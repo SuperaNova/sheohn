@@ -12,7 +12,7 @@ jobs:
     if: github.repository_owner == 'SuperaNova' # Only run on the main repo
     steps:
       - name: Auto-merge stable Dependabot PRs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const daysToWait = 7;
