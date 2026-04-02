@@ -1,0 +1,14 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "astro.enableSpecializedQuery": true,
+  "tailwindCSS.experimental.classRegex": [
+    ["(?:class|className)\\s*=\\s*['\"{]([^'\"}]*)['\"}]", "([^\\s'\"}]*)"]
+  ],
+  "[astro]": {
+    "editor.defaultFormatter": "astro-build.astro-vscode"
+  }
+}
