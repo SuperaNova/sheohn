@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* Executive Naturalist tokens with dark/light theme support. */
+@theme {
+  --color-surface: #f3efe8;
+  --color-surface-container-low: #ece6dc;
+  --color-surface-container: #e4ddd2;
+  --color-surface-container-high: #dad2c6;
+  --color-surface-container-highest: #cec4b6;
+  --color-on-surface: #1c1c19;
+  --color-on-surface-muted: #4c4b45;
+  --color-primary: #182519;
+  --color-primary-container: #2d3b2d;
+  --color-tertiary: #2f5a3c;
+  --color-tertiary-container: #23452d;
+  --color-outline-variant: #c4c8c0;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark {
+  --color-surface: #050505;
+  --color-surface-container-low: #0b0b0b;
+  --color-surface-container: #111111;
+  --color-surface-container-high: #171717;
+  --color-surface-container-highest: #1f1f1f;
+  --color-on-surface: #ecf2ec;
+  --color-on-surface-muted: #b7c2b7;
+  --color-primary: #1f3a27;
+  --color-primary-container: #2f5a3c;
+  --color-tertiary: #3c724d;
+  --color-tertiary-container: #2b5438;
+  --color-outline-variant: #c4c8c0;
+}
+
+html,
+body {
+  @apply bg-surface text-[var(--color-on-surface)] antialiased;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  @apply min-h-screen;
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+.font-display {
+  font-family: "Playfair Display", Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+.content-wrap {
+  @apply mx-auto w-full max-w-[74rem] px-6 md:px-12;
+}
+
+.section-space {
+  @apply py-24 md:py-32;
+}
+
+.glass-island {
+  background: color-mix(in srgb, var(--color-surface-container) 80%, transparent);
+  backdrop-filter: blur(12px);
+}
