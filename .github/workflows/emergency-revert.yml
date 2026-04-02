@@ -1,0 +1,32 @@
+name: Emergency Security Revert
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'The package name to revert (e.g. "lodash")'
+        required: true
+      version:
+        description: 'The safe version to downgrade to (e.g. "4.17.20")'
+        required: true
+
+jobs:
+  revert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Downgrade package
+        run: |
+          npm install ${{ github.event.inputs.package_name }}@${{ github.event.inputs.version }}
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add package.json package-lock.json
+          git commit -m "security(emergency): downgrade ${{ github.event.inputs.package_name }} to ${{ github.event.inputs.version }} due to reported issues"
+          git push
