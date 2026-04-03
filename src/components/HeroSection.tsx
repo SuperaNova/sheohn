@@ -32,6 +32,7 @@ export default function HeroSection() {
     damping: 28,
   });
 
+  // TODO: add more information about me and my roles
   return (
     <section ref={sectionRef} id="home" className="content-wrap section-space scroll-mt-24 flex min-h-[100svh] items-center snap-center pt-24">
       <motion.div

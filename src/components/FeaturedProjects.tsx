@@ -25,6 +25,7 @@ type Project = {
  *   href: "https://github.com/your-repo"
  * }
  */
+// TODO: add my projects
 const projects: Project[] = [
   {
     title: "<Project Title 1>",
