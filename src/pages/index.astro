@@ -1,15 +1,15 @@
 ---
-import "../styles/global.css";
-import HeroSection from "../components/HeroSection";
-import FeaturedProjects from "../components/FeaturedProjects";
-import SectionReveal from "../components/SectionReveal";
-import ScrollProgress from "../components/ScrollProgress";
-import HeaderNav from "../components/HeaderNav";
-import ExperienceTimeline from "../components/ExperienceTimeline";
+import '../styles/global.css';
+import HeroSection from '../components/HeroSection';
+import FeaturedProjects from '../components/FeaturedProjects';
+import SectionReveal from '../components/SectionReveal';
+import ScrollProgress from '../components/ScrollProgress';
+import HeaderNav from '../components/HeaderNav';
+import ExperienceTimeline from '../components/ExperienceTimeline';
 ---
 
 <!doctype html>
-<html lang="en" class="dark scroll-smooth snap-y snap-proximity">
+<html lang="en" class="dark snap-y snap-proximity scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -28,7 +28,9 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
     />
   </head>
 
-  <body class="selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100">
+  <body
+    class="selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
+  >
     <ScrollProgress client:load />
     <HeaderNav client:load />
 
@@ -42,23 +44,47 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
       </div>
 
       <!-- React Island wrapper for scroll entrance motion; content remains mostly static -->
-      <SectionReveal client:visible id="stack" className="content-wrap section-space scroll-mt-24 min-h-[100svh] flex flex-col snap-center py-24 bg-[var(--color-surface-container)]">
+      <SectionReveal
+        client:visible
+        id="stack"
+        className="content-wrap section-space flex min-h-[100svh] snap-center scroll-mt-24 flex-col bg-[var(--color-surface-container)] py-24"
+      >
         <div class="mb-12 flex items-end justify-between gap-6">
-          <h2 class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl">Tech Stack</h2>
-          <span class="text-xs uppercase tracking-[0.2em] text-[var(--color-on-surface-muted)]">Technology Overview</span>
+          <h2
+            class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+          >
+            Tech Stack
+          </h2>
+          <span
+            class="text-xs tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase"
+            >Technology Overview</span
+          >
         </div>
 
+        <!-- TODO: add my tech stack -->
         <div class="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-          <article class="rounded-xl bg-[var(--color-surface-container-high)] p-6">
-            <h3 class="text-sm uppercase tracking-[0.14em] text-[var(--color-primary-container)]">Core</h3>
+          <article
+            class="rounded-xl bg-[var(--color-surface-container-high)] p-6"
+          >
+            <h3
+              class="text-sm tracking-[0.14em] text-[var(--color-primary-container)] uppercase"
+            >
+              Core
+            </h3>
             <ul class="mt-4 space-y-2 text-[var(--color-on-surface)]">
               <li>&lt;Core technology 1&gt;</li>
               <li>&lt;Core technology 2&gt;</li>
             </ul>
           </article>
 
-          <article class="rounded-xl bg-[var(--color-surface-container-high)] p-6">
-            <h3 class="text-sm uppercase tracking-[0.14em] text-[var(--color-primary-container)]">Frontend</h3>
+          <article
+            class="rounded-xl bg-[var(--color-surface-container-high)] p-6"
+          >
+            <h3
+              class="text-sm tracking-[0.14em] text-[var(--color-primary-container)] uppercase"
+            >
+              Frontend
+            </h3>
             <ul class="mt-4 space-y-2 text-[var(--color-on-surface)]">
               <li>&lt;Frontend technology 1&gt;</li>
               <li>&lt;Frontend technology 2&gt;</li>
@@ -67,8 +93,14 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
             </ul>
           </article>
 
-          <article class="rounded-xl bg-[var(--color-surface-container-high)] p-6">
-            <h3 class="text-sm uppercase tracking-[0.14em] text-[var(--color-primary-container)]">AI / Data</h3>
+          <article
+            class="rounded-xl bg-[var(--color-surface-container-high)] p-6"
+          >
+            <h3
+              class="text-sm tracking-[0.14em] text-[var(--color-primary-container)] uppercase"
+            >
+              AI / Data
+            </h3>
             <ul class="mt-4 space-y-2 text-[var(--color-on-surface)]">
               <li>&lt;AI or data technology 1&gt;</li>
               <li>&lt;AI or data technology 2&gt;</li>
@@ -77,8 +109,14 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
             </ul>
           </article>
 
-          <article class="rounded-xl bg-[var(--color-surface-container-high)] p-6">
-            <h3 class="text-sm uppercase tracking-[0.14em] text-[var(--color-primary-container)]">Infrastructure</h3>
+          <article
+            class="rounded-xl bg-[var(--color-surface-container-high)] p-6"
+          >
+            <h3
+              class="text-sm tracking-[0.14em] text-[var(--color-primary-container)] uppercase"
+            >
+              Infrastructure
+            </h3>
             <ul class="mt-4 space-y-2 text-[var(--color-on-surface)]">
               <li>&lt;Infrastructure tool 1&gt;</li>
               <li>&lt;Infrastructure tool 2&gt;</li>
@@ -90,27 +128,56 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
         </div>
       </SectionReveal>
 
-      <SectionReveal client:visible id="about" className="content-wrap section-space scroll-mt-24 min-h-[100svh] flex flex-col snap-center py-24 bg-[var(--color-surface-container-low)]">
+      <!-- TODO: add my about me -->
+      <SectionReveal
+        client:visible
+        id="about"
+        className="content-wrap section-space flex min-h-[100svh] snap-center scroll-mt-24 flex-col bg-[var(--color-surface-container-low)] py-24"
+      >
         <div class="grid items-start gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <h2 class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl">About Me</h2>
-            <p class="mt-6 max-w-2xl leading-[1.6] text-[var(--color-on-surface)]">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus
-              posuere velit aliquet. Curabitur blandit tempus porttitor, quis luctus nibh ullamcorper sit amet.
+            <h2
+              class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+            >
+              About Me
+            </h2>
+            <p
+              class="mt-6 max-w-2xl leading-[1.6] text-[var(--color-on-surface)]"
+            >
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer
+              posuere erat a ante venenatis dapibus posuere velit aliquet.
+              Curabitur blandit tempus porttitor, quis luctus nibh ullamcorper
+              sit amet.
             </p>
-            <p class="mt-4 max-w-2xl leading-[1.6] text-[var(--color-on-surface-muted)]">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-              ex ea commodo consequat.
+            <p
+              class="mt-4 max-w-2xl leading-[1.6] text-[var(--color-on-surface-muted)]"
+            >
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat.
             </p>
           </div>
 
-          <div class="glass-island rounded-xl p-7 shadow-[0_20px_40px_rgba(28,28,25,0.2)] h-fit sticky top-32">
-            <p class="text-xs uppercase tracking-[0.14em] text-[var(--color-tertiary)]">Current Focus</p>
-            <h3 class="mt-3 text-2xl font-semibold text-[var(--color-on-surface)]">&lt;Primary objective goes here&gt;</h3>
-            <p class="mt-4 leading-relaxed text-[var(--color-on-surface-muted)]">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent commodo cursus magna, vel scelerisque
-              nisl consectetur et. Cras mattis consectetur purus sit amet fermentum.
+          <div
+            class="glass-island sticky top-32 h-fit rounded-xl p-7 shadow-[0_20px_40px_rgba(28,28,25,0.2)]"
+          >
+            <p
+              class="text-xs tracking-[0.14em] text-[var(--color-tertiary)] uppercase"
+            >
+              Current Focus
+            </p>
+            <h3
+              class="mt-3 text-2xl font-semibold text-[var(--color-on-surface)]"
+            >
+              &lt;Primary objective goes here&gt;
+            </h3>
+            <p
+              class="mt-4 leading-relaxed text-[var(--color-on-surface-muted)]"
+            >
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
+              commodo cursus magna, vel scelerisque nisl consectetur et. Cras
+              mattis consectetur purus sit amet fermentum.
             </p>
           </div>
         </div>
@@ -119,37 +186,94 @@ import ExperienceTimeline from "../components/ExperienceTimeline";
       </SectionReveal>
     </main>
 
-    <footer id="footer" class="scroll-mt-24 bg-[var(--color-surface-container)] py-16">
-      <div class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10">
+    <!-- TODO: add my footer -->
+    <footer
+      id="footer"
+      class="scroll-mt-24 bg-[var(--color-surface-container)] py-16"
+    >
+      <div
+        class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10"
+      >
         <div>
-          <p class="font-display text-3xl text-[var(--color-on-surface)]">Jared Sheohn L. Acebes</p>
-          <p class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor.
+          <p class="font-display text-3xl text-[var(--color-on-surface)]">
+            Jared Sheohn L. Acebes
+          </p>
+          <p
+            class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
+          >
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur
+            blandit tempus porttitor.
           </p>
         </div>
 
         <div>
-          <p class="text-xs uppercase tracking-[0.16em] text-[var(--color-primary-container)]">Navigation</p>
-          <nav class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]">
-            <a href="#home" class="transition hover:text-[var(--color-on-surface)]">Home</a>
-            <a href="#projects" class="transition hover:text-[var(--color-on-surface)]">Projects</a>
-            <a href="#stack" class="transition hover:text-[var(--color-on-surface)]">Stack</a>
-            <a href="#about" class="transition hover:text-[var(--color-on-surface)]">About</a>
+          <p
+            class="text-xs tracking-[0.16em] text-[var(--color-primary-container)] uppercase"
+          >
+            Navigation
+          </p>
+          <nav
+            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
+          >
+            <a
+              href="#home"
+              class="transition hover:text-[var(--color-on-surface)]">Home</a
+            >
+            <a
+              href="#projects"
+              class="transition hover:text-[var(--color-on-surface)]"
+              >Projects</a
+            >
+            <a
+              href="#stack"
+              class="transition hover:text-[var(--color-on-surface)]">Stack</a
+            >
+            <a
+              href="#about"
+              class="transition hover:text-[var(--color-on-surface)]">About</a
+            >
           </nav>
         </div>
 
         <div>
-          <p class="text-xs uppercase tracking-[0.16em] text-[var(--color-primary-container)]">Connect</p>
-          <nav class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]">
-            <a href="https://github.com/" target="_blank" rel="noreferrer" class="transition hover:text-[var(--color-on-surface)]">GitHub</a>
-            <a href="https://linkedin.com/" target="_blank" rel="noreferrer" class="transition hover:text-[var(--color-on-surface)]">LinkedIn</a>
-            <a href="mailto:you@sheohn.dev" class="transition hover:text-[var(--color-on-surface)]">Email</a>
-            <a href="/resume.pdf" class="font-medium text-[var(--color-primary-container)] transition hover:text-[var(--color-on-surface)]">Download Resume</a>
+          <p
+            class="text-xs tracking-[0.16em] text-[var(--color-primary-container)] uppercase"
+          >
+            Connect
+          </p>
+          <nav
+            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
+          >
+            <a
+              href="https://github.com/"
+              target="_blank"
+              rel="noreferrer"
+              class="transition hover:text-[var(--color-on-surface)]">GitHub</a
+            >
+            <a
+              href="https://linkedin.com/"
+              target="_blank"
+              rel="noreferrer"
+              class="transition hover:text-[var(--color-on-surface)]"
+              >LinkedIn</a
+            >
+            <a
+              href="mailto:you@sheohn.dev"
+              class="transition hover:text-[var(--color-on-surface)]">Email</a
+            >
+            <!-- TODO: add my resume pdf -->
+            <a
+              href="/resume.pdf"
+              class="font-medium text-[var(--color-primary-container)] transition hover:text-[var(--color-on-surface)]"
+              >Download Resume</a
+            >
           </nav>
         </div>
       </div>
 
-      <div class="mx-auto mt-12 w-full max-w-[90rem] border-t border-white/10 px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10">
+      <div
+        class="mx-auto mt-12 w-full max-w-[90rem] border-t border-white/10 px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10"
+      >
         &copy; {new Date().getFullYear()} sheohn.dev
       </div>
     </footer>
