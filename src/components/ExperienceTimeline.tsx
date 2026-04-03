@@ -19,6 +19,14 @@ const timelineData = [
   },
   {
     id: "lead-2",
+    date: "2025 – Present",
+    role: "Network & Linkages Director",
+    organization: "AWS Cloud Clubs - WildQuacc",
+    description: "Forges strategic partnerships with campus organizations and the local tech community through targeted outreach, networking, and resource-sharing.",
+    category: "Leadership",
+  },
+  {
+    id: "lead-3",
     date: "2025",
     role: "Management Information Team (MIT) Lead",
     organization: "Angat Bayanihan Volunteer Network",
