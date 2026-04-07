@@ -24,5 +24,6 @@
     "enabled": true,
     "automerge": true,
     "minimumReleaseAge": "0 days" 
-  }
+  },
+  "enabled": false
 }

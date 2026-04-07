@@ -1,5 +1,6 @@
 import { motion, useScroll, useSpring, useTransform, type Variants } from "framer-motion";
 import { useRef } from "react";
+import DecoderText from "./DecoderText";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0, y: 18 },
@@ -34,7 +35,7 @@ export default function HeroSection() {
 
   // TODO: add more information about me and my roles
   return (
-    <section ref={sectionRef} id="home" className="content-wrap section-space scroll-mt-24 flex min-h-[100svh] items-center snap-center pt-24">
+    <section ref={sectionRef} id="home" className="content-wrap section-space scroll-mt-24 flex min-h-[100svh] items-center pt-24">
       <motion.div
         style={{ y: parallaxY }}
         className="grid w-full items-end gap-12 lg:grid-cols-[1.2fr_0.8fr]"
@@ -45,7 +46,7 @@ export default function HeroSection() {
       >
         <div>
           <motion.p variants={itemVariants} className="mb-5 text-xs uppercase tracking-[0.24em] text-[var(--color-on-surface-muted)]">
-            &lt;Your portfolio label&gt;
+            <DecoderText text="Executive Portfolio" delay={1800} />
           </motion.p>
 
           <motion.h1
@@ -55,9 +56,17 @@ export default function HeroSection() {
             Jared Sheohn L. Acebes
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="mt-6 text-lg text-[var(--color-on-surface)] md:text-xl">
-            &lt;Your role goes here&gt;
+          <motion.p variants={itemVariants} className="mt-6 text-lg text-[var(--color-on-surface)] md:text-xl font-mono tracking-tight">
+            <DecoderText text="wǒ cào nǐ mā" delay={2400} />
           </motion.p>
+
+          <motion.div variants={itemVariants} className="mt-6 flex items-center gap-3">
+            <div className="relative flex h-3 w-3 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </div>
+            <span className="text-sm font-medium tracking-wide text-[var(--color-on-surface)]">Available for Opportunities</span>
+          </motion.div>
 
           <motion.p variants={itemVariants} className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
@@ -71,18 +80,19 @@ export default function HeroSection() {
               transition={{ type: "spring", stiffness: 350, damping: 24 }}
               className="inline-flex rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)]"
             >
-              &lt;Your current status or objective goes here&gt;
+              Initiate Strategic Engagement
+
             </motion.a>
           </motion.div>
         </div>
 
         <motion.aside
           variants={itemVariants}
-          className="rounded-2xl bg-[color-mix(in_srgb,var(--color-surface-container-high)_80%,transparent)] p-6"
+          className="group relative rounded-2xl border border-[var(--color-surface-container-highest)] bg-[color-mix(in_srgb,var(--color-surface-container-high)_50%,transparent)] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-outline-variant)] hover:shadow-[4px_4px_0_0_var(--color-surface-container-highest)] dark:hover:shadow-[4px_4px_0_0_var(--color-primary-container)]"
         >
           <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-tertiary)]">Strategic Note</p>
           <p className="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Dedicated to driving unhindered technical innovation. Specializing in highly optimized architectures and uncompromising visual precision.
           </p>
         </motion.aside>
       </motion.div>
