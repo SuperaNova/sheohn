@@ -41,3 +41,27 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+---
+
+## Pre-Push Checklist (CI/CD Safety)
+
+To ensure GitHub Actions or Vercel CI/CD doesn't unexpectedly fail on your branches, always run these commands locally before committing / pushing code:
+
+1. **Auto-Format Code:**
+   Ensures all files match Prettier's strict styling rules.
+   ```bash
+   npm run format
+   ```
+
+2. **Lint Code (find errors):**
+   Catches undeclared variables, unused imports, or bad syntax.
+   ```bash
+   npm run lint
+   ```
+
+3. **Type-Check (Astro + TS strict mode):**
+   Ensures all TypeScript interfaces, JSX props, and Astro components compile successfully without throwing errors.
+   ```bash
+   npm run check
+   ```

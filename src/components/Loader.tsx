@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 export default function Loader() {
   const [progress, setProgress] = useState(0);
@@ -7,7 +7,7 @@ export default function Loader() {
 
   useEffect(() => {
     // Disable scroll while loading
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
 
     const duration = 1200; // 1.2s rapid counting
     const intervalTime = 20;
@@ -24,14 +24,14 @@ export default function Loader() {
         clearInterval(interval);
         setTimeout(() => {
           setIsLoading(false);
-          document.body.style.overflow = "";
+          document.body.style.overflow = '';
         }, 400); // Tiny pause at 100%
       }
     }, intervalTime);
 
     return () => {
       clearInterval(interval);
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, []);
 
@@ -41,15 +41,16 @@ export default function Loader() {
         <motion.div
           key="loader"
           initial={{ y: 0 }}
-          exit={{ y: "-100%" }}
+          exit={{ y: '-100%' }}
           transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-[var(--color-surface)] p-6 md:p-12 text-[var(--color-on-surface)]"
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-[var(--color-surface)] p-6 text-[var(--color-on-surface)] md:p-12"
         >
           {/* Faint Architectural Grid Backdrop for loader */}
-          <div className="pointer-events-none absolute inset-0 opacity-20 transition-opacity"
+          <div
+            className="pointer-events-none absolute inset-0 opacity-20 transition-opacity"
             style={{
               backgroundImage: `linear-gradient(to right, var(--color-on-surface-muted) 1px, transparent 1px), linear-gradient(to bottom, var(--color-on-surface-muted) 1px, transparent 1px)`,
-              backgroundSize: '4rem 4rem'
+              backgroundSize: '4rem 4rem',
             }}
           />
 
@@ -58,20 +59,20 @@ export default function Loader() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-xs uppercase tracking-[0.24em] text-[var(--color-on-surface-muted)]"
+              className="text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
             >
               System Initialization
             </motion.div>
-            <div className="font-display text-7xl md:text-9xl leading-none tracking-tighter">
+            <div className="font-display text-7xl leading-none tracking-tighter md:text-9xl">
               {progress}%
             </div>
           </div>
-          
-          <div className="relative z-10 mt-6 h-[1px] w-full bg-[var(--color-surface-container-highest)] overflow-hidden">
-            <motion.div 
-               className="h-full bg-[var(--color-on-surface)]"
-               style={{ width: `${progress}%` }}
-               transition={{ duration: 0.1, ease: "linear" }}
+
+          <div className="relative z-10 mt-6 h-[1px] w-full overflow-hidden bg-[var(--color-surface-container-highest)]">
+            <motion.div
+              className="h-full bg-[var(--color-on-surface)]"
+              style={{ width: `${progress}%` }}
+              transition={{ duration: 0.1, ease: 'linear' }}
             />
           </div>
         </motion.div>

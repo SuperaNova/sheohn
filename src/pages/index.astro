@@ -2,13 +2,12 @@
 import '../styles/global.css';
 import HeroSection from '../components/HeroSection';
 import FeaturedProjects from '../components/FeaturedProjects';
-import SectionReveal from '../components/SectionReveal';
 import ScrollProgress from '../components/ScrollProgress';
 import HeaderNav from '../components/HeaderNav';
-import ExperienceTimeline from '../components/ExperienceTimeline';
 import Loader from '../components/Loader';
 import CustomCursor from '../components/CustomCursor';
 import { ClientRouter } from 'astro:transitions';
+import AgentChat from '../components/AgentChat';
 ---
 
 <!doctype html>
@@ -33,11 +32,15 @@ import { ClientRouter } from 'astro:transitions';
   </head>
 
   <body
-    class="selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100 relative"
+    class="relative selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
   >
-    <div class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 dark:opacity-30 mix-blend-overlay"></div>
-    <div class="site-grid pointer-events-none fixed inset-0 z-0 opacity-10"></div>
-    
+    <div
+      class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
+    >
+    </div>
+    <div class="site-grid pointer-events-none fixed inset-0 z-0 opacity-10">
+    </div>
+
     <CustomCursor client:load transition:persist />
     <Loader client:load />
     <ScrollProgress client:load />
@@ -48,16 +51,15 @@ import { ClientRouter } from 'astro:transitions';
       <HeroSection client:load />
 
       <!-- React Island: projects rendered through array/object mapping -->
-      <div class="bg-transparent relative z-10">
+      <div class="relative z-10 bg-transparent">
         <FeaturedProjects client:visible />
       </div>
-
     </main>
 
     <!-- TODO: add my footer -->
     <footer
       id="footer"
-      class="scroll-mt-24 bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] border-t-2 border-[var(--color-on-surface-muted)] py-16 relative z-10"
+      class="relative z-10 scroll-mt-24 border-t-2 border-[var(--color-on-surface-muted)] bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] py-16"
     >
       <div
         class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10"
@@ -83,9 +85,8 @@ import { ClientRouter } from 'astro:transitions';
           <nav
             class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
           >
-            <a
-              href="/"
-              class="transition hover:text-[var(--color-on-surface)]">Home</a
+            <a href="/" class="transition hover:text-[var(--color-on-surface)]"
+              >Home</a
             >
             <a
               href="/#projects"
@@ -145,5 +146,7 @@ import { ClientRouter } from 'astro:transitions';
         &copy; {new Date().getFullYear()} sheohn.dev
       </div>
     </footer>
+
+    <AgentChat client:load />
   </body>
 </html>

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useEffect, useState } from 'react';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 
 export default function CustomCursor() {
-  const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isGreenHover, setIsGreenHover] = useState(false);
 
   // Use motion values for zero-latency tracking
   const mouseX = useMotionValue(-100);
@@ -23,34 +23,27 @@ export default function CustomCursor() {
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (
-        target.tagName.toLowerCase() === "a" ||
-        target.tagName.toLowerCase() === "button" ||
-        target.closest("a") ||
-        target.closest("button") ||
-        window.getComputedStyle(target).cursor === "pointer"
-      ) {
-        setIsHovering(true);
-      } else {
-        setIsHovering(false);
-      }
+
+      const isGreen =
+        target.hasAttribute('data-cursor-green') ||
+        target.closest('[data-cursor-green]');
+      setIsGreenHover(!!isGreen);
     };
 
-    const handleMouseOut = () => setIsHovering(false);
     const handleMouseLeave = () => setIsVisible(false);
 
-    window.addEventListener("mousemove", updateMousePosition);
-    window.addEventListener("mouseover", handleMouseOver);
-    window.addEventListener("mouseout", handleMouseOut);
-    document.body.addEventListener("mouseleave", handleMouseLeave);
-    document.body.addEventListener("mouseenter", () => setIsVisible(true));
+    window.addEventListener('mousemove', updateMousePosition);
+    window.addEventListener('mouseover', handleMouseOver);
+    window.addEventListener('mouseout', () => {});
+    document.body.addEventListener('mouseleave', handleMouseLeave);
+    document.body.addEventListener('mouseenter', () => setIsVisible(true));
 
     return () => {
-      window.removeEventListener("mousemove", updateMousePosition);
-      window.removeEventListener("mouseover", handleMouseOver);
-      window.removeEventListener("mouseout", handleMouseOut);
-      document.body.removeEventListener("mouseleave", handleMouseLeave);
-      document.body.removeEventListener("mouseenter", () => setIsVisible(true));
+      window.removeEventListener('mousemove', updateMousePosition);
+      window.removeEventListener('mouseover', handleMouseOver);
+      window.removeEventListener('mouseout', () => {});
+      document.body.removeEventListener('mouseleave', handleMouseLeave);
+      document.body.removeEventListener('mouseenter', () => setIsVisible(true));
     };
   }, [isVisible, mouseX, mouseY]);
 
@@ -63,22 +56,22 @@ export default function CustomCursor() {
           }
         }
       `}</style>
-      
+
       {/* Single solid instant cursor */}
       <motion.div
-        className="pointer-events-none fixed left-0 top-0 z-[100] hidden rounded-full bg-[var(--color-on-surface)] md:block shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
+        className={`pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full transition-colors duration-200 md:block ${isGreenHover ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' : 'bg-[var(--color-on-surface)] shadow-[0_2px_8px_rgba(0,0,0,0.15)]'}`}
         style={{
-          x: mouseX,
-          y: mouseY,
-          translateX: "-50%",
-          translateY: "-50%",
+          x: cursorX,
+          y: cursorY,
+          translateX: '-50%',
+          translateY: '-50%',
         }}
         animate={{
           width: 20,
           height: 20,
           opacity: isVisible ? 1 : 0,
         }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
       />
     </>
   );
