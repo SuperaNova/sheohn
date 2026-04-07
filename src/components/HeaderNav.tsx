@@ -2,67 +2,45 @@ import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 
-const sections = [
-  { id: "home", label: "Home" },
-  { id: "projects", label: "Projects" },
-  { id: "stack", label: "Stack" },
-  { id: "about", label: "About" },
-  { id: "footer", label: "Contact" },
+const navItems = [
+  { id: "home", label: "Home", path: "/" },
+  { id: "about", label: "About", path: "/about" },
+  { id: "resume", label: "Resume", path: "/resume.pdf", external: true },
 ];
 
 export default function HeaderNav() {
-  const [activeId, setActiveId] = useState("home");
-
-  const sectionElements = useMemo(
-    () =>
-      sections
-        .map((section) => ({
-          id: section.id,
-          element: typeof window !== "undefined" ? document.getElementById(section.id) : null,
-        }))
-        .filter((entry) => entry.element),
-    []
-  );
+  const [activeId, setActiveId] = useState("");
 
   useEffect(() => {
-    const onScroll = () => {
-      const midpoint = window.scrollY + window.innerHeight * 0.35;
-      let nextActive = "home";
-      for (const entry of sectionElements) {
-        if (!entry.element) continue;
-        if (entry.element.offsetTop <= midpoint) nextActive = entry.id;
-      }
-      setActiveId(nextActive);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [sectionElements]);
+    // Simple static active state based on current page
+    const path = window.location.pathname;
+    if (path === "/" || path === "/index.html") {
+      setActiveId("home");
+    } else if (path.startsWith("/about")) {
+      setActiveId("about");
+    }
+  }, []);
 
   return (
-    <header className="glass-island fixed inset-x-0 top-0 z-50 border-b border-white/10">
+    <header className="absolute inset-x-0 top-0 z-50 border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]">
       <div className="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between px-6 md:px-10">
-        <a href="#home" className="font-display text-xl text-[var(--color-on-surface)]">
-          sheohn.dev
+        <a href="/" className="font-display text-xl font-bold tracking-wide text-[var(--color-on-surface)]">
+          sheohn<span className="text-[var(--color-tertiary)]">.dev</span>
         </a>
 
-        <nav className="hidden items-center gap-2 md:flex">
-          {sections.map((section) => {
+        <nav className="hidden items-center gap-6 md:flex">
+          {navItems.map((section) => {
             const isActive = activeId === section.id;
             return (
               <a
                 key={section.id}
-                href={`#${section.id}`}
-                className="relative rounded-md px-3 py-2 text-sm text-[var(--color-on-surface-muted)] transition hover:text-[var(--color-on-surface)]"
+                href={section.path}
+                target={section.external ? "_blank" : undefined}
+                rel={section.external ? "noreferrer" : undefined}
+                className={`text-sm font-medium transition hover:text-[var(--color-on-surface)] ${
+                  isActive ? "text-[var(--color-on-surface)] underline underline-offset-8 decoration-2 decoration-[var(--color-tertiary)]" : "text-[var(--color-on-surface-muted)]"
+                }`}
               >
-                {isActive ? (
-                  <motion.span
-                    layoutId="nav-active-pill"
-                    className="absolute inset-0 -z-10 rounded-md bg-[color-mix(in_srgb,var(--color-primary)_30%,transparent)]"
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  />
-                ) : null}
                 {section.label}
               </a>
             );

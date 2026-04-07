@@ -43,6 +43,11 @@ html,
 body {
   @apply bg-surface text-[var(--color-on-surface)] antialiased;
   font-family: Inter, system-ui, sans-serif;
+  cursor: none !important;
+}
+
+* {
+  cursor: none !important;
 }
 
 body {
@@ -66,4 +71,16 @@ body {
 .glass-island {
   background: color-mix(in srgb, var(--color-surface-container) 80%, transparent);
   backdrop-filter: blur(12px);
+}
+
+.site-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.site-grid {
+  background-image: linear-gradient(to right, var(--color-on-surface-muted) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-on-surface-muted) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(circle at 50% 50%, black 10%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 10%, transparent 80%);
 }

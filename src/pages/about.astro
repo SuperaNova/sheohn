@@ -1,0 +1,142 @@
+---
+import '../styles/global.css';
+import SectionReveal from '../components/SectionReveal';
+import ScrollProgress from '../components/ScrollProgress';
+import HeaderNav from '../components/HeaderNav';
+import ExperienceTimeline from '../components/ExperienceTimeline';
+import CustomCursor from '../components/CustomCursor';
+import { ClientRouter } from 'astro:transitions';
+---
+
+<!doctype html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>About | sheohn.dev</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <ClientRouter />
+  </head>
+
+  <body
+    class="selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100 relative"
+  >
+    <div class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 dark:opacity-30 mix-blend-overlay"></div>
+    <div class="site-grid pointer-events-none fixed inset-0 z-0 opacity-10"></div>
+    
+    <CustomCursor client:load transition:persist />
+    <ScrollProgress client:load />
+    <HeaderNav client:load />
+
+    <main class="bg-[var(--color-surface)] pt-32 min-h-screen">
+      <SectionReveal
+        client:visible
+        id="about"
+        className="content-wrap section-space flex scroll-mt-24 flex-col bg-transparent py-24 relative z-10"
+      >
+        <div class="grid items-start gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <h2 class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl">
+              About Me
+            </h2>
+            <p class="mt-6 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface)]">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer
+              posuere erat a ante venenatis dapibus posuere velit aliquet.
+              Curabitur blandit tempus porttitor, quis luctus nibh ullamcorper
+              sit amet.
+            </p>
+            <p class="mt-4 max-w-2xl leading-[1.6] text-[var(--color-on-surface-muted)]">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat.
+            </p>
+          </div>
+
+          <div class="bg-[color-mix(in_srgb,var(--color-surface-container-high)_80%,transparent)] h-fit rounded-2xl border border-[var(--color-outline-variant)] p-8 shadow-sm">
+            <p class="text-xs tracking-[0.14em] text-[var(--color-tertiary)] uppercase font-semibold">
+              Current Focus
+            </p>
+            <h3 class="mt-3 text-2xl font-display font-semibold text-[var(--color-on-surface)]">
+              &lt;Primary objective goes here&gt;
+            </h3>
+            <p class="mt-4 leading-relaxed text-[var(--color-on-surface-muted)] text-sm">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
+              commodo cursus magna, vel scelerisque nisl consectetur et.
+            </p>
+          </div>
+        </div>
+
+        <ExperienceTimeline client:visible />
+      </SectionReveal>
+
+      <SectionReveal
+        client:visible
+        id="stack"
+        className="content-wrap section-space border-t border-[var(--color-outline-variant)] flex scroll-mt-24 flex-col bg-transparent py-24 relative z-10"
+      >
+        <div class="mb-16 flex items-end justify-between gap-6">
+          <h2 class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl">
+            Tech Stack
+          </h2>
+          <span class="text-xs tracking-[0.2em] font-medium text-[var(--color-on-surface-muted)] uppercase">Technology Overview</span>
+        </div>
+
+        <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+          <article>
+            <h3 class="text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase mb-6">Core</h3>
+            <div class="flex flex-wrap gap-2">
+              {["TypeScript", "JavaScript", "React", "Node.js", "Python"].map(item => (
+                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">{item}</span>
+              ))}
+            </div>
+          </article>
+          
+          <article>
+            <h3 class="text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase mb-6">Frontend</h3>
+            <div class="flex flex-wrap gap-2">
+              {["Next.js", "Astro", "Tailwind CSS", "Framer Motion", "Zustand"].map(item => (
+                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">{item}</span>
+              ))}
+            </div>
+          </article>
+
+          <article>
+            <h3 class="text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase mb-6">Backend & DB</h3>
+            <div class="flex flex-wrap gap-2">
+              {["PostgreSQL", "MongoDB", "Express", "REST API", "GraphQL"].map(item => (
+                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">{item}</span>
+              ))}
+            </div>
+          </article>
+
+          <article>
+            <h3 class="text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase mb-6">Infra & Tools</h3>
+            <div class="flex flex-wrap gap-2">
+              {["Docker", "AWS", "GitHub Actions", "Git", "Figma", "Linux"].map(item => (
+                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">{item}</span>
+              ))}
+            </div>
+          </article>
+        </div>
+      </SectionReveal>
+    </main>
+
+    <footer id="footer" class="scroll-mt-24 bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] border-t-2 border-[var(--color-on-surface-muted)] py-16 relative z-10">
+      <div class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10">
+        <div>
+          <p class="font-display text-3xl text-[var(--color-on-surface)]">sheohn.dev</p>
+        </div>
+      </div>
+      <div class="mx-auto mt-12 w-full max-w-[90rem] border-t border-[var(--color-outline-variant)] px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10">
+        &copy; {new Date().getFullYear()} sheohn.dev
+      </div>
+    </footer>
+  </body>
+</html>
