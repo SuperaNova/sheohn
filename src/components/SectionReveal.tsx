@@ -1,12 +1,16 @@
-import type { PropsWithChildren } from "react";
-import { motion } from "framer-motion";
+import type { PropsWithChildren } from 'react';
+import { motion } from 'framer-motion';
 
 type SectionRevealProps = PropsWithChildren<{
   id?: string;
   className?: string;
 }>;
 
-export default function SectionReveal({ id, className = "", children }: SectionRevealProps) {
+export default function SectionReveal({
+  id,
+  className = '',
+  children,
+}: SectionRevealProps) {
   return (
     <motion.section
       id={id}
