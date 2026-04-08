@@ -50,12 +50,14 @@ To ensure GitHub Actions or Vercel CI/CD doesn't unexpectedly fail on your branc
 
 1. **Auto-Format Code:**
    Ensures all files match Prettier's strict styling rules.
+
    ```bash
    npm run format
    ```
 
 2. **Lint Code (find errors):**
    Catches undeclared variables, unused imports, or bad syntax.
+
    ```bash
    npm run lint
    ```

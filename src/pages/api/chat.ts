@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { streamText, embed, tool } from 'ai';
-import { google } from '@ai-sdk/google';
+import { streamText, embed, tool, convertToModelMessages } from 'ai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { Index } from '@upstash/vector';
@@ -16,8 +16,25 @@ const index = new Index({
     process.env.UPSTASH_VECTOR_REST_TOKEN,
 });
 
+// Explicitly pass the API key; Astro SSR may not expose process.env to the SDK auto-detector
+const google = createGoogleGenerativeAI({
+  apiKey:
+    import.meta.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
 export const POST: APIRoute = async ({ request }) => {
-  const { messages } = await request.json();
+  const body = await request.json();
+  // DefaultChatTransport sends UI messages. Normalize to ensure all have `parts`
+  // (first-turn messages may only have `content` without `parts`)
+  const rawMessages: any[] = (body.messages ?? []).map((m: any) => {
+    if (!m.parts) {
+      // Normalize old-format messages to have parts
+      return { ...m, parts: [{ type: 'text', text: m.content ?? '' }] };
+    }
+    return m;
+  });
+  const messages = await convertToModelMessages(rawMessages);
 
   const result = streamText({
     model: google('gemini-2.5-flash'),
@@ -51,7 +68,7 @@ export const POST: APIRoute = async ({ request }) => {
         execute: async ({ query }) => {
           console.log(`[RAG Pipeline] Embedding query: "${query}"`);
 
-          // Embed the user's explicit query to match the math vectors
+          // Embed the user's query to match vector embeddings
           const { embedding } = await embed({
             model: google.embeddingModel('gemini-embedding-001'),
             value: query,
@@ -62,14 +79,13 @@ export const POST: APIRoute = async ({ request }) => {
             },
           });
 
-          // Query the top 3 most mathematically relevant facts from Upstash
+          // Query the top 3 most relevant facts from Upstash
           const results = await index.query({
             vector: embedding,
             topK: 3,
             includeMetadata: true,
           });
 
-          // Extract just the factual text blocks to feed to the LLM so it can natively read them
           const facts = results.map((r) => r.metadata?.text || 'Unknown fact');
           console.log(
             `[RAG Pipeline] Found ${facts.length} facts from memory.`,
@@ -80,8 +96,5 @@ export const POST: APIRoute = async ({ request }) => {
       }),
     },
   });
-
-  return (result as any).toDataStreamResponse
-    ? (result as any).toDataStreamResponse()
-    : (result as any).toTextStreamResponse();
+  return (result as any).toUIMessageStreamResponse();
 };

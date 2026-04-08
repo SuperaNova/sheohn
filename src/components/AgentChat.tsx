@@ -1,27 +1,46 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { DefaultChatTransport } from 'ai';
+import { useState, useRef, useEffect } from 'react';
 import { usePortfolioStore } from '../store';
 
 export default function AgentChat() {
-  const chatHelpers = useChat({
-    // @ts-expect-error version mismatch
-    api: '/api/chat',
-    // Hook into tool calls on the client side to update UI
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
     onToolCall: ({ toolCall }: any) => {
       if (toolCall.toolName === 'trigger_ui_state') {
-        const focus = toolCall.args?.focus || toolCall.arguments?.focus;
+        const focus = toolCall.args?.focus ?? toolCall.arguments?.focus;
         console.log(`AI triggered UI focus on: ${focus}`);
-
-        // UPDATE ZUSTAND HERE:
         usePortfolioStore.getState().setFocus(focus);
       }
     },
-  }) as any;
-
-  const { messages, input, setInput, append } = chatHelpers;
+    onError: (err: any) => {
+      console.error('[AgentChat] error:', err);
+    },
+  } as any);
 
   const [isMinimized, setIsMinimized] = useState(true);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    sendMessage({
+      role: 'user',
+      parts: [{ type: 'text', text: trimmed }],
+    } as any);
+    setInput('');
+  };
+
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   if (isMinimized) {
     return (
@@ -45,6 +64,9 @@ export default function AgentChat() {
         <span className="flex items-center gap-2 font-mono text-xs text-green-500">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
           AGENT INTERFACE
+          {isLoading && (
+            <span className="animate-pulse opacity-60">· thinking</span>
+          )}
         </span>
         <button
           onClick={() => setIsMinimized(true)}
@@ -64,35 +86,48 @@ export default function AgentChat() {
       </div>
 
       <div className="mb-4 h-64 space-y-2 overflow-y-auto pr-2 font-mono text-sm">
-        {messages?.map?.((m: any) => (
-          <div
-            key={m.id}
-            className={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}
-          >
-            <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
-            {m.content}
+        {messages?.length === 0 && (
+          <p className="pt-20 text-center text-xs text-gray-600">
+            [ awaiting query ]
+          </p>
+        )}
+        {messages?.map?.((m: any) => {
+          // Get text content from parts array (new SDK format) or fallback
+          const textContent = m.parts
+            ? m.parts
+                .filter((p: any) => p.type === 'text')
+                .map((p: any) => p.text)
+                .join('')
+            : m.content;
 
-            {/* Displaying Tool Executions (Optional but cool) */}
-            {m.toolInvocations?.map((tool: any) => (
-              <span
-                key={tool.toolCallId}
-                className="mt-1 block text-xs text-yellow-500/70"
-              >
-                {'>'} executing: {tool.toolName}(
-                {JSON.stringify(tool.args || (tool as any).arguments)})
-              </span>
-            ))}
-          </div>
-        ))}
+          return (
+            <div
+              key={m.id}
+              className={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}
+            >
+              <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
+              {textContent}
+
+              {/* Tool executions */}
+              {m.parts
+                ?.filter((p: any) => p.type === 'tool-invocation')
+                .map((p: any) => (
+                  <span
+                    key={p.toolInvocation?.toolCallId}
+                    className="mt-1 block text-xs text-yellow-500/70"
+                  >
+                    {'>'} {p.toolInvocation?.toolName}(
+                    {JSON.stringify(p.toolInvocation?.args)})
+                  </span>
+                ))}
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
       </div>
 
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!input.trim()) return;
-          append({ role: 'user', content: input });
-          setInput('');
-        }}
+        onSubmit={handleSubmit}
         className="flex rounded border border-gray-800 bg-black"
       >
         <input
@@ -100,8 +135,13 @@ export default function AgentChat() {
           value={input}
           placeholder="> query agent..."
           onChange={(e) => setInput(e.target.value)}
+          disabled={isLoading}
         />
-        <button type="submit" className="p-2 text-green-500 hover:text-white">
+        <button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          className="p-2 text-green-500 transition-colors hover:text-white disabled:opacity-30"
+        >
           ↵
         </button>
       </form>
