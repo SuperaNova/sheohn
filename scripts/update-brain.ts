@@ -11,22 +11,20 @@ const index = new Index({
 });
 
 // Update these facts to represent your actual resume/portfolio data!
-const myFacts = [
-  "lorem ipsum wo ai ni",
-];
+const myFacts = ['lorem ipsum wo ai ni'];
 
 async function updateBrain() {
-  console.log("Connecting to Gemini to embed facts into vector space...");
-  
+  console.log('Connecting to Gemini to embed facts into vector space...');
+
   // Create mathematical vector embeddings using the stable embedding model
   const { embeddings } = await embedMany({
-    model: google.embeddingModel('gemini-embedding-001'), 
+    model: google.embeddingModel('gemini-embedding-001'),
     values: myFacts,
     providerOptions: {
-    google: {
-      outputDimensionality: 1536,
-    }
-  }
+      google: {
+        outputDimensionality: 1536,
+      },
+    },
   });
 
   const vectors = myFacts.map((fact, i) => ({
@@ -35,10 +33,12 @@ async function updateBrain() {
     metadata: { text: fact }, // We store the actual string here to return to the LLM later
   }));
 
-  console.log(`Pushing ${vectors.length} vectors to Serverless Upstash Database...`);
+  console.log(
+    `Pushing ${vectors.length} vectors to Serverless Upstash Database...`,
+  );
   await index.upsert(vectors);
 
-  console.log("successfully updated!");
+  console.log('successfully updated');
 }
 
 updateBrain().catch(console.error);
