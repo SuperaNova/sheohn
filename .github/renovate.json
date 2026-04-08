@@ -1,12 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
-  "platformAutomerge": true,
+  "ignorePresets": [],
+  "ignorePaths": [],
+  "versioning": "npm",
+
   "packageRules": [
+    // ── Block ALL pre-releases / unstable channels globally ──────────────────
+    {
+      "matchPackagePatterns": ["*"],
+      "matchCurrentVersion": "!/^0\\./",
+      "allowedVersions": "!/^[0-9]+\\.[0-9]+\\.[0-9]+-.*/",
+      "description": "Ignore any version with a pre-release tag (alpha, beta, rc, canary, next, etc.)"
+    },
+
+    // ── Node.js: only LTS even-numbered majors ───────────────────────────────
+    {
+      "matchPackageNames": ["node"],
+      "allowedVersions": "/^(18|20|22|24)\\./",
+      "description": "Only allow Node.js LTS (even-numbered) major versions"
+    },
+
+    // ── Auto-merge safe updates (minor, patch, pin) ──────────────────────────
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true
@@ -15,15 +32,29 @@
       "matchDepTypes": ["devDependencies"],
       "automerge": true
     },
+
+    // ── Require manual review for major version bumps ────────────────────────
     {
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"],
+      "description": "Major updates need manual review — peer deps often break"
+    },
+
+    // ── Group all non-major updates into one PR ──────────────────────────────
+    {
+      "matchUpdateTypes": ["minor", "patch"],
       "matchPackagePatterns": ["*"],
       "groupName": "All non-major dependencies"
     }
   ],
+
+  // ── Security patches bypass the 7-day wait and auto-merge ───────────────
   "vulnerabilityAlerts": {
     "enabled": true,
     "automerge": true,
-    "minimumReleaseAge": "0 days" 
+    "minimumReleaseAge": "0 days"
   },
-  "enabled": false
+
+  "enabled": true
 }
