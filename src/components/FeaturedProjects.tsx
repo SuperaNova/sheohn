@@ -1,7 +1,4 @@
-import {
-  motion,
-  AnimatePresence,
-} from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRef } from 'react';
 import { usePortfolioStore } from '../store';
 
@@ -30,7 +27,7 @@ type Project = {
  *   href: "https://github.com/your-repo"
  * }
  */
-// TODO: add my projects
+// TODO: add my projects currently only has generated projects, pics from nanobanana
 const projects: Project[] = [
   {
     title: 'Executive Dashboard',
