@@ -11,11 +11,14 @@ const allProjects = await getCollection('projects');
 const featuredProjects = allProjects
   .filter((p) => p.data.featured)
   .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 1) 
-  .map(p => ({ slug: p.id, ...p.data }));
+  .slice(0, 1)
+  .map((p) => ({ slug: p.id, ...p.data }));
 ---
 
-<BaseLayout title="Jared Sheohn L. Acebes - Portfolio" description="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect">
+<BaseLayout
+  title="Jared Sheohn L. Acebes - Portfolio"
+  description="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect"
+>
   <Loader client:load />
   <ScrollProgress client:load />
 
@@ -29,5 +32,3 @@ const featuredProjects = allProjects
     </div>
   </main>
 </BaseLayout>
-
-

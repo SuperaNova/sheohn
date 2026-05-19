@@ -11,13 +11,16 @@ interface Props {
   image?: string;
 }
 
-const { 
-  title, 
-  description = "Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect.",
-  image = "/og-image.jpg"
+const {
+  title,
+  description = 'Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect.',
+  image = '/og-image.jpg',
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.dev');
+const canonicalURL = new URL(
+  Astro.url.pathname,
+  Astro.site || 'https://sheohn.dev',
+);
 ---
 
 <!doctype html>
@@ -27,11 +30,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    
+
     <title>{title}</title>
     <meta name="title" content={title} />
     <meta name="description" content={description} />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
@@ -57,7 +60,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
     <script is:inline>
       function applyThemeAndLoader() {
         // 1. Prevent Dark Mode Flicker
-        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const theme =
+          localStorage.getItem('theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light');
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         } else {
@@ -85,7 +92,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
   >
     <div
       class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
-    ></div>
+    >
+    </div>
 
     <CustomCursor client:load transition:persist />
     <HeaderNav client:load />
@@ -106,7 +114,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
           <p
             class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
           >
-            Software Developer and Systems Architect building robust, scalable applications.
+            Software Developer and Systems Architect building robust, scalable
+            applications.
           </p>
         </div>
 
@@ -119,10 +128,22 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
           <nav
             class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
           >
-            <a href="/" class="transition hover:text-[var(--color-on-surface)]">Home</a>
-            <a href="/projects" class="transition hover:text-[var(--color-on-surface)]">Projects</a>
-            <a href="/about#stack" class="transition hover:text-[var(--color-on-surface)]">Stack</a>
-            <a href="/about" class="transition hover:text-[var(--color-on-surface)]">About</a>
+            <a href="/" class="transition hover:text-[var(--color-on-surface)]"
+              >Home</a
+            >
+            <a
+              href="/projects"
+              class="transition hover:text-[var(--color-on-surface)]"
+              >Projects</a
+            >
+            <a
+              href="/about#stack"
+              class="transition hover:text-[var(--color-on-surface)]">Stack</a
+            >
+            <a
+              href="/about"
+              class="transition hover:text-[var(--color-on-surface)]">About</a
+            >
           </nav>
         </div>
 
@@ -139,19 +160,24 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://sheohn.d
               href="https://github.com/SuperaNova"
               target="_blank"
               rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]">GitHub</a>
+              class="transition hover:text-[var(--color-on-surface)]">GitHub</a
+            >
             <a
               href="https://linkedin.com/in/your-profile"
               target="_blank"
               rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]">LinkedIn</a>
+              class="transition hover:text-[var(--color-on-surface)]"
+              >LinkedIn</a
+            >
             <a
               href="mailto:jared@sheohn.dev"
-              class="transition hover:text-[var(--color-on-surface)]">Email</a>
+              class="transition hover:text-[var(--color-on-surface)]">Email</a
+            >
             <a
               href="/resume.pdf"
               class="font-medium text-[var(--color-primary-container)] transition hover:text-[var(--color-on-surface)]"
-              >Download Resume</a>
+              >Download Resume</a
+            >
           </nav>
         </div>
       </div>
