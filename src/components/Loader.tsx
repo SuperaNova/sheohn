@@ -42,7 +42,7 @@ export default function Loader() {
       clearInterval(interval);
       document.body.style.overflow = '';
     };
-  }, [isLoading]);
+  }, []);
 
   return (
     <AnimatePresence>

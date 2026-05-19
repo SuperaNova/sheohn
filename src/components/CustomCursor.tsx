@@ -13,7 +13,7 @@ export default function CustomCursor() {
     const updateMousePosition = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      setIsVisible(true);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
@@ -26,23 +26,22 @@ export default function CustomCursor() {
     };
 
     const handleMouseLeave = () => setIsVisible(false);
+    const handleMouseEnter = () => setIsVisible(true);
 
     window.addEventListener('mousemove', updateMousePosition, {
       passive: true,
     });
     window.addEventListener('mouseover', handleMouseOver);
-    window.addEventListener('mouseout', () => {});
     document.body.addEventListener('mouseleave', handleMouseLeave);
-    document.body.addEventListener('mouseenter', () => setIsVisible(true));
+    document.body.addEventListener('mouseenter', handleMouseEnter);
 
     return () => {
       window.removeEventListener('mousemove', updateMousePosition);
       window.removeEventListener('mouseover', handleMouseOver);
-      window.removeEventListener('mouseout', () => {});
       document.body.removeEventListener('mouseleave', handleMouseLeave);
-      document.body.removeEventListener('mouseenter', () => setIsVisible(true));
+      document.body.removeEventListener('mouseenter', handleMouseEnter);
     };
-  }, [isVisible, mouseX, mouseY]);
+  }, [mouseX, mouseY]);
 
   return (
     <>
