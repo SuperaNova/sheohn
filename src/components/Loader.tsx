@@ -6,6 +6,12 @@ export default function Loader() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // If CSS skip-loader is present, just stop loading logic immediately
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('skip-loader')) {
+      setIsLoading(false);
+      return;
+    }
+
     // Disable scroll while loading
     document.body.style.overflow = 'hidden';
 
@@ -33,17 +39,18 @@ export default function Loader() {
       clearInterval(interval);
       document.body.style.overflow = '';
     };
-  }, []);
+  }, [isLoading]);
 
   return (
     <AnimatePresence>
       {isLoading && (
         <motion.div
           key="loader"
+          id="global-loader"
           initial={{ y: 0 }}
           exit={{ y: '-100%' }}
           transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-[var(--color-surface)] p-6 text-[var(--color-on-surface)] md:p-12"
+          className="fixed inset-0 z-[100] flex flex-col justify-end bg-surface p-6 text-on-surface md:p-12"
         >
           {/* Faint Architectural Grid Backdrop for loader */}
           <div

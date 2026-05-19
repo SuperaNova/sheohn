@@ -3,6 +3,7 @@ import ThemeToggle from './ThemeToggle';
 
 const navItems = [
   { id: 'home', label: 'Home', path: '/' },
+  { id: 'projects', label: 'Projects', path: '/projects' },
   { id: 'about', label: 'About', path: '/about' },
   { id: 'resume', label: 'Resume', path: '/resume.pdf', external: true },
 ];
@@ -15,6 +16,8 @@ export default function HeaderNav() {
     const path = window.location.pathname;
     if (path === '/' || path === '/index.html') {
       setActiveId('home');
+    } else if (path.startsWith('/projects')) {
+      setActiveId('projects');
     } else if (path.startsWith('/about')) {
       setActiveId('about');
     }
