@@ -50,6 +50,7 @@ const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
 
               <a
                 href={`/projects/${project.id}`}
+                aria-label={`View case study: ${project.data.title}`}
                 class="group relative isolate mb-4 block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-[var(--color-surface-container)]"
               >
                 {project.data.image ? (
