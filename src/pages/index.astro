@@ -1,152 +1,33 @@
 ---
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSection from '../components/HeroSection';
 import FeaturedProjects from '../components/FeaturedProjects';
 import ScrollProgress from '../components/ScrollProgress';
-import HeaderNav from '../components/HeaderNav';
 import Loader from '../components/Loader';
-import CustomCursor from '../components/CustomCursor';
-import { ClientRouter } from 'astro:transitions';
-import AgentChat from '../components/AgentChat';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+
+const featuredProjects = allProjects
+  .filter((p) => p.data.featured)
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 1) 
+  .map(p => ({ slug: p.id, ...p.data }));
 ---
 
-<!doctype html>
-<html lang="en" class="dark scroll-smooth">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <meta
-      name="description"
-      content="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect."
-    />
-    <title>Jared Sheohn L. Acebes | sheohn.dev</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <ClientRouter />
-  </head>
+<BaseLayout title="Jared Sheohn L. Acebes - Portfolio" description="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect">
+  <Loader client:load />
+  <ScrollProgress client:load />
 
-  <body
-    class="relative selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
-  >
-    <div
-      class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
-    >
+  <main class="bg-[var(--color-surface)] pt-16">
+    <!-- React Island: animated hero -->
+    <HeroSection client:load />
+
+    <!-- React Island: projects rendered through array/object mapping -->
+    <div class="relative z-10 bg-transparent">
+      <FeaturedProjects client:visible projects={featuredProjects} />
     </div>
-    <div class="site-grid pointer-events-none fixed inset-0 z-0 opacity-10">
-    </div>
+  </main>
+</BaseLayout>
 
-    <CustomCursor client:load transition:persist />
-    <Loader client:load />
-    <ScrollProgress client:load />
-    <HeaderNav client:load />
 
-    <main class="bg-[var(--color-surface)] pt-16">
-      <!-- React Island: animated hero -->
-      <HeroSection client:load />
-
-      <!-- React Island: projects rendered through array/object mapping -->
-      <div class="relative z-10 bg-transparent">
-        <FeaturedProjects client:visible />
-      </div>
-    </main>
-
-    <!-- TODO: add my footer -->
-    <footer
-      id="footer"
-      class="relative z-10 scroll-mt-24 border-t-2 border-[var(--color-on-surface-muted)] bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] py-16"
-    >
-      <div
-        class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10"
-      >
-        <div>
-          <p class="font-display text-3xl text-[var(--color-on-surface)]">
-            Jared Sheohn L. Acebes
-          </p>
-          <p
-            class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
-          >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur
-            blandit tempus porttitor.
-          </p>
-        </div>
-
-        <div>
-          <p
-            class="text-xs tracking-[0.16em] text-[var(--color-primary-container)] uppercase"
-          >
-            Navigation
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a href="/" class="transition hover:text-[var(--color-on-surface)]"
-              >Home</a
-            >
-            <a
-              href="/#projects"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >Projects</a
-            >
-            <a
-              href="/about#stack"
-              class="transition hover:text-[var(--color-on-surface)]">Stack</a
-            >
-            <a
-              href="/about"
-              class="transition hover:text-[var(--color-on-surface)]">About</a
-            >
-          </nav>
-        </div>
-
-        <div>
-          <p
-            class="text-xs tracking-[0.16em] text-[var(--color-primary-container)] uppercase"
-          >
-            Connect
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a
-              href="https://github.com/"
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]">GitHub</a
-            >
-            <a
-              href="https://linkedin.com/"
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >LinkedIn</a
-            >
-            <a
-              href="mailto:you@sheohn.dev"
-              class="transition hover:text-[var(--color-on-surface)]">Email</a
-            >
-            <!-- TODO: add my resume pdf -->
-            <a
-              href="/resume.pdf"
-              class="font-medium text-[var(--color-primary-container)] transition hover:text-[var(--color-on-surface)]"
-              >Download Resume</a
-            >
-          </nav>
-        </div>
-      </div>
-
-      <div
-        class="mx-auto mt-12 w-full max-w-[90rem] border-t border-white/10 px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10"
-      >
-        &copy; {new Date().getFullYear()} sheohn.dev
-      </div>
-    </footer>
-
-    <AgentChat client:load />
-  </body>
-</html>
