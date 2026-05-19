@@ -2,74 +2,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRef } from 'react';
 import { usePortfolioStore } from '../store';
 
-type Project = {
+export type ProjectData = {
+  slug: string;
   title: string;
   category: string;
   summary: string;
   stack: string[];
   status: string;
-  href?: string;
   image?: string;
+  featured?: boolean;
 };
 
-/**
- * PROJECT DATA SOURCE
- * -------------------
- * Add future projects inside this array.
- *
- * Example:
- * {
- *   title: "Cloud Native Orchestration",
- *   category: "Systems / Infra",
- *   summary: "Built a distributed orchestration layer for container workloads.",
- *   stack: ["Go", "Kubernetes", "AWS"],
- *   status: "In Progress",
- *   href: "https://github.com/your-repo"
- * }
- */
-// TODO: add my projects currently only has generated projects, pics from nanobanana
-const projects: Project[] = [
-  {
-    title: 'Executive Dashboard',
-    category: 'Web App',
-    summary:
-      'A high-end analytics dashboard designed for creative agencies to track metrics with visual elegance.',
-    stack: ['React', 'Tailwind', 'Framer Motion'],
-    status: 'Completed',
-    href: 'https://github.com/',
-    image: '/project1.png',
-  },
-  {
-    title: 'EcoArchitecture Core',
-    category: 'E-Commerce',
-    summary:
-      'Modern architectural e-commerce platform blending natural tones with strict minimalist typography.',
-    stack: ['Next.js', 'TypeScript', 'PostgreSQL'],
-    status: 'In Progress',
-    href: 'https://github.com/',
-    image: '/project2.png',
-  },
-  {
-    title: '<Project Title 3>',
-    category: '<Category 3>',
-    summary:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    stack: ['<Tech 1>', '<Tech 2>', '<Tech 3>'],
-    status: '<Status>',
-    href: 'https://github.com/',
-  },
-  {
-    title: '<Project Title 4>',
-    category: '<Category 4>',
-    summary:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    stack: ['<Tech 1>', '<Tech 2>', '<Tech 3>'],
-    status: '<Status>',
-    href: 'https://github.com/',
-  },
-];
+interface FeaturedProjectsProps {
+  projects: ProjectData[];
+  title?: string;
+  subtitle?: string;
+}
 
-export default function FeaturedProjects() {
+export default function FeaturedProjects({
+  projects,
+  title = 'Selected Work',
+  subtitle = 'Featured Project',
+}: FeaturedProjectsProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const { activeFocus, overlayActive, clearFocus } = usePortfolioStore();
 
@@ -91,7 +45,7 @@ export default function FeaturedProjects() {
       <section
         ref={sectionRef}
         id="projects"
-        className="content-wrap section-space relative z-[50] flex min-h-[100svh] scroll-mt-24 flex-col py-24"
+        className="content-wrap section-space relative z-[50] flex flex-col py-24"
       >
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -102,16 +56,25 @@ export default function FeaturedProjects() {
           <div className="mb-16 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <h2 className="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl">
-                Selected Work
+                {title}
               </h2>
               <span className="mt-3 block text-sm font-medium tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase">
-                Projects & Architectures
+                {subtitle}
               </span>
             </div>
+
+            <a
+              href="/projects"
+              className="group flex items-center gap-2 text-sm font-semibold tracking-wide text-[var(--color-tertiary)] transition hover:text-[var(--color-on-surface)]"
+            >
+              View All Projects
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </a>
           </div>
 
-          {/* CSS GRID GALLERY */}
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-x-8 md:gap-y-16">
+          <div className="grid grid-cols-1 gap-12">
             {projects.map((project, i) => {
               const isMatch = activeFocus
                 ? project.stack.some((s) =>
@@ -130,12 +93,12 @@ export default function FeaturedProjects() {
 
               return (
                 <motion.article
-                  key={project.title}
+                  key={project.slug}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.1 }}
                   animate={{
-                    scale: isFocused ? 1.05 : isDimmed ? 0.95 : 1,
+                    scale: isFocused ? 1.02 : isDimmed ? 0.95 : 1,
                     opacity: isDimmed ? 0.3 : 1,
                     filter: isDimmed ? 'blur(4px)' : 'blur(0px)',
                   }}
@@ -143,7 +106,7 @@ export default function FeaturedProjects() {
                     duration: 0.5,
                     delay: overlayActive ? 0 : i * 0.1,
                   }}
-                  className={`group flex flex-col transition-all duration-500 ease-out ${
+                  className={`group flex flex-col gap-8 transition-all duration-500 ease-out md:flex-row ${
                     isFocused
                       ? 'relative z-[60]'
                       : isDimmed
@@ -151,11 +114,15 @@ export default function FeaturedProjects() {
                         : 'relative z-10'
                   }`}
                 >
-                  {/* Image Container */}
-                  <div className="relative isolate mb-6 aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)]">
+                  {/* Image Container - Now a clickable link */}
+                  <a
+                    href={`/projects/${project.slug}`}
+                    aria-label={`View case study: ${project.title}`}
+                    className="group/image relative isolate block aspect-video w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] md:aspect-[4/3] md:w-3/5"
+                  >
                     {project.image ? (
                       <motion.div
-                        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover/image:scale-105"
                         style={{ backgroundImage: `url(${project.image})` }}
                       />
                     ) : (
@@ -163,12 +130,12 @@ export default function FeaturedProjects() {
                         [ Demo Asset Missing ]
                       </div>
                     )}
-                    <div className="absolute inset-0 z-10 bg-black/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
+                    <div className="absolute inset-0 z-10 bg-black/5 opacity-0 transition-opacity duration-300 group-hover/image:opacity-100" />
+                  </a>
 
                   {/* Text Content */}
-                  <div className="flex flex-grow flex-col px-2">
-                    <div className="mb-3 flex flex-wrap items-center gap-3">
+                  <div className="flex w-full flex-col justify-center py-4 md:w-2/5">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
                       <span className="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--color-tertiary)] uppercase">
                         {project.status}
                       </span>
@@ -177,10 +144,10 @@ export default function FeaturedProjects() {
                       </span>
                     </div>
 
-                    <h3 className="font-display mb-3 text-2xl font-semibold text-[var(--color-on-surface)]">
+                    <h3 className="font-display mb-4 text-3xl font-semibold text-[var(--color-on-surface)]">
                       {project.title}
                     </h3>
-                    <p className="text-sm leading-relaxed text-[var(--color-on-surface-muted)] md:text-base">
+                    <p className="text-base leading-relaxed text-[var(--color-on-surface-muted)]">
                       {project.summary}
                     </p>
 
@@ -188,23 +155,19 @@ export default function FeaturedProjects() {
                       {project.stack.map((tool) => (
                         <li
                           key={`${project.title}-${tool}`}
-                          className="list-none rounded bg-[var(--color-surface-container)] px-2.5 py-1 text-xs font-medium tracking-wide text-[var(--color-on-surface-muted)]"
+                          className="list-none rounded bg-[var(--color-surface-container)] px-2.5 py-1.5 text-xs font-medium tracking-wide text-[var(--color-on-surface-muted)]"
                         >
                           {tool}
                         </li>
                       ))}
                     </div>
 
-                    {project.href ? (
-                      <a
-                        className="mt-6 inline-flex self-start text-sm font-semibold tracking-wide text-[var(--color-on-surface)] underline-offset-4 transition group-hover:underline hover:text-[var(--color-tertiary)]"
-                        href={project.href}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        View Case Study
-                      </a>
-                    ) : null}
+                    <a
+                      className="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"
+                      href={`/projects/${project.slug}`}
+                    >
+                      Read Case Study
+                    </a>
                   </div>
                 </motion.article>
               );

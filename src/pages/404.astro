@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="404 | Page Not Found"
+  description="The page you are looking for does not exist."
+>
+  <main
+    class="flex min-h-screen items-center justify-center bg-[var(--color-surface)] px-6"
+  >
+    <div class="text-center">
+      <h1
+        class="font-display text-9xl font-bold text-[var(--color-primary-container)] opacity-50"
+      >
+        404
+      </h1>
+      <h2
+        class="mt-8 text-2xl font-semibold tracking-wide text-[var(--color-on-surface)]"
+      >
+        SYSTEM_ERR: ENDPOINT_NOT_FOUND
+      </h2>
+      <p class="mx-auto mt-4 max-w-md text-[var(--color-on-surface-muted)]">
+        The requested resource could not be located on this server. You can ask
+        the AI agent for help, or return to the main node.
+      </p>
+      <div class="mt-10">
+        <a
+          href="/"
+          class="inline-flex items-center justify-center rounded-lg bg-[var(--color-surface-container-high)] px-6 py-3 text-sm font-semibold tracking-[0.1em] text-[var(--color-on-surface)] transition hover:bg-[var(--color-surface-container-highest)]"
+        >
+          RETURN HOME
+        </a>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
