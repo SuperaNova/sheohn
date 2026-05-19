@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 
 /* Executive Naturalist tokens with dark/light theme support. */
 @theme {
@@ -102,4 +103,9 @@ body {
     black 10%,
     transparent 80%
   );
+}
+
+/* Instantly hide the loader to prevent flicker on return visits */
+html.skip-loader #global-loader {
+  display: none !important;
 }
