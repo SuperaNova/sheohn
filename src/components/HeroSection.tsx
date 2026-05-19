@@ -44,8 +44,9 @@ export default function HeroSection() {
     <section
       ref={sectionRef}
       id="home"
-      className="content-wrap section-space flex min-h-[100svh] scroll-mt-24 items-center pt-24"
+      className="content-wrap section-space relative flex min-h-[100svh] scroll-mt-24 items-center pt-24"
     >
+      <div className="site-grid pointer-events-none absolute inset-0 z-0 opacity-10"></div>
       <motion.div
         style={{ y: parallaxY }}
         className="grid w-full items-end gap-12 lg:grid-cols-[1.2fr_0.8fr]"
