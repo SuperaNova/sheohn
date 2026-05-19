@@ -114,9 +114,10 @@ export default function FeaturedProjects({
                         : 'relative z-10'
                   }`}
                 >
-                  {/* Image Container */}
+                  {/* Image Container - Now a clickable link */}
                   <a
                     href={`/projects/${project.slug}`}
+                    aria-label={`View case study: ${project.title}`}
                     className="group/image relative isolate block aspect-video w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] md:aspect-[4/3] md:w-3/5"
                   >
                     {project.image ? (
