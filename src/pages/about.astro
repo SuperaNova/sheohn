@@ -5,7 +5,10 @@ import ScrollProgress from '../components/ScrollProgress';
 import ExperienceTimeline from '../components/ExperienceTimeline';
 ---
 
-<BaseLayout title="About | sheohn.dev" description="About Jared Sheohn L. Acebes and his technical experience.">
+<BaseLayout
+  title="About | sheohn.dev"
+  description="About Jared Sheohn L. Acebes and his technical experience."
+>
   <ScrollProgress client:load />
 
   <main class="min-h-screen bg-[var(--color-surface)] pt-32">
@@ -24,12 +27,19 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
           <p
             class="mt-6 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface)]"
           >
-            I am a Software Developer and Systems Architect focused on building scalable, resilient, and highly interactive applications. I specialize in the intersection of modern frontend architectures and robust backend systems.
+            I am a Software Developer and Systems Architect focused on building
+            scalable, resilient, and highly interactive applications. I
+            specialize in the intersection of modern frontend architectures and
+            robust backend systems.
           </p>
           <p
             class="mt-4 max-w-2xl leading-[1.6] text-[var(--color-on-surface-muted)]"
           >
-            With a background in both systems engineering and frontend development, I enjoy bridging the gap between deep technical architecture and seamless user experiences. When I'm not coding, I'm usually exploring new open-source tools or writing technical documentation.
+            With a background in both systems engineering and frontend
+            development, I enjoy bridging the gap between deep technical
+            architecture and seamless user experiences. When I'm not coding, I'm
+            usually exploring new open-source tools or writing technical
+            documentation.
           </p>
         </div>
 
@@ -49,7 +59,9 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
           <p
             class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
           >
-            Exploring the boundaries of LLMs in production environments and building tools that enhance developer productivity. Currently focused on RAG architectures and edge computing.
+            Exploring the boundaries of LLMs in production environments and
+            building tools that enhance developer productivity. Currently
+            focused on RAG architectures and edge computing.
           </p>
         </div>
       </div>
@@ -144,18 +156,13 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
           </h3>
           <div class="flex flex-wrap gap-2">
             {
-              [
-                'Docker',
-                'AWS',
-                'GitHub Actions',
-                'Git',
-                'Figma',
-                'Linux',
-              ].map((item) => (
-                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
-                  {item}
-                </span>
-              ))
+              ['Docker', 'AWS', 'GitHub Actions', 'Git', 'Figma', 'Linux'].map(
+                (item) => (
+                  <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
+                    {item}
+                  </span>
+                ),
+              )
             }
           </div>
         </article>
@@ -163,4 +170,3 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
     </SectionReveal>
   </main>
 </BaseLayout>
-

@@ -7,7 +7,10 @@ export default function Loader() {
 
   useEffect(() => {
     // If CSS skip-loader is present, just stop loading logic immediately
-    if (typeof document !== 'undefined' && document.documentElement.classList.contains('skip-loader')) {
+    if (
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('skip-loader')
+    ) {
       setIsLoading(false);
       return;
     }
@@ -50,7 +53,7 @@ export default function Loader() {
           initial={{ y: 0 }}
           exit={{ y: '-100%' }}
           transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-[100] flex flex-col justify-end bg-surface p-6 text-on-surface md:p-12"
+          className="bg-surface text-on-surface fixed inset-0 z-[100] flex flex-col justify-end p-6 md:p-12"
         >
           {/* Faint Architectural Grid Backdrop for loader */}
           <div

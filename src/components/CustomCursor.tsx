@@ -27,7 +27,9 @@ export default function CustomCursor() {
 
     const handleMouseLeave = () => setIsVisible(false);
 
-    window.addEventListener('mousemove', updateMousePosition, { passive: true });
+    window.addEventListener('mousemove', updateMousePosition, {
+      passive: true,
+    });
     window.addEventListener('mouseover', handleMouseOver);
     window.addEventListener('mouseout', () => {});
     document.body.addEventListener('mouseleave', handleMouseLeave);
