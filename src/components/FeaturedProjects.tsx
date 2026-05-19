@@ -113,10 +113,13 @@ export default function FeaturedProjects({
                   }`}
                 >
                   {/* Image Container */}
-                  <div className="relative isolate w-full md:w-3/5 aspect-video md:aspect-[4/3] overflow-hidden rounded-2xl bg-[var(--color-surface-container)]">
+                  <a 
+                    href={`/projects/${project.slug}`}
+                    className="group/image relative isolate w-full md:w-3/5 aspect-video md:aspect-[4/3] overflow-hidden rounded-2xl bg-[var(--color-surface-container)] block"
+                  >
                     {project.image ? (
                       <motion.div
-                        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover/image:scale-105"
                         style={{ backgroundImage: `url(${project.image})` }}
                       />
                     ) : (
@@ -124,8 +127,8 @@ export default function FeaturedProjects({
                         [ Demo Asset Missing ]
                       </div>
                     )}
-                    <div className="absolute inset-0 z-10 bg-black/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
+                    <div className="absolute inset-0 z-10 bg-black/5 opacity-0 transition-opacity duration-300 group-hover/image:opacity-100" />
+                  </a>
 
                   {/* Text Content */}
                   <div className="flex w-full md:w-2/5 flex-col justify-center py-4">
@@ -157,7 +160,7 @@ export default function FeaturedProjects({
                     </div>
 
                     <a
-                      className="mt-8 inline-flex self-start items-center gap-2 rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition group-hover:bg-[var(--color-tertiary)] group-hover:text-black"
+                      className="mt-8 inline-flex self-start items-center gap-2 rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"
                       href={`/projects/${project.slug}`}
                     >
                       Read Case Study
