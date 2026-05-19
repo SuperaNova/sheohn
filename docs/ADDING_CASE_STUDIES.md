@@ -12,20 +12,21 @@ I'm using **Astro Content Collections** to manage my case studies.
 
 ```markdown
 ---
-title: "Project Title"
-summary: "A quick 1-2 sentence summary of what this project is and what it does."
-category: "Web App / Systems / Infra"
-stack: ["Next.js", "TypeScript", "Tailwind"]
-status: "Completed" # Or "In Progress"
-image: "/path-to-image-in-public-folder.png" # Optional header image
+title: 'Project Title'
+summary: 'A quick 1-2 sentence summary of what this project is and what it does.'
+category: 'Web App / Systems / Infra'
+stack: ['Next.js', 'TypeScript', 'Tailwind']
+status: 'Completed' # Or "In Progress"
+image: '/path-to-image-in-public-folder.png' # Optional header image
 featured: false # Set to true if I want this on the Home page
 order: 10 # Lower numbers mean it shows up higher in the list
-role: "Lead Engineer" # Optional
-timeline: "Jan 2026 - Mar 2026" # Optional
-team: "Jared" # Optional
+role: 'Lead Engineer' # Optional
+timeline: 'Jan 2026 - Mar 2026' # Optional
+team: 'Jared' # Optional
 ---
 
 ## Overview
+
 Write the case study content here using standard Markdown (or MDX components)...
 ```
 
@@ -37,5 +38,6 @@ Write the case study content here using standard Markdown (or MDX components)...
 
 The home page (`index.astro`) is set up to pull my top featured projects.
 To get a project on the home page:
+
 1. Change `featured: true` in its frontmatter.
 2. Make sure its `order` number is lower than the others so it takes priority (e.g., `order: 1`).

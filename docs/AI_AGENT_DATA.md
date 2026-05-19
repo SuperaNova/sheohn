@@ -3,6 +3,7 @@
 The site has a built-in AI assistant powered by the Vercel AI SDK and an Upstash Vector database for RAG (Retrieval-Augmented Generation).
 
 ## How the brain works
+
 The chatbot relies on a script in `scripts/update-brain.ts`. This script reads my plain-text info, turns it into mathematical vectors (embeddings), and shoots them over to my Upstash Vector database.
 
 When someone asks a question on the site, the backend (`api/chat.ts`) searches the Vector database for the most relevant chunks of text, and feeds them into the LLM (Gemini/Claude/OpenAI) so it can generate an accurate, non-hallucinated response about me.
@@ -13,12 +14,15 @@ When someone asks a question on the site, the backend (`api/chat.ts`) searches t
 2. **Write about myself:** Create files like `bio.md`, `experience.md`, `projects.md`. Need to be descriptive here!
 3. **Run the script:**
    After I update the text files, I have to embed them. Double check that my `.env` has:
+
    ```env
    GOOGLE_GENERATIVE_AI_API_KEY=...
    UPSTASH_VECTOR_REST_URL=...
    UPSTASH_VECTOR_REST_TOKEN=...
    ```
+
    Then run the sync script:
+
    ```bash
    npx tsx scripts/update-brain.ts
    ```
@@ -26,6 +30,7 @@ When someone asks a question on the site, the backend (`api/chat.ts`) searches t
 4. **Test it:** Boot up the local dev server (`npm run dev`) and interrogate the chatbot to make sure it actually learned the new info.
 
 ## Tips for good RAG data
-*   Write in complete sentences, it helps the embeddings.
-*   Don't just list buzzwords; explain *how* I actually used them in projects.
-*   Keep files focused on specific topics so the vector search retrieves the right chunks.
+
+- Write in complete sentences, it helps the embeddings.
+- Don't just list buzzwords; explain _how_ I actually used them in projects.
+- Keep files focused on specific topics so the vector search retrieves the right chunks.

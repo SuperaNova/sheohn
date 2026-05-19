@@ -7,7 +7,10 @@ const allProjects = await getCollection('projects');
 const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title="Projects | sheohn.dev" description="Case studies and featured work by Jared Sheohn L. Acebes">
+<BaseLayout
+  title="Projects | sheohn.dev"
+  description="Case studies and featured work by Jared Sheohn L. Acebes"
+>
   <main class="min-h-screen bg-[var(--color-surface)] pt-32">
     <SectionReveal
       client:visible
@@ -15,52 +18,64 @@ const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
       className="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
     >
       <div class="mb-16">
-        <h1 class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl">
+        <h1
+          class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl"
+        >
           Case Studies
         </h1>
-        <p class="mt-4 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface-muted)]">
-          A deep dive into the architecture, challenges, and solutions behind my featured projects.
+        <p
+          class="mt-4 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface-muted)]"
+        >
+          A deep dive into the architecture, challenges, and solutions behind my
+          featured projects.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-x-8 md:gap-y-16">
-        {sortedProjects.map((project, i) => (
-          <article class="group flex flex-col transition-all duration-500 ease-out relative z-10">
-            <div class="flex flex-col mb-4">
-              <div class="flex flex-wrap items-center gap-3">
-                <span class="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--color-tertiary)] uppercase">
-                  {project.data.status}
-                </span>
-                <span class="text-xs font-medium tracking-[0.16em] text-[var(--color-on-surface-muted)] uppercase">
-                  {project.data.category}
-                </span>
-              </div>
-            </div>
-
-            <a href={`/projects/${project.id}`} class="group block relative isolate mb-4 aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] cursor-pointer">
-              {project.data.image ? (
-                <div
-                  class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                  style={`background-image: url(${project.data.image})`}
-                />
-              ) : (
-                <div class="absolute inset-0 flex items-center justify-center text-sm tracking-widest text-[var(--color-on-surface-muted)] uppercase">
-                  [ Demo Asset Missing ]
+      <div
+        class="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-x-8 md:gap-y-16"
+      >
+        {
+          sortedProjects.map((project) => (
+            <article class="group relative z-10 flex flex-col transition-all duration-500 ease-out">
+              <div class="mb-4 flex flex-col">
+                <div class="flex flex-wrap items-center gap-3">
+                  <span class="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--color-tertiary)] uppercase">
+                    {project.data.status}
+                  </span>
+                  <span class="text-xs font-medium tracking-[0.16em] text-[var(--color-on-surface-muted)] uppercase">
+                    {project.data.category}
+                  </span>
                 </div>
-              )}
-              <div class="absolute inset-0 z-10 bg-black/10 shadow-[inset_0_0_80px_rgba(0,0,0,0.3)] opacity-0 transition-all duration-300 group-hover:opacity-100" />
-            </a>
+              </div>
 
-            <div class="flex flex-grow flex-col">
-              <h3 class="font-display mb-1.5 text-3xl font-bold tracking-tight text-[var(--color-on-surface)]">
-                {project.data.title}
-              </h3>
-              <p class="text-sm leading-relaxed text-[var(--color-on-surface-muted)] md:text-base">
-                {project.data.summary}
-              </p>
-            </div>
-          </article>
-        ))}
+              <a
+                href={`/projects/${project.id}`}
+                class="group relative isolate mb-4 block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-[var(--color-surface-container)]"
+              >
+                {project.data.image ? (
+                  <div
+                    class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    style={`background-image: url(${project.data.image})`}
+                  />
+                ) : (
+                  <div class="absolute inset-0 flex items-center justify-center text-sm tracking-widest text-[var(--color-on-surface-muted)] uppercase">
+                    [ Demo Asset Missing ]
+                  </div>
+                )}
+                <div class="absolute inset-0 z-10 bg-black/10 opacity-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:opacity-100" />
+              </a>
+
+              <div class="flex flex-grow flex-col">
+                <h3 class="font-display mb-1.5 text-3xl font-bold tracking-tight text-[var(--color-on-surface)]">
+                  {project.data.title}
+                </h3>
+                <p class="text-sm leading-relaxed text-[var(--color-on-surface-muted)] md:text-base">
+                  {project.data.summary}
+                </p>
+              </div>
+            </article>
+          ))
+        }
       </div>
     </SectionReveal>
   </main>

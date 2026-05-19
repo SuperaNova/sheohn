@@ -19,10 +19,10 @@ interface FeaturedProjectsProps {
   subtitle?: string;
 }
 
-export default function FeaturedProjects({ 
-  projects, 
-  title = "Selected Work",
-  subtitle = "Featured Project"
+export default function FeaturedProjects({
+  projects,
+  title = 'Selected Work',
+  subtitle = 'Featured Project',
 }: FeaturedProjectsProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const { activeFocus, overlayActive, clearFocus } = usePortfolioStore();
@@ -62,13 +62,15 @@ export default function FeaturedProjects({
                 {subtitle}
               </span>
             </div>
-            
-            <a 
-              href="/projects" 
+
+            <a
+              href="/projects"
               className="group flex items-center gap-2 text-sm font-semibold tracking-wide text-[var(--color-tertiary)] transition hover:text-[var(--color-on-surface)]"
             >
               View All Projects
-              <span className="transition-transform group-hover:translate-x-1">→</span>
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
             </a>
           </div>
 
@@ -104,7 +106,7 @@ export default function FeaturedProjects({
                     duration: 0.5,
                     delay: overlayActive ? 0 : i * 0.1,
                   }}
-                  className={`group flex flex-col md:flex-row gap-8 transition-all duration-500 ease-out ${
+                  className={`group flex flex-col gap-8 transition-all duration-500 ease-out md:flex-row ${
                     isFocused
                       ? 'relative z-[60]'
                       : isDimmed
@@ -113,9 +115,9 @@ export default function FeaturedProjects({
                   }`}
                 >
                   {/* Image Container */}
-                  <a 
+                  <a
                     href={`/projects/${project.slug}`}
-                    className="group/image relative isolate w-full md:w-3/5 aspect-video md:aspect-[4/3] overflow-hidden rounded-2xl bg-[var(--color-surface-container)] block"
+                    className="group/image relative isolate block aspect-video w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] md:aspect-[4/3] md:w-3/5"
                   >
                     {project.image ? (
                       <motion.div
@@ -131,7 +133,7 @@ export default function FeaturedProjects({
                   </a>
 
                   {/* Text Content */}
-                  <div className="flex w-full md:w-2/5 flex-col justify-center py-4">
+                  <div className="flex w-full flex-col justify-center py-4 md:w-2/5">
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                       <span className="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--color-tertiary)] uppercase">
                         {project.status}
@@ -160,7 +162,7 @@ export default function FeaturedProjects({
                     </div>
 
                     <a
-                      className="mt-8 inline-flex self-start items-center gap-2 rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"
+                      className="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"
                       href={`/projects/${project.slug}`}
                     >
                       Read Case Study
