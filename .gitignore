@@ -37,3 +37,6 @@ pnpm-debug.log*
 .netlify/
 .eslintcache
 coverage/
+
+*.md
+!README.md
