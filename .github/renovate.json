@@ -1,59 +1,51 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", ":dependencyDashboard"],
   "labels": ["dependencies"],
   "minimumReleaseAge": "7 days",
-  "ignorePresets": [],
-  "ignorePaths": [],
   "versioning": "npm",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 2,
+  "prHourlyLimit": 0,
+  "rebaseWhen": "conflicted",
 
   "packageRules": [
-    // ── Block ALL pre-releases / unstable channels globally ──────────────────
     {
-      "matchPackagePatterns": ["*"],
+      "description": "Block pre-release versions (alpha/beta/rc/canary/next) for stable >=1.0 packages",
       "matchCurrentVersion": "!/^0\\./",
-      "allowedVersions": "!/^[0-9]+\\.[0-9]+\\.[0-9]+-.*/",
-      "description": "Ignore any version with a pre-release tag (alpha, beta, rc, canary, next, etc.)"
+      "allowedVersions": "!/^[0-9]+\\.[0-9]+\\.[0-9]+-.*/"
     },
 
-    // ── Node.js: only LTS even-numbered majors ───────────────────────────────
     {
+      "description": "Only allow Node.js LTS (even-numbered) major versions",
       "matchPackageNames": ["node"],
-      "allowedVersions": "/^(18|20|22|24)\\./",
-      "description": "Only allow Node.js LTS (even-numbered) major versions"
+      "allowedVersions": "/^(18|20|22|24|26)\\./"
     },
 
-    // ── Auto-merge safe updates (minor, patch, pin) ──────────────────────────
     {
+      "description": "Group ALL non-major updates into one PR and auto-merge",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-non-major",
+      "automerge": true,
+      "automergeType": "pr"
     },
 
-    // ── Require manual review for major version bumps ────────────────────────
     {
+      "description": "Group ALL major updates into one PR — manual review required",
       "matchUpdateTypes": ["major"],
+      "groupName": "all major dependencies",
+      "groupSlug": "all-major",
       "automerge": false,
-      "labels": ["dependencies", "major-update"],
-      "description": "Major updates need manual review — peer deps often break"
-    },
-
-    // ── Group all non-major updates into one PR ──────────────────────────────
-    {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchPackagePatterns": ["*"],
-      "groupName": "All non-major dependencies"
+      "labels": ["dependencies", "major-update"]
     }
   ],
 
-  // ── Security patches bypass the 7-day wait and auto-merge ───────────────
   "vulnerabilityAlerts": {
     "enabled": true,
     "automerge": true,
-    "minimumReleaseAge": "0 days"
+    "minimumReleaseAge": "0 days",
+    "labels": ["dependencies", "security"]
   },
 
   "enabled": true
