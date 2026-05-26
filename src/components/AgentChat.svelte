@@ -14,8 +14,13 @@
       transport: new DefaultChatTransport({ api: '/api/chat' }),
       onToolCall: ({ toolCall }) => {
         if (toolCall.toolName === 'trigger_ui_state') {
-          const focus = (toolCall.input as { focus?: string } | undefined)
-            ?.focus;
+          const payload = toolCall as {
+            args?: unknown;
+            arguments?: unknown;
+            input?: unknown;
+          };
+          const args = payload.args ?? payload.arguments ?? payload.input;
+          const focus = (args as { focus?: string } | undefined)?.focus;
           if (focus) {
             console.log(`AI triggered UI focus on: ${focus}`);
             setFocus(focus);
@@ -111,9 +116,11 @@
         {#if chat}
           {#each chat.messages as m (m.id)}
             {@const textContent = m.parts
-              .filter((p) => p.type === 'text')
-              .map((p) => (p as { type: 'text'; text: string }).text)
-              .join('')}
+              ? m.parts
+                  .filter((p) => p.type === 'text')
+                  .map((p) => (p as { type: 'text'; text: string }).text)
+                  .join('')
+              : m.content || ''}
 
             <div class={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}>
               <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
