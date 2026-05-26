@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroSection from '../components/HeroSection';
-import FeaturedProjects from '../components/FeaturedProjects';
-import ScrollProgress from '../components/ScrollProgress';
-import Loader from '../components/Loader';
+import HeroSection from '../components/HeroSection.svelte';
+import FeaturedProjects from '../components/FeaturedProjects.svelte';
+import ScrollProgress from '../components/ScrollProgress.svelte';
+import Loader from '../components/Loader.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
@@ -23,10 +23,10 @@ const featuredProjects = allProjects
   <ScrollProgress client:load />
 
   <main class="bg-[var(--color-surface)] pt-16">
-    <!-- React Island: animated hero -->
+    <!-- Svelte Island: animated hero -->
     <HeroSection client:load />
 
-    <!-- React Island: projects rendered through array/object mapping -->
+    <!-- Svelte Island: projects rendered through array/object mapping -->
     <div class="relative z-10 bg-transparent">
       <FeaturedProjects client:visible projects={featuredProjects} />
     </div>
