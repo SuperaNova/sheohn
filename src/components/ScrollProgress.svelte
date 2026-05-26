@@ -19,14 +19,9 @@
   }
 </script>
 
-<svelte:window 
-  bind:scrollY 
-  bind:innerHeight 
-/>
+<svelte:window bind:scrollY bind:innerHeight />
 
-<svelte:body 
-  bind:clientHeight={scrollHeight}
-/>
+<svelte:body bind:clientHeight={scrollHeight} />
 
 <div
   class="fixed top-0 right-0 left-0 z-[60] h-[2px] origin-left bg-[var(--color-tertiary)]"

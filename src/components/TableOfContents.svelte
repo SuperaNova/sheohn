@@ -55,12 +55,16 @@
       Back
     </a>
 
-    <ul class="flex flex-col gap-4 border-l border-[var(--color-outline-variant)]">
+    <ul
+      class="flex flex-col gap-4 border-l border-[var(--color-outline-variant)]"
+    >
       {#each tocHeadings as heading (heading.slug)}
         {@const isActive = activeId === heading.slug}
         <li class="relative {heading.depth === 3 ? 'ml-4' : ''}">
           {#if isActive}
-            <div class="absolute top-1/2 -left-[5px] z-10 h-2 w-2 -translate-y-1/2 rounded-full bg-[#f26522]"></div>
+            <div
+              class="absolute top-1/2 -left-[5px] z-10 h-2 w-2 -translate-y-1/2 rounded-full bg-[#f26522]"
+            ></div>
           {/if}
 
           <a

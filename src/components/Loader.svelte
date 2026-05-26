@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
@@ -53,7 +53,9 @@
     <!-- Faint Architectural Grid Backdrop for loader -->
     <div
       class="pointer-events-none absolute inset-0 opacity-20 transition-opacity"
-      style:background-image="linear-gradient(to right, var(--color-on-surface-muted) 1px, transparent 1px), linear-gradient(to bottom, var(--color-on-surface-muted) 1px, transparent 1px)"
+      style:background-image="linear-gradient(to right,
+      var(--color-on-surface-muted) 1px, transparent 1px), linear-gradient(to
+      bottom, var(--color-on-surface-muted) 1px, transparent 1px)"
       style:background-size="4rem 4rem"
     ></div>
 
@@ -63,12 +65,16 @@
       >
         System Initialization
       </div>
-      <div class="font-display text-7xl leading-none tracking-tighter md:text-9xl">
+      <div
+        class="font-display text-7xl leading-none tracking-tighter md:text-9xl"
+      >
         {progress}%
       </div>
     </div>
 
-    <div class="relative z-10 mt-6 h-[1px] w-full overflow-hidden bg-[var(--color-surface-container-highest)]">
+    <div
+      class="relative z-10 mt-6 h-[1px] w-full overflow-hidden bg-[var(--color-surface-container-highest)]"
+    >
       <div
         class="h-full bg-[var(--color-on-surface)] transition-all duration-100 ease-linear"
         style:width="{progress}%"
@@ -83,7 +89,11 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 </style>

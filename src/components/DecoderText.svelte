@@ -47,10 +47,12 @@
 </script>
 
 {#if show}
-<span
-  class="inline-block {className} {isDecoding ? 'text-[var(--color-primary-container)]' : ''}"
-  transition:fade={{ duration: 300 }}
->
-  {displayText || text.replace(/./g, '\u00A0')}
-</span>
+  <span
+    class="inline-block {className} {isDecoding
+      ? 'text-[var(--color-primary-container)]'
+      : ''}"
+    transition:fade={{ duration: 300 }}
+  >
+    {displayText || text.replace(/./g, '\u00A0')}
+  </span>
 {/if}

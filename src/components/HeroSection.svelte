@@ -30,8 +30,10 @@
   class="content-wrap section-space relative flex min-h-[100svh] scroll-mt-24 items-center pt-24 hero-section"
   use:inview={{ once: true, amount: 0.5 }}
 >
-  <div class="site-grid pointer-events-none absolute inset-0 z-0 opacity-10"></div>
-  
+  <div
+    class="site-grid pointer-events-none absolute inset-0 z-0 opacity-10"
+  ></div>
+
   <div
     style:transform="translateY({$parallaxY}px)"
     class="grid w-full items-end gap-12 lg:grid-cols-[1.2fr_0.8fr]"
@@ -63,10 +65,15 @@
         class="hero-item mt-6 flex items-center gap-3"
       >
         <div class="relative flex h-3 w-3 items-center justify-center">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
-          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span
+            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"
+          ></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
+          ></span>
         </div>
-        <span class="text-sm font-medium tracking-wide text-[var(--color-on-surface)]">
+        <span
+          class="text-sm font-medium tracking-wide text-[var(--color-on-surface)]"
+        >
           Available for Opportunities
         </span>
       </div>
@@ -75,8 +82,8 @@
         style:transition-delay="480ms"
         class="hero-item mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg"
       >
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-        eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua.
       </p>
 
       <div style:transition-delay="600ms" class="hero-item mt-10">
@@ -93,13 +100,16 @@
       style:transition-delay="720ms"
       class="hero-item group relative rounded-2xl border border-[var(--color-surface-container-highest)] bg-[color-mix(in_srgb,var(--color-surface-container-high)_50%,transparent)] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-outline-variant)] hover:shadow-[4px_4px_0_0_var(--color-surface-container-highest)] dark:hover:shadow-[4px_4px_0_0_var(--color-primary-container)]"
     >
-      <p class="text-xs tracking-[0.16em] text-[var(--color-tertiary)] uppercase">
+      <p
+        class="text-xs tracking-[0.16em] text-[var(--color-tertiary)] uppercase"
+      >
         Strategic Note
       </p>
-      <p class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]">
-        Dedicated to driving unhindered technical innovation. Specializing
-        in highly optimized architectures and uncompromising visual
-        precision.
+      <p
+        class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
+      >
+        Dedicated to driving unhindered technical innovation. Specializing in
+        highly optimized architectures and uncompromising visual precision.
       </p>
     </aside>
   </div>
@@ -109,7 +119,9 @@
   .hero-item {
     opacity: 0;
     transform: translateY(18px);
-    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   :global(.hero-section.in-view) .hero-item {
