@@ -38,5 +38,4 @@ pnpm-debug.log*
 .eslintcache
 coverage/
 
-*.md
-!README.md
+.config
