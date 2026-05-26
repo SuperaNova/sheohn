@@ -1,15 +1,12 @@
-import { create } from 'zustand';
+import { writable, derived } from 'svelte/store';
 
-interface PortfolioState {
-  activeFocus: string | null;
-  overlayActive: boolean;
-  setFocus: (focus: string | null) => void;
-  clearFocus: () => void;
+export const activeFocus = writable<string | null>(null);
+export const overlayActive = derived(activeFocus, ($f) => !!$f);
+
+export function setFocus(focus: string | null) {
+  activeFocus.set(focus);
 }
 
-export const usePortfolioStore = create<PortfolioState>((set) => ({
-  activeFocus: null,
-  overlayActive: false,
-  setFocus: (focus) => set({ activeFocus: focus, overlayActive: !!focus }),
-  clearFocus: () => set({ activeFocus: null, overlayActive: false }),
-}));
+export function clearFocus() {
+  activeFocus.set(null);
+}
