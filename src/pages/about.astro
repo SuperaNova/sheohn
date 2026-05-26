@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionReveal from '../components/SectionReveal';
-import ScrollProgress from '../components/ScrollProgress';
-import ExperienceTimeline from '../components/ExperienceTimeline';
+import SectionReveal from '../components/SectionReveal.svelte';
+import ScrollProgress from '../components/ScrollProgress.svelte';
+import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
 ---
 
 <BaseLayout
@@ -15,7 +15,7 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
     <SectionReveal
       client:visible
       id="about"
-      className="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
     >
       <div class="grid items-start gap-10 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
@@ -72,7 +72,7 @@ import ExperienceTimeline from '../components/ExperienceTimeline';
     <SectionReveal
       client:visible
       id="stack"
-      className="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-24"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-24"
     >
       <div class="mb-16 flex items-end justify-between gap-6">
         <h2

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { Index } from '@upstash/vector';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
+export const prerender = false;
 
 // Initialize the Vector DB client outside the route so it natively caches on the Edge/Serverless function
 const index = new Index({

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SectionReveal from '../../components/SectionReveal';
+import SectionReveal from '../../components/SectionReveal.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
@@ -15,7 +15,7 @@ const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
     <SectionReveal
       client:visible
       id="projects"
-      className="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
     >
       <div class="mb-16">
         <h1
