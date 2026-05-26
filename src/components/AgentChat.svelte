@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Chat } from '@ai-sdk/svelte';
-  import { DefaultChatTransport, isToolUIPart, getToolName } from 'ai';
+  import { DefaultChatTransport } from 'ai';
   import { setFocus } from '../store';
 
   let isMinimized = $state(true);
@@ -97,9 +97,7 @@
         </button>
       </div>
 
-      <div
-        class="mb-4 h-64 space-y-2 overflow-y-auto pr-2 font-mono text-sm"
-      >
+      <div class="mb-4 h-64 space-y-2 overflow-y-auto pr-2 font-mono text-sm">
         {#if chatError}
           <div class="pt-10 text-center text-xs text-red-500">
             [ ERROR: {chatError} ]
@@ -121,14 +119,21 @@
               <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
               {textContent}
 
-              {#each m.parts.filter(isToolUIPart) as p}
-                <span class="mt-1 block text-xs text-yellow-500/70">
-                  {'>'}
-                  {getToolName(p)}({JSON.stringify(
-                    (p as { input?: unknown }).input ?? {},
-                  )})
-                </span>
-              {/each}
+              <!-- Tool executions -->
+              {#if m.parts}
+                {#each m.parts.filter((p) => p.type === 'tool-invocation') as p, i (i)}
+                  <span class="mt-1 block text-xs text-yellow-500/70">
+                    &gt; {(
+                      p as {
+                        toolInvocation?: { toolName: string; args: unknown };
+                      }
+                    ).toolInvocation?.toolName}({JSON.stringify(
+                      (p as { toolInvocation?: { args: unknown } })
+                        .toolInvocation?.args,
+                    )})
+                  </span>
+                {/each}
+              {/if}
             </div>
           {/each}
         {/if}
