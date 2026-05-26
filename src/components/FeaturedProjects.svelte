@@ -33,13 +33,13 @@
   use:inview={{ once: true, amount: 0.1 }}
 >
   {#if $overlayActive}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
+    <button
+      type="button"
+      aria-label="Close project overlay"
       transition:fade={{ duration: 400 }}
-      class="fixed inset-0 z-[45] cursor-pointer bg-black/80 backdrop-blur-sm"
+      class="fixed inset-0 z-[45] cursor-pointer bg-black/80 backdrop-blur-sm w-full h-full border-none"
       on:click={clearFocus}
-    ></div>
+    ></button>
   {/if}
 
   <div class="projects-container relative z-[50]">

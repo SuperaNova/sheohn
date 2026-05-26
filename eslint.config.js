@@ -5,8 +5,7 @@ import eslintPluginSvelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import svelteParser from 'svelte-eslint-parser';
 
-// @ts-expect-error - suppress deprecation warning for signature
-export default tseslint.config([
+export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
@@ -32,4 +31,4 @@ export default tseslint.config([
   {
     ignores: ['dist/', 'node_modules/', '.astro/'],
   },
-]);
+);
