@@ -16,7 +16,9 @@
   .section-reveal {
     opacity: 0;
     transform: translateY(32px) scale(0.985);
-    transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   :global(.section-reveal.in-view) {

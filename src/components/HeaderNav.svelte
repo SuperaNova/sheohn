@@ -23,9 +23,16 @@
   });
 </script>
 
-<header class="absolute inset-x-0 top-0 z-50 border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]">
-  <div class="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between px-6 md:px-10">
-    <a href="/" class="font-display text-xl font-bold tracking-wide text-[var(--color-on-surface)]">
+<header
+  class="absolute inset-x-0 top-0 z-50 border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]"
+>
+  <div
+    class="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between px-6 md:px-10"
+  >
+    <a
+      href="/"
+      class="font-display text-xl font-bold tracking-wide text-[var(--color-on-surface)]"
+    >
       sheohn<span class="text-[var(--color-tertiary)]">.dev</span>
     </a>
 

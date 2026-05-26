@@ -29,7 +29,9 @@
   }
 
   onMount(() => {
-    window.addEventListener('mousemove', updateMousePosition, { passive: true });
+    window.addEventListener('mousemove', updateMousePosition, {
+      passive: true,
+    });
     window.addEventListener('mouseover', handleMouseOver);
     document.body.addEventListener('mouseleave', handleMouseLeave);
     document.body.addEventListener('mouseenter', handleMouseEnter);
@@ -45,20 +47,27 @@
   });
 </script>
 
-<style>
-  @media (pointer: fine) {
-    :global(*), :global(body), :global(a), :global(button), :global(input) {
-      cursor: none !important;
-    }
-  }
-</style>
-
 <!-- Single solid instant cursor -->
 <div
-  class="pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full transition-colors duration-200 md:block {isGreenHover ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' : 'bg-[var(--color-on-surface)] shadow-[0_2px_8px_rgba(0,0,0,0.15)]'}"
+  class="pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full transition-colors duration-200 md:block {isGreenHover
+    ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
+    : 'bg-[var(--color-on-surface)] shadow-[0_2px_8px_rgba(0,0,0,0.15)]'}"
   style:transform="translate({mouseX}px, {mouseY}px) translate(-50%, -50%)"
   style:width="20px"
   style:height="20px"
   style:opacity={isVisible ? 1 : 0}
-  style:transition="opacity 0.15s ease-out, background-color 0.2s, box-shadow 0.2s"
+  style:transition="opacity 0.15s ease-out, background-color 0.2s, box-shadow
+  0.2s"
 ></div>
+
+<style>
+  @media (pointer: fine) {
+    :global(*),
+    :global(body),
+    :global(a),
+    :global(button),
+    :global(input) {
+      cursor: none !important;
+    }
+  }
+</style>
