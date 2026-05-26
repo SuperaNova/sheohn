@@ -31,6 +31,29 @@ const canonicalURL = new URL(
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Jared Sheohn L. Acebes",
+        "url": "https://sheohn.dev",
+        "jobTitle": "Software Developer & Systems Architect",
+        "sameAs": [
+          "https://github.com/yourgithub",
+          "https://linkedin.com/in/yourlinkedin"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Jared Sheohn L. Acebes Portfolio",
+        "url": "https://sheohn.dev"
+      }
+    </script>
 
     <title>{title}</title>
     <meta name="title" content={title} />
