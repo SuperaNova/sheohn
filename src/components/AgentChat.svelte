@@ -1,40 +1,51 @@
 <script lang="ts">
   import { Chat } from '@ai-sdk/svelte';
+  import { DefaultChatTransport, isToolUIPart, getToolName } from 'ai';
   import { setFocus } from '../store';
 
-  let isMinimized = true;
-  let messagesEndEl: HTMLDivElement | null = null;
+  let isMinimized = $state(true);
+  let chatError = $state('');
+  let inputValue = $state('');
+  let messagesEndEl = $state<HTMLDivElement | null>(null);
 
-  const chat = new Chat({
-    api: '/api/chat',
-    onToolCall: ({ toolCall }) => {
-      if (toolCall.toolName === 'trigger_ui_state') {
-        const focus = toolCall.args?.focus ?? (toolCall as any).arguments?.focus;
-        console.log(`AI triggered UI focus on: ${focus}`);
-        setFocus(focus);
-      }
-    },
-    onError: (err) => console.error('[AgentChat] error:', err),
-  });
-
-  let isLoading = false;
-  $: isLoading = chat.status === 'streaming' || chat.status === 'submitted';
-
-  $: if (chat.messages.length && messagesEndEl) {
-    messagesEndEl.scrollIntoView({ behavior: 'smooth' });
+  let chat: Chat | null = null;
+  try {
+    chat = new Chat({
+      transport: new DefaultChatTransport({ api: '/api/chat' }),
+      onToolCall: ({ toolCall }) => {
+        if (toolCall.toolName === 'trigger_ui_state') {
+          const focus = (toolCall.input as { focus?: string } | undefined)
+            ?.focus;
+          if (focus) {
+            console.log(`AI triggered UI focus on: ${focus}`);
+            setFocus(focus);
+          }
+        }
+      },
+      onError: (err) => console.error('[AgentChat] error:', err),
+    });
+  } catch (err) {
+    chatError = String(err);
+    console.error('Chat init failed', err);
   }
+
+  const isLoading = $derived(
+    chat ? chat.status === 'streaming' || chat.status === 'submitted' : false,
+  );
+
+  $effect(() => {
+    if (chat && chat.messages.length && messagesEndEl) {
+      messagesEndEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
-    const trimmed = chat.input.trim();
+    if (!chat) return;
+    const trimmed = inputValue.trim();
     if (!trimmed) return;
-    
-    chat.append({ 
-      role: 'user', 
-      content: trimmed,
-    });
-    
-    chat.input = '';
+    chat.sendMessage({ text: trimmed });
+    inputValue = '';
   }
 </script>
 
@@ -43,7 +54,9 @@
     <button
       data-cursor-green="true"
       class="fixed right-4 bottom-4 z-[999] flex cursor-pointer items-center gap-2 rounded-full border border-gray-800 bg-black/90 px-4 py-2 font-mono text-xs text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)] backdrop-blur-md transition-all hover:bg-black/100"
-      on:click={() => { console.log('Opening chat'); isMinimized = false; }}
+      onclick={() => {
+        isMinimized = false;
+      }}
       aria-label="Open System Agent"
     >
       <span class="h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
@@ -54,7 +67,9 @@
       data-cursor-green="true"
       class="fixed right-4 bottom-4 z-[999] w-96 rounded-xl border border-gray-800 bg-black/90 p-4 shadow-2xl backdrop-blur-md"
     >
-      <div class="mb-4 flex items-center justify-between border-b border-gray-800 pb-2">
+      <div
+        class="mb-4 flex items-center justify-between border-b border-gray-800 pb-2"
+      >
         <span class="flex items-center gap-2 font-mono text-xs text-green-500">
           <span class="h-2 w-2 animate-pulse rounded-full bg-green-500"></span>
           AGENT INTERFACE
@@ -63,7 +78,9 @@
           {/if}
         </span>
         <button
-          on:click={() => { console.log('Closing chat'); isMinimized = true; }}
+          onclick={() => {
+            isMinimized = true;
+          }}
           class="text-gray-500 transition-colors hover:text-white"
           aria-label="Minimize System Agent"
         >
@@ -80,48 +97,57 @@
         </button>
       </div>
 
-      <div class="mb-4 h-64 space-y-2 overflow-y-auto pr-2 font-mono text-sm">
-        {#if chat.messages.length === 0}
-          <p class="pt-20 text-center text-xs text-gray-600">
-            [ awaiting query ]
-          </p>
+      <div
+        class="mb-4 h-64 space-y-2 overflow-y-auto pr-2 font-mono text-sm"
+      >
+        {#if chatError}
+          <div class="pt-10 text-center text-xs text-red-500">
+            [ ERROR: {chatError} ]
+          </div>
+        {:else if !chat || chat.messages.length === 0}
+          <div class="text-gray-300">
+            <strong>SYSTEM: </strong> Ask me about Jared.
+          </div>
         {/if}
-        
-        {#each chat.messages as m (m.id)}
-          {@const textContent = m.parts
-            ? m.parts.filter((p) => p.type === 'text').map((p) => (p as any).text).join('')
-            : m.content}
-            
-          <div class={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}>
-            <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
-            {textContent}
 
-            <!-- Tool executions -->
-            {#if m.parts}
-              {#each m.parts.filter((p) => p.type === 'tool-invocation') as p}
+        {#if chat}
+          {#each chat.messages as m (m.id)}
+            {@const textContent = m.parts
+              .filter((p) => p.type === 'text')
+              .map((p) => (p as { type: 'text'; text: string }).text)
+              .join('')}
+
+            <div class={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}>
+              <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
+              {textContent}
+
+              {#each m.parts.filter(isToolUIPart) as p}
                 <span class="mt-1 block text-xs text-yellow-500/70">
-                  {'>'} {(p as any).toolInvocation?.toolName}({JSON.stringify((p as any).toolInvocation?.args)})
+                  {'>'}
+                  {getToolName(p)}({JSON.stringify(
+                    (p as { input?: unknown }).input ?? {},
+                  )})
                 </span>
               {/each}
-            {/if}
-          </div>
-        {/each}
+            </div>
+          {/each}
+        {/if}
         <div bind:this={messagesEndEl}></div>
       </div>
 
       <form
-        on:submit={handleSubmit}
+        onsubmit={handleSubmit}
         class="flex rounded border border-gray-800 bg-black"
       >
         <input
           class="flex-1 bg-transparent p-2 font-mono text-sm text-white focus:outline-none"
-          bind:value={chat.input}
-          placeholder="> query agent..."
-          disabled={isLoading}
+          bind:value={inputValue}
+          placeholder={chat ? '> query agent...' : '> error...'}
+          disabled={isLoading || !chat}
         />
         <button
           type="submit"
-          disabled={isLoading || !chat.input.trim()}
+          disabled={isLoading || !chat || !inputValue.trim()}
           class="p-2 text-green-500 transition-colors hover:text-white disabled:opacity-30"
         >
           ↵
