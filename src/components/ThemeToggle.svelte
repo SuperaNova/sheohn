@@ -1,29 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { theme, initTheme, toggleTheme } from '../store';
 
   export let compact = false;
 
-  let theme: 'light' | 'dark' = 'dark';
-
-  function getPreferredTheme() {
-    if (typeof window === 'undefined') return 'dark';
-    const saved = window.localStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
-  }
-
   onMount(() => {
-    theme = getPreferredTheme();
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    initTheme();
   });
-
-  function toggleTheme() {
-    theme = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    window.localStorage.setItem('theme', theme);
-  }
 </script>
 
 <button
@@ -34,5 +17,5 @@
     : 'glass-island fixed top-6 right-6 z-50 rounded-lg px-4 py-2 text-xs font-semibold tracking-[0.12em] text-[var(--color-on-surface)] shadow-[0_16px_32px_rgba(0,0,0,0.25)]'}"
   aria-label="Toggle color theme"
 >
-  {theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}
+  {$theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}
 </button>
