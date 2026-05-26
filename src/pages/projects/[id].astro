@@ -1,7 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getEntry, render } from 'astro:content';
-import TableOfContents from '../../components/TableOfContents';
+import { getCollection, getEntry, render } from 'astro:content';
+import TableOfContents from '../../components/TableOfContents.svelte';
+
+// Required for SSG — tells Astro which dynamic pages to prerender
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({
+    params: { id: project.id },
+  }));
+}
 
 const { id } = Astro.params;
 
@@ -66,7 +74,7 @@ const { Content, headings } = await render(entry);
           )
         }
 
-        {/* Metadata section redesign */}
+        {/* Metadata section */}
         <div
           class="mb-24 flex flex-col flex-wrap gap-x-16 gap-y-10 border-y border-[var(--color-outline-variant)] py-8 md:flex-row"
         >
