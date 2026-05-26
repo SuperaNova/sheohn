@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PongGame from '../components/PongGame.svelte';
 ---
 
 <BaseLayout
@@ -7,23 +8,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="The page you are looking for does not exist."
 >
   <main
-    class="flex min-h-screen items-center justify-center bg-[var(--color-surface)] px-6"
+    class="flex min-h-screen flex-col items-center justify-center bg-[var(--color-surface)] px-6 py-20"
   >
-    <div class="text-center">
+    <div class="text-center w-full max-w-2xl">
       <h1
-        class="font-display text-9xl font-bold text-[var(--color-primary-container)] opacity-50"
+        class="font-display text-7xl md:text-9xl font-bold text-[var(--color-primary-container)] opacity-50"
       >
         404
       </h1>
       <h2
-        class="mt-8 text-2xl font-semibold tracking-wide text-[var(--color-on-surface)]"
+        class="mt-4 text-xl md:text-2xl font-semibold tracking-wide text-[var(--color-on-surface)]"
       >
         SYSTEM_ERR: ENDPOINT_NOT_FOUND
       </h2>
       <p class="mx-auto mt-4 max-w-md text-[var(--color-on-surface-muted)]">
-        The requested resource could not be located on this server. You can ask
-        the AI agent for help, or return to the main node.
+        The requested resource could not be located. You can play a game against the SYS.AI while you wait, or return to the main node.
       </p>
+      
+      <PongGame client:visible />
+
       <div class="mt-10">
         <a
           href="/"
