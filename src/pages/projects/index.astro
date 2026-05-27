@@ -5,11 +5,12 @@ import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
 const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
+import { personalInfo } from '../../data/personalInfo';
 ---
 
 <BaseLayout
-  title="Projects | sheohn.dev"
-  description="Case studies and featured work by Jared Sheohn L. Acebes"
+  title="Projects & Work"
+  description={`Case studies and featured work by ${personalInfo.name}`}
 >
   <main class="min-h-screen bg-[var(--color-surface)] pt-32">
     <SectionReveal

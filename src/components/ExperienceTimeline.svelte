@@ -1,53 +1,9 @@
 <script lang="ts">
   import { inview } from '../lib/actions/inview';
 
-  const timelineData = [
-    {
-      id: 'exp-1',
-      date: 'Mar 2025 – Dec 2025',
-      role: 'AI Trainee Developer',
-      organization: 'Ace-1 IT Solutions',
-      description:
-        'Developed backend systems and AI-driven workflows using n8n and LangChain. Configured on-prem Docker servers, databases, and deployed cloud-based workflows for clients.',
-      category: 'Experience',
-    },
-    {
-      id: 'lead-1',
-      date: '2025 – Present',
-      role: 'President & Campus Organizer',
-      organization: 'Google Developer Group on Campus CIT-U',
-      description:
-        'Leads chapter operations, mentors team members, and expands campus engagement. Previously served as Public Relations Officer (2024-2025).',
-      category: 'Leadership',
-    },
-    {
-      id: 'lead-2',
-      date: '2025 – Present',
-      role: 'Network & Linkages Director',
-      organization: 'AWS Cloud Clubs - WildQuacc',
-      description:
-        'Forges strategic partnerships with campus organizations and the local tech community through targeted outreach, networking, and resource-sharing.',
-      category: 'Leadership',
-    },
-    {
-      id: 'lead-3',
-      date: '2025',
-      role: 'Management Information Team (MIT) Lead',
-      organization: 'Angat Bayanihan Volunteer Network',
-      description:
-        'Developed an information system for public data analysis and coordinated relief deployment to 30,000 families across 44 barangays during the 2025 Bogo earthquake.',
-      category: 'Leadership',
-    },
-    {
-      id: 'edu-1',
-      date: 'Expected 2027',
-      role: 'Bachelor of Science in Computer Science',
-      organization: 'Cebu Institute of Technology - University',
-      description:
-        'Certifications: CodeChum C Certificate, CodeChum Java Certificate.',
-      category: 'Education',
-    },
-  ];
+  import { personalInfo } from '../data/personalInfo';
+
+  const timelineData = personalInfo.experience;
 </script>
 
 <div class="mt-20 ml-2 border-l border-white/10 pl-6 md:ml-4 md:pl-10">

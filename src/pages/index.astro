@@ -12,11 +12,12 @@ const featuredProjects = allProjects
   .sort((a, b) => a.data.order - b.data.order)
   .slice(0, 1)
   .map((p) => ({ slug: p.id, ...p.data }));
+import { personalInfo } from '../data/personalInfo';
 ---
 
 <BaseLayout
-  title="Jared Sheohn L. Acebes - Portfolio"
-  description="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect"
+  title={`${personalInfo.name} - Portfolio`}
+  description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
 >
   <ScrollProgress client:idle />
 

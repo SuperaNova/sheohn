@@ -3,6 +3,7 @@
   import { inview } from '../lib/actions/inview';
   import { scrollState } from '../store';
   import DecoderText from './DecoderText.svelte';
+  import { personalInfo } from '../data/personalInfo';
 
   const parallaxY = spring(0, {
     stiffness: 0.11,
@@ -38,7 +39,7 @@
         class="hero-item mb-5 text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
       >
         <DecoderText
-          text="Software Developer & Systems Architect"
+          text={personalInfo.title}
           delay={1800}
         />
       </p>
@@ -47,7 +48,7 @@
         style:transition-delay="120ms"
         class="hero-item font-display text-5xl leading-[1.02] text-[var(--color-on-surface)] sm:text-6xl md:text-7xl"
       >
-        Jared Sheohn L. Acebes
+        {personalInfo.name}
       </h1>
 
       <p
@@ -55,7 +56,7 @@
         class="hero-item mt-6 font-mono text-lg tracking-tight text-[var(--color-on-surface)] md:text-xl"
       >
         <DecoderText
-          text="Bachelor of Science in Computer Science @ CIT-U"
+          text={personalInfo.education}
           delay={2400}
         />
       </p>
@@ -82,8 +83,7 @@
         style:transition-delay="480ms"
         class="hero-item mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg"
       >
-        AI Trainee Developer at Ace-1 IT Solutions. President of GDG on Campus
-        CIT-U. Passionate about AI-integrated web systems.
+        {personalInfo.bio}
       </p>
 
       <div style:transition-delay="600ms" class="hero-item mt-10">
@@ -108,8 +108,7 @@
       <p
         class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
       >
-        Dedicated to driving unhindered technical innovation. Specializing in
-        highly optimized architectures and uncompromising visual precision.
+        {personalInfo.strategicNote}
       </p>
     </aside>
   </div>
