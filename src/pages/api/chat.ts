@@ -42,7 +42,8 @@ const google = createGoogleGenerativeAI({
 });
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  const ip = clientAddress || request.headers.get('x-forwarded-for') || '127.0.0.1';
+  const ip =
+    clientAddress || request.headers.get('x-forwarded-for') || '127.0.0.1';
   const { success, limit, reset, remaining } = await ratelimit.limit(
     `ratelimit_chat_${ip}`,
   );

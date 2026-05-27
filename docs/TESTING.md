@@ -6,7 +6,7 @@ This repository is configured with a comprehensive testing suite to ensure the s
 
 We use **Vitest** along with the **Svelte Testing Library** to test individual components and isolated utility functions.
 
-- **Run unit tests:** 
+- **Run unit tests:**
   ```bash
   npm run test:unit
   ```
@@ -16,7 +16,7 @@ We use **Vitest** along with the **Svelte Testing Library** to test individual c
 
 We use **Playwright** to test full user flows in the browser exactly as a real user would experience them. Our Playwright setup also includes accessibility and visual regression testing.
 
-- **Run E2E tests:** 
+- **Run E2E tests:**
   ```bash
   npm run test:e2e
   ```
@@ -30,7 +30,8 @@ We use **Playwright** to test full user flows in the browser exactly as a real u
 
 Playwright is configured with `@axe-core/playwright` to automatically scan pages for accessibility violations (like missing alt text, poor contrast, or incorrect ARIA roles).
 
-*Example usage in a test:*
+_Example usage in a test:_
+
 ```typescript
 import AxeBuilder from '@axe-core/playwright';
 
@@ -47,4 +48,4 @@ Playwright takes screenshots of components or pages and compares them against "b
   npm run test:e2e -- --update-snapshots
   ```
 
-*(Note: Baseline images are stored in `tests/e2e/*-snapshots/` and should be committed to version control. The `playwright-report` and `test-results` folders are ignored by git).*
+_(Note: Baseline images are stored in `tests/e2e/_-snapshots/`and should be committed to version control. The`playwright-report`and`test-results` folders are ignored by git).\*
