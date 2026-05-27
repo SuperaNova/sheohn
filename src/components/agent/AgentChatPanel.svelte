@@ -118,31 +118,27 @@
 
         {#if chat}
           {#each chat.messages as m (m.id)}
-            {@const textContent = m.parts
-              ? m.parts
-                  .filter((p) => p.type === 'text')
-                  .map((p) => (p as { type: 'text'; text: string }).text)
-                  .join('')
-              : m.content || ''}
-
             <div class={m.role === 'user' ? 'text-green-400' : 'text-gray-300'}>
               <strong>{m.role === 'user' ? 'GUEST: ' : 'SYSTEM: '}</strong>
-              {textContent}
-
-              <!-- Tool executions -->
               {#if m.parts}
-                {#each m.parts.filter((p) => typeof p.type === 'string' && (p.type.startsWith('tool-') || p.type === 'dynamic-tool')) as p, i (i)}
-                  {@const part = p as {
-                    type: string;
-                    toolName?: string;
-                    input?: unknown;
-                  }}
-                  {@const toolName =
-                    part.toolName ?? part.type.replace(/^tool-/, '')}
-                  <span class="mt-1 block text-xs text-yellow-500/70">
-                    &gt; {toolName}({JSON.stringify(part.input)})
-                  </span>
+                {#each m.parts as p, i (i)}
+                  {#if p.type === 'text'}
+                    <span>{(p as { type: 'text'; text: string }).text}</span>
+                  {:else if typeof p.type === 'string' && (p.type.startsWith('tool-') || p.type === 'dynamic-tool')}
+                    {@const part = p as {
+                      type: string;
+                      toolName?: string;
+                      input?: unknown;
+                    }}
+                    {@const toolName =
+                      part.toolName ?? part.type.replace(/^tool-/, '')}
+                    <span class="mt-1 block text-xs text-yellow-500/70">
+                      &gt; {toolName}({JSON.stringify(part.input)})
+                    </span>
+                  {/if}
                 {/each}
+              {:else}
+                {m.content || ''}
               {/if}
             </div>
           {/each}

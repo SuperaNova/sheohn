@@ -2,6 +2,7 @@ import {
   streamText,
   embed,
   tool,
+  stepCountIs,
   convertToModelMessages,
   type UIMessage,
 } from 'ai';
@@ -88,6 +89,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     model: google('gemini-3.1-flash-lite'),
     system: SYSTEM_PROMPT,
     messages,
+    stopWhen: stepCountIs(5),
     tools: {
       trigger_ui_state: tool({
         description:
