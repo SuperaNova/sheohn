@@ -125,8 +125,8 @@ const canonicalURL = new URL(
     >
     </div>
 
-    <CustomCursor client:load transition:persist />
-    <HeaderNav client:load />
+    <CustomCursor client:idle transition:persist />
+    <HeaderNav client:idle />
 
     <slot />
 
@@ -219,6 +219,7 @@ const canonicalURL = new URL(
       </div>
     </footer>
 
+    {/* @ts-ignore - svelte2tsx false positive */}
     <CommandPalette client:idle />
     <AgentChat client:idle />
   </body>

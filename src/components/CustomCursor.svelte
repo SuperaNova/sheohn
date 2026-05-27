@@ -12,12 +12,16 @@
     isVisible = true;
   }
 
+  let mouseOverRafId = 0;
   function handleMouseOver(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    const isGreen =
-      target.hasAttribute('data-cursor-green') ||
-      target.closest('[data-cursor-green]');
-    isGreenHover = !!isGreen;
+    cancelAnimationFrame(mouseOverRafId);
+    mouseOverRafId = requestAnimationFrame(() => {
+      const target = e.target as HTMLElement;
+      const isGreen =
+        target.hasAttribute('data-cursor-green') ||
+        target.closest('[data-cursor-green]');
+      isGreenHover = !!isGreen;
+    });
   }
 
   function handleMouseLeave() {
@@ -43,6 +47,7 @@
       window.removeEventListener('mouseover', handleMouseOver);
       document.body.removeEventListener('mouseleave', handleMouseLeave);
       document.body.removeEventListener('mouseenter', handleMouseEnter);
+      cancelAnimationFrame(mouseOverRafId);
     }
   });
 </script>

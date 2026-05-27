@@ -1,29 +1,23 @@
 <script lang="ts">
   import { spring } from 'svelte/motion';
   import { inview } from '../lib/actions/inview';
+  import { scrollState } from '../store';
   import DecoderText from './DecoderText.svelte';
-
-  let scrollY = 0;
-  let scrollHeight = 0;
-  let innerHeight = 0;
 
   const parallaxY = spring(0, {
     stiffness: 0.11,
     damping: 0.28,
   });
 
-  $: {
+  scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
     if (scrollHeight > innerHeight && innerHeight > 0) {
       const scrollYProgress = scrollY / (scrollHeight - innerHeight);
       $parallaxY = scrollYProgress * -40; // Map [0, 1] to [0, -40]
     } else {
       $parallaxY = 0;
     }
-  }
+  });
 </script>
-
-<svelte:window bind:scrollY bind:innerHeight />
-<svelte:body bind:clientHeight={scrollHeight} />
 
 <section
   id="home"
