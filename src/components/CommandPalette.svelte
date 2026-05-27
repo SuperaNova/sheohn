@@ -7,11 +7,34 @@
   let selectedIndex = $state(0);
 
   const allCommands = [
-    { id: 'home', label: 'Go to Home', action: () => (window.location.href = '/') },
-    { id: 'projects', label: 'Go to Projects', action: () => (window.location.href = '/projects') },
-    { id: 'about', label: 'Go to About', action: () => (window.location.href = '/about') },
-    { id: 'theme', label: 'Toggle Dark/Light Mode', action: () => { toggleTheme(); close(); } },
-    { id: 'resume', label: 'View Resume', action: () => window.open('/resume.pdf', '_blank') },
+    {
+      id: 'home',
+      label: 'Go to Home',
+      action: () => (window.location.href = '/'),
+    },
+    {
+      id: 'projects',
+      label: 'Go to Projects',
+      action: () => (window.location.href = '/projects'),
+    },
+    {
+      id: 'about',
+      label: 'Go to About',
+      action: () => (window.location.href = '/about'),
+    },
+    {
+      id: 'theme',
+      label: 'Toggle Dark/Light Mode',
+      action: () => {
+        toggleTheme();
+        close();
+      },
+    },
+    {
+      id: 'resume',
+      label: 'View Resume',
+      action: () => window.open('/resume.pdf', '_blank'),
+    },
   ];
 
   // React to search query
@@ -22,7 +45,11 @@
   });
 
   // Filter commands
-  let filteredCommands = $derived(allCommands.filter(c => c.label.toLowerCase().includes(searchQuery.toLowerCase())));
+  let filteredCommands = $derived(
+    allCommands.filter((c) =>
+      c.label.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
+  );
 
   function handleKeydown(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
@@ -39,7 +66,8 @@
       selectedIndex = (selectedIndex + 1) % filteredCommands.length;
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
-      selectedIndex = (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
+      selectedIndex =
+        (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
     } else if (event.key === 'Enter') {
       event.preventDefault();
       if (filteredCommands[selectedIndex]) {
@@ -77,8 +105,22 @@
       class="relative w-full max-w-xl overflow-hidden rounded-xl border border-[var(--color-on-surface-muted)] bg-[var(--color-surface)] shadow-2xl"
       transition:fly={{ y: -20, duration: 200 }}
     >
-      <div class="flex items-center border-b border-[var(--color-on-surface-muted)] px-4 py-3">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--color-on-surface-muted)]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <div
+        class="flex items-center border-b border-[var(--color-on-surface-muted)] px-4 py-3"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-[var(--color-on-surface-muted)]"
+          ><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
+        >
         <input
           bind:this={searchInput}
           bind:value={searchQuery}
@@ -86,14 +128,19 @@
           placeholder="Type a command or search..."
           class="w-full bg-transparent px-4 text-lg text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-muted)] focus:outline-none"
         />
-        <button on:click={close} class="rounded-md px-2 py-1 text-xs text-[var(--color-on-surface-muted)] hover:bg-[var(--color-on-surface-muted)]/20 hover:text-[var(--color-on-surface)]">
+        <button
+          on:click={close}
+          class="rounded-md px-2 py-1 text-xs text-[var(--color-on-surface-muted)] hover:bg-[var(--color-on-surface-muted)]/20 hover:text-[var(--color-on-surface)]"
+        >
           ESC
         </button>
       </div>
 
       <div class="max-h-96 overflow-y-auto py-2">
         {#if filteredCommands.length === 0}
-          <div class="px-6 py-8 text-center text-sm text-[var(--color-on-surface-muted)]">
+          <div
+            class="px-6 py-8 text-center text-sm text-[var(--color-on-surface-muted)]"
+          >
             No results found for "{searchQuery}"
           </div>
         {:else}
@@ -102,7 +149,10 @@
               <li>
                 <button
                   on:click={cmd.action}
-                  class="flex w-full items-center rounded-lg px-4 py-3 text-left text-sm transition-all {i === selectedIndex ? 'bg-[var(--color-on-surface)]/20 text-[var(--color-on-surface)] font-semibold border-l-4 border-[var(--color-tertiary)] shadow-sm' : 'text-[var(--color-on-surface-muted)] border-l-4 border-transparent hover:bg-[var(--color-on-surface)]/5 hover:text-[var(--color-on-surface)]'}"
+                  class="flex w-full items-center rounded-lg px-4 py-3 text-left text-sm transition-all {i ===
+                  selectedIndex
+                    ? 'bg-[var(--color-on-surface)]/20 text-[var(--color-on-surface)] font-semibold border-l-4 border-[var(--color-tertiary)] shadow-sm'
+                    : 'text-[var(--color-on-surface-muted)] border-l-4 border-transparent hover:bg-[var(--color-on-surface)]/5 hover:text-[var(--color-on-surface)]'}"
                   on:mouseenter={() => (selectedIndex = i)}
                 >
                   {cmd.label}
