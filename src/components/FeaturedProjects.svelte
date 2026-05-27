@@ -96,16 +96,15 @@
             class="group/image relative isolate block aspect-video w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] md:aspect-[4/3] md:w-3/5"
           >
             {#if project.image}
-              <!-- 
-                TODO (Performance): These images are currently loading as raw background images.
-                When replacing temporary images with real ones, either compress them to webp/avif,
-                or use an optimized <img loading="lazy" /> element instead of a background image
-                to drastically improve initial page load times on slow connections.
-              -->
-              <div
-                class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover/image:scale-105"
-                style="background-image: url({project.image})"
-              ></div>
+              <img
+                src={project.image}
+                alt={project.title}
+                loading="lazy"
+                decoding="async"
+                width="1200"
+                height="900"
+                class="absolute inset-0 z-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover/image:scale-105"
+              />
             {:else}
               <div
                 class="absolute inset-0 flex items-center justify-center text-sm tracking-widest text-[var(--color-on-surface-muted)] uppercase"
