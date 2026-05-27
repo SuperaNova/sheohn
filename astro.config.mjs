@@ -11,7 +11,11 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
-  integrations: [svelte(), mdx()],
+  prefetch: {
+    defaultStrategy: 'hover',
+    prefetchAll: true
+  },
+  integrations: [svelte(), mdx(), sitemap()],
 
   vite: {
     plugins: [tailwindcss()],
