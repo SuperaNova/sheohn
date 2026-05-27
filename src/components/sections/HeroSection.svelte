@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Spring } from 'svelte/motion';
-  import { inview } from '../lib/actions/inview';
-  import { scrollState } from '../store';
-  import DecoderText from './DecoderText.svelte';
-  import { personalInfo } from '../data/personalInfo';
+  import { inview } from '../../lib/actions/inview';
+  import { scrollState } from '../../store';
+  import DecoderText from '../ui/DecoderText.svelte';
+  import { personalInfo } from '../../data/personalInfo';
 
   const parallaxY = new Spring(0, {
     stiffness: 0.11,

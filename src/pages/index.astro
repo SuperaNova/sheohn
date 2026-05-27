@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroSection from '../components/HeroSection.svelte';
-import FeaturedProjects from '../components/FeaturedProjects.svelte';
-import ScrollProgress from '../components/ScrollProgress.svelte';
+import HeroSection from '../components/sections/HeroSection.svelte';
+import FeaturedProjects from '../components/sections/FeaturedProjects.svelte';
+import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');

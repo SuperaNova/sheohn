@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { theme, initTheme, toggleTheme } from '../store';
+  import { theme, initTheme, toggleTheme } from '../../store';
 
   let { compact = false }: { compact?: boolean } = $props();
 

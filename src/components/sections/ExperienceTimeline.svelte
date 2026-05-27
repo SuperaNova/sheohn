@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { inview } from '../lib/actions/inview';
+  import { inview } from '../../lib/actions/inview';
 
-  import { personalInfo } from '../data/personalInfo';
+  import { personalInfo } from '../../data/personalInfo';
 
   const timelineData = personalInfo.experience;
 </script>

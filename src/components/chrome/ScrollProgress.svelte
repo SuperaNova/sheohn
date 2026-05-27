@@ -1,6 +1,6 @@
 <script lang="ts">
   import { spring } from 'svelte/motion';
-  import { scrollState } from '../store';
+  import { scrollState } from '../../store';
 
   let scrollY = 0;
   let scrollHeight = 0;

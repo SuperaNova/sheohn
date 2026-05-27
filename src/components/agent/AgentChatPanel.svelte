@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
-  import { setFocus } from '../store';
+  import { setFocus } from '../../store';
 
   let { startMinimized = false } = $props();
 

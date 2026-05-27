@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { inview } from '../lib/actions/inview';
+  import { inview } from '../../lib/actions/inview';
   import { fade } from 'svelte/transition';
-  import { activeFocus, overlayActive, clearFocus } from '../store';
+  import { activeFocus, overlayActive, clearFocus } from '../../store';
 
   export type ProjectData = {
     slug: string;
