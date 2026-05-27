@@ -36,23 +36,28 @@ const canonicalURL = new URL(
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <script type="application/ld+json" is:inline set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": personalInfo.name,
-      "url": "https://sheohn.dev",
-      "jobTitle": personalInfo.title,
-      "sameAs": [
-        personalInfo.socials.github,
-        personalInfo.socials.linkedin
-      ]
-    })}></script>
-    <script type="application/ld+json" is:inline set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": `${personalInfo.name} Portfolio`,
-      "url": "https://sheohn.dev"
-    })}></script>
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: personalInfo.name,
+        url: 'https://sheohn.dev',
+        jobTitle: personalInfo.title,
+        sameAs: [personalInfo.socials.github, personalInfo.socials.linkedin],
+      })}
+    />
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: `${personalInfo.name} Portfolio`,
+        url: 'https://sheohn.dev',
+      })}
+    />
 
     <title>{title}</title>
     <meta name="title" content={title} />
@@ -142,8 +147,7 @@ const canonicalURL = new URL(
           <p
             class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
           >
-            {personalInfo.title} building robust, scalable
-            applications.
+            {personalInfo.title} building robust, scalable applications.
           </p>
         </div>
 

@@ -14,9 +14,17 @@
     featured?: boolean;
   };
 
-  export let projects: ProjectData[];
-  export let title = 'Selected Work';
-  export let subtitle = 'Featured Project';
+  interface Props {
+    projects: ProjectData[];
+    title?: string;
+    subtitle?: string;
+  }
+
+  let {
+    projects,
+    title = 'Selected Work',
+    subtitle = 'Featured Project',
+  }: Props = $props();
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && $overlayActive) {

@@ -1,5 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { streamText, embed, tool, convertToModelMessages } from 'ai';
+import {
+  streamText,
+  embed,
+  tool,
+  convertToModelMessages,
+  type UIMessage,
+} from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
@@ -32,6 +37,7 @@ const ratelimit = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(10, '1 m'),
   analytics: true,
+  prefix: 'ratelimit_chat',
 });
 
 // Explicitly pass the API key; Astro SSR may not expose process.env to the SDK auto-detector
@@ -40,6 +46,11 @@ const google = createGoogleGenerativeAI({
     import.meta.env.GOOGLE_GENERATIVE_AI_API_KEY ||
     process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
+
+type IncomingMessage = Partial<UIMessage> & {
+  role: UIMessage['role'];
+  content?: string;
+};
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip =
@@ -59,15 +70,17 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     });
   }
 
-  const body = await request.json();
-  // DefaultChatTransport sends UI messages. Normalize to ensure all have `parts`
-  // (first-turn messages may only have `content` without `parts`)
-  const rawMessages: any[] = (body.messages ?? []).map((m: any) => {
+  const body = (await request.json()) as { messages?: IncomingMessage[] };
+  // DefaultChatTransport sends UI messages. Normalize so all have `parts`
+  // (first-turn messages may only have `content` without `parts`).
+  const rawMessages: UIMessage[] = (body.messages ?? []).map((m) => {
     if (!m.parts) {
-      // Normalize old-format messages to have parts
-      return { ...m, parts: [{ type: 'text', text: m.content ?? '' }] };
+      return {
+        ...m,
+        parts: [{ type: 'text', text: m.content ?? '' }],
+      } as UIMessage;
     }
-    return m;
+    return m as UIMessage;
   });
   const messages = await convertToModelMessages(rawMessages);
 
@@ -79,14 +92,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       trigger_ui_state: tool({
         description:
           'Highlight specific projects on the screen when the user asks about certain technologies.',
-        parameters: z.object({
+        inputSchema: z.object({
           focus: z
             .string()
             .describe(
               'The technology or project to focus on, e.g., "React", "AI", "PostgreSQL"',
             ),
         }),
-        // @ts-expect-error: strict type inference mismatch
         execute: async ({ focus }) => {
           return { status: 'triggered', focus };
         },
@@ -94,16 +106,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       query_jared_memory: tool({
         description:
           "Search Jared's long-term memory vector database for localized facts about his work, skills, and background.",
-        parameters: z.object({
+        inputSchema: z.object({
           query: z
             .string()
             .describe("The search query to match against Jared's facts."),
         }),
-        // @ts-expect-error: strict type inference mismatch
         execute: async ({ query }) => {
           console.log(`[RAG Pipeline] Embedding query: "${query}"`);
 
-          // Embed the user's query to match vector embeddings
           const { embedding } = await embed({
             model: google.embeddingModel('gemini-embedding-001'),
             value: query,
@@ -114,7 +124,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             },
           });
 
-          // Query the top 3 most relevant facts from Upstash
           const results = await index.query({
             vector: embedding,
             topK: 3,
@@ -131,5 +140,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       }),
     },
   });
-  return (result as any).toUIMessageStreamResponse();
+
+  return result.toUIMessageStreamResponse();
 };

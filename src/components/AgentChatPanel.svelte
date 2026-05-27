@@ -130,16 +130,16 @@
 
               <!-- Tool executions -->
               {#if m.parts}
-                {#each m.parts.filter((p) => p.type === 'tool-invocation') as p, i (i)}
+                {#each m.parts.filter((p) => typeof p.type === 'string' && (p.type.startsWith('tool-') || p.type === 'dynamic-tool')) as p, i (i)}
+                  {@const part = p as {
+                    type: string;
+                    toolName?: string;
+                    input?: unknown;
+                  }}
+                  {@const toolName =
+                    part.toolName ?? part.type.replace(/^tool-/, '')}
                   <span class="mt-1 block text-xs text-yellow-500/70">
-                    &gt; {(
-                      p as {
-                        toolInvocation?: { toolName: string; args: unknown };
-                      }
-                    ).toolInvocation?.toolName}({JSON.stringify(
-                      (p as { toolInvocation?: { args: unknown } })
-                        .toolInvocation?.args,
-                    )})
+                    &gt; {toolName}({JSON.stringify(part.input)})
                   </span>
                 {/each}
               {/if}

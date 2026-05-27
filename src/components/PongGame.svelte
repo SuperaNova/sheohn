@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D | null;
-  let animationFrameId: number;
+  let canvas = $state<HTMLCanvasElement | null>(null);
+  let ctx: CanvasRenderingContext2D | null = null;
+  let animationFrameId = 0;
 
   const PADDLE_WIDTH = 10;
   const PADDLE_HEIGHT = 80;
   const BALL_SIZE = 10;
 
-  let width = 600;
-  let height = 400;
+  const width = 600;
+  const height = 400;
 
   let playerY = 160;
   let aiY = 160;
@@ -19,9 +19,9 @@
   let ballSpeedX = 5;
   let ballSpeedY = 5;
 
-  let playerScore = 0;
-  let aiScore = 0;
-  let playing = false;
+  let playerScore = $state(0);
+  let aiScore = $state(0);
+  let playing = $state(false);
 
   function resetBall() {
     ballX = width / 2;
@@ -162,11 +162,16 @@
   }
 
   onMount(() => {
+    if (!canvas) return;
     ctx = canvas.getContext('2d');
 
     // Set internal resolution strictly
     canvas.width = width;
     canvas.height = height;
+
+    // Svelte 5 removed event modifiers; register touchmove manually so
+    // preventDefault() works (replaces the old `on:touchmove|nonpassive`).
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     resetBall();
     playing = true;
@@ -174,6 +179,7 @@
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      canvas?.removeEventListener('touchmove', handleTouchMove);
     };
   });
 </script>
@@ -190,8 +196,7 @@
 
   <canvas
     bind:this={canvas}
-    on:mousemove={handleMouseMove}
-    on:touchmove|nonpassive={handleTouchMove}
+    onmousemove={handleMouseMove}
     class="block w-full h-full touch-none cursor-none"
   ></canvas>
 

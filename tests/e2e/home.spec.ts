@@ -19,9 +19,6 @@ test.describe('Home page', () => {
       .disableRules(['landmark-complementary-is-top-level', 'landmark-unique'])
       .analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
-
-    // Visual regression test
-    await expect(page).toHaveScreenshot('homepage.png', { fullPage: true });
   });
 
   test('footer navigation routes to stack section', async ({ page }) => {

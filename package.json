@@ -12,10 +12,12 @@
     "astro": "astro",
     "lint": "eslint src",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "check": "astro check",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:unit": "vitest"
+    "test:unit": "vitest",
+    "precommit": "powershell -ExecutionPolicy Bypass -File ./scripts/pre-commit.ps1"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.59",

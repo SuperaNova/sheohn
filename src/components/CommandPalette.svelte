@@ -1,26 +1,32 @@
 <script lang="ts">
   import { commandPaletteOpen, toggleTheme } from '../store';
   import { fade, fly } from 'svelte/transition';
+  import { navigate } from 'astro:transitions/client';
 
   let searchInput = $state<HTMLInputElement>();
   let searchQuery = $state('');
   let selectedIndex = $state(0);
 
+  function goto(path: string) {
+    close();
+    navigate(path);
+  }
+
   const allCommands = [
     {
       id: 'home',
       label: 'Go to Home',
-      action: () => (window.location.href = '/'),
+      action: () => goto('/'),
     },
     {
       id: 'projects',
       label: 'Go to Projects',
-      action: () => (window.location.href = '/projects'),
+      action: () => goto('/projects'),
     },
     {
       id: 'about',
       label: 'Go to About',
-      action: () => (window.location.href = '/about'),
+      action: () => goto('/about'),
     },
     {
       id: 'theme',
@@ -33,7 +39,10 @@
     {
       id: 'resume',
       label: 'View Resume',
-      action: () => window.open('/resume.pdf', '_blank'),
+      action: () => {
+        window.open('/resume.pdf', '_blank');
+        close();
+      },
     },
   ];
 

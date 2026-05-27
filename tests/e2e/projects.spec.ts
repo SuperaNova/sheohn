@@ -21,11 +21,21 @@ test.describe('Projects', () => {
   });
 
   test('direct project slug loads content', async ({ page }) => {
-    await page.goto('/projects/eco-architecture');
+    // Discover a real slug from the listing so this test stays valid as
+    // case studies are added or renamed — no hardcoded titles.
+    await page.goto('/projects');
+    const firstHref = await page
+      .locator('a[aria-label^="View case study:"]')
+      .first()
+      .getAttribute('href');
 
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'EcoArchitecture Core' }),
-    ).toBeVisible();
+    if (!firstHref) {
+      throw new Error('No case studies found on /projects');
+    }
+
+    await page.goto(firstHref);
+
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
   });
 });
