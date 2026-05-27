@@ -25,7 +25,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <section
   id="projects"
@@ -38,7 +38,7 @@
       aria-label="Close project overlay"
       transition:fade={{ duration: 400 }}
       class="fixed inset-0 z-[45] cursor-pointer bg-black/80 backdrop-blur-sm w-full h-full border-none"
-      on:click={clearFocus}
+      onclick={clearFocus}
     ></button>
   {/if}
 

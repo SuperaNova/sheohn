@@ -60,7 +60,7 @@
       <button
         aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
         class="text-[var(--color-on-surface)] transition hover:text-[var(--color-tertiary)]"
-        on:click={() => (isMenuOpen = !isMenuOpen)}
+        onclick={() => (isMenuOpen = !isMenuOpen)}
       >
         {#if isMenuOpen}
           <!-- X icon -->
@@ -119,7 +119,7 @@
             class="text-sm font-medium transition hover:text-[var(--color-on-surface)] {isActive
               ? 'text-[var(--color-on-surface)] underline decoration-[var(--color-tertiary)] decoration-2 underline-offset-8'
               : 'text-[var(--color-on-surface-muted)]'}"
-            on:click={() => (isMenuOpen = false)}
+            onclick={() => (isMenuOpen = false)}
           >
             {section.label}
           </a>

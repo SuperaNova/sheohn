@@ -89,7 +89,7 @@
   });
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if $commandPaletteOpen}
   <div class="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
@@ -97,7 +97,7 @@
       type="button"
       aria-label="Close command palette"
       class="fixed inset-0 w-full h-full cursor-default border-none bg-black/60 backdrop-blur-sm transition-opacity"
-      on:click={close}
+      onclick={close}
       transition:fade={{ duration: 200 }}
     ></button>
 
@@ -129,7 +129,7 @@
           class="w-full bg-transparent px-4 text-lg text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-muted)] focus:outline-none"
         />
         <button
-          on:click={close}
+          onclick={close}
           class="rounded-md px-2 py-1 text-xs text-[var(--color-on-surface-muted)] hover:bg-[var(--color-on-surface-muted)]/20 hover:text-[var(--color-on-surface)]"
         >
           ESC
@@ -148,12 +148,12 @@
             {#each filteredCommands as cmd, i (cmd.id)}
               <li>
                 <button
-                  on:click={cmd.action}
+                  onclick={cmd.action}
                   class="flex w-full items-center rounded-lg px-4 py-3 text-left text-sm transition-all {i ===
                   selectedIndex
                     ? 'bg-[var(--color-on-surface)]/20 text-[var(--color-on-surface)] font-semibold border-l-4 border-[var(--color-tertiary)] shadow-sm'
                     : 'text-[var(--color-on-surface-muted)] border-l-4 border-transparent hover:bg-[var(--color-on-surface)]/5 hover:text-[var(--color-on-surface)]'}"
-                  on:mouseenter={() => (selectedIndex = i)}
+                  onmouseenter={() => (selectedIndex = i)}
                 >
                   {cmd.label}
                 </button>
