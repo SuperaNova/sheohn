@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
   const messages = await convertToModelMessages(rawMessages);
 
   const result = streamText({
-    model: google('gemini-2.5-flash'),
+    model: google('gemini-3.1-flash-lite'),
     system: SYSTEM_PROMPT,
     messages,
     tools: {

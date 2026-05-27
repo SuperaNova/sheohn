@@ -3,7 +3,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSection from '../components/HeroSection.svelte';
 import FeaturedProjects from '../components/FeaturedProjects.svelte';
 import ScrollProgress from '../components/ScrollProgress.svelte';
-import Loader from '../components/Loader.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
@@ -19,7 +18,6 @@ const featuredProjects = allProjects
   title="Jared Sheohn L. Acebes - Portfolio"
   description="Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect"
 >
-  <Loader client:load />
   <ScrollProgress client:idle />
 
   <main class="bg-[var(--color-surface)] pt-16">

@@ -190,7 +190,7 @@
 
   <canvas
     bind:this={canvas}
-    on:mousemove={handleMouseMove}
+    onmousemove={handleMouseMove}
     on:touchmove|nonpassive={handleTouchMove}
     class="block w-full h-full touch-none cursor-none"
   ></canvas>
