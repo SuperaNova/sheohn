@@ -3,6 +3,8 @@ import { writable, derived } from 'svelte/store';
 export const activeFocus = writable<string | null>(null);
 export const overlayActive = derived(activeFocus, ($f) => !!$f);
 
+export const scrollState = writable({ scrollY: 0, scrollHeight: 0, innerHeight: 0 });
+
 export function setFocus(focus: string | null) {
   activeFocus.set(focus);
 }
