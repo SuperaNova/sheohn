@@ -1,0 +1,21 @@
+---
+title: 'Crucible - Autonomous Sprite Synthesis Pipeline'
+summary: 'Automated multi-agent pipeline using Google ADK to orchestrate state handoffs across vision and diffusion models.'
+category: 'AI / Pipeline'
+stack: ['Python', 'Gemini 3.1 Flash-Lite', 'Moondream2 (VLM)', 'Flux.1', 'Google ADK']
+role: 'Lead Architect'
+timeline: '2026'
+team: 'Solo'
+status: 'Completed'
+image: '/project1.png'
+featured: true
+order: 1
+---
+
+## Overview
+
+Crucible is an automated multi-agent pipeline architected using Google ADK to orchestrate state handoffs across vision and diffusion models. A data validation heuristic was engineered for strict quality control prior to inference.
+
+## Optimization
+
+Local model execution was optimized via float16 quantization to strictly bound memory footprints under 6GB VRAM. This enforced reproducible generation using fixed-seed API configurations and structured LLM reasoning.

@@ -86,16 +86,16 @@ import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
         >
       </div>
 
-      <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-12 lg:grid-cols-3">
         <article>
           <h3
             class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
           >
-            Core
+            Languages
           </h3>
           <div class="flex flex-wrap gap-2">
             {
-              ['TypeScript', 'JavaScript', 'React', 'Node.js', 'Python'].map(
+              ['C++', 'Java', 'Python', 'Rust', 'TypeScript', 'JavaScript', 'Dart', 'SQL', 'NoSQL'].map(
                 (item) => (
                   <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
                     {item}
@@ -110,16 +110,21 @@ import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
           <h3
             class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
           >
-            Frontend
+            Cloud & AI
           </h3>
           <div class="flex flex-wrap gap-2">
             {
               [
-                'Next.js',
-                'Astro',
-                'Tailwind CSS',
-                'Framer Motion',
-                'Zustand',
+                'GCP',
+                'Vertex AI',
+                'Gemini',
+                'Firebase',
+                'LangChain',
+                'n8n',
+                'Make',
+                'Docker',
+                'Git',
+                'GitHub'
               ].map((item) => (
                 <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
                   {item}
@@ -133,30 +138,11 @@ import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
           <h3
             class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
           >
-            Backend & DB
+            Data & Analysis
           </h3>
           <div class="flex flex-wrap gap-2">
             {
-              ['PostgreSQL', 'MongoDB', 'Express', 'REST API', 'GraphQL'].map(
-                (item) => (
-                  <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
-                    {item}
-                  </span>
-                ),
-              )
-            }
-          </div>
-        </article>
-
-        <article>
-          <h3
-            class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
-          >
-            Infra & Tools
-          </h3>
-          <div class="flex flex-wrap gap-2">
-            {
-              ['Docker', 'AWS', 'GitHub Actions', 'Git', 'Figma', 'Linux'].map(
+              ['Pandas', 'NumPy', 'Matplotlib', 'Jupyter', 'JSON/CSV'].map(
                 (item) => (
                   <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
                     {item}
