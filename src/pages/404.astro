@@ -10,21 +10,22 @@ import PongGame from '../components/PongGame.svelte';
   <main
     class="flex min-h-screen flex-col items-center justify-center bg-[var(--color-surface)] px-6 py-20"
   >
-    <div class="text-center w-full max-w-2xl">
+    <div class="w-full max-w-2xl text-center">
       <h1
-        class="font-display text-7xl md:text-9xl font-bold text-[var(--color-primary-container)] opacity-50"
+        class="font-display text-7xl font-bold text-[var(--color-primary-container)] opacity-50 md:text-9xl"
       >
         404
       </h1>
       <h2
-        class="mt-4 text-xl md:text-2xl font-semibold tracking-wide text-[var(--color-on-surface)]"
+        class="mt-4 text-xl font-semibold tracking-wide text-[var(--color-on-surface)] md:text-2xl"
       >
         SYSTEM_ERR: ENDPOINT_NOT_FOUND
       </h2>
       <p class="mx-auto mt-4 max-w-md text-[var(--color-on-surface-muted)]">
-        The requested resource could not be located. You can play a game against the SYS.AI while you wait, or return to the main node.
+        The requested resource could not be located. You can play a game against
+        the SYS.AI while you wait, or return to the main node.
       </p>
-      
+
       <PongGame client:visible />
 
       <div class="mt-10">

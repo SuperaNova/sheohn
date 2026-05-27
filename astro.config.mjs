@@ -15,7 +15,7 @@ export default defineConfig({
   output: 'static',
   prefetch: {
     defaultStrategy: 'hover',
-    prefetchAll: true
+    prefetchAll: true,
   },
   integrations: [svelte(), mdx(), sitemap()],
 
