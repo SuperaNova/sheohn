@@ -25,6 +25,8 @@
     "@astrojs/svelte": "^8.1.1",
     "@astrojs/vercel": "^10.0.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "@upstash/vector": "^1.2.3",
     "ai": "^6.0.149",
     "astro": "^6.1.3",

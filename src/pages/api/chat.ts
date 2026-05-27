@@ -4,6 +4,8 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { Index } from '@upstash/vector';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 export const prerender = false;
 
@@ -17,6 +19,21 @@ const index = new Index({
     process.env.UPSTASH_VECTOR_REST_TOKEN,
 });
 
+const redis = new Redis({
+  url:
+    import.meta.env.UPSTASH_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_REST_URL,
+  token:
+    import.meta.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
+  analytics: true,
+});
+
 // Explicitly pass the API key; Astro SSR may not expose process.env to the SDK auto-detector
 const google = createGoogleGenerativeAI({
   apiKey:
@@ -24,7 +41,23 @@ const google = createGoogleGenerativeAI({
     process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  const ip = clientAddress || request.headers.get('x-forwarded-for') || '127.0.0.1';
+  const { success, limit, reset, remaining } = await ratelimit.limit(
+    `ratelimit_chat_${ip}`,
+  );
+
+  if (!success) {
+    return new Response('Too Many Requests', {
+      status: 429,
+      headers: {
+        'X-RateLimit-Limit': limit.toString(),
+        'X-RateLimit-Remaining': remaining.toString(),
+        'X-RateLimit-Reset': reset.toString(),
+      },
+    });
+  }
+
   const body = await request.json();
   // DefaultChatTransport sends UI messages. Normalize to ensure all have `parts`
   // (first-turn messages may only have `content` without `parts`)
