@@ -3,11 +3,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionReveal from '../components/SectionReveal.svelte';
 import ScrollProgress from '../components/ScrollProgress.svelte';
 import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
+import { personalInfo } from '../data/personalInfo';
 ---
 
 <BaseLayout
-  title="About | sheohn.dev"
-  description="About Jared Sheohn L. Acebes and his technical experience."
+  title="About Me"
+  description={`About ${personalInfo.name} and his technical experience.`}
 >
   <ScrollProgress client:idle />
 

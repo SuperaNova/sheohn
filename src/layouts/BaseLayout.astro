@@ -7,6 +7,8 @@ import AgentChat from '../components/AgentChat.svelte';
 import CommandPalette from '../components/CommandPalette.svelte';
 import { ClientRouter } from 'astro:transitions';
 
+import { personalInfo } from '../data/personalInfo';
+
 interface Props {
   title: string;
   description?: string;
@@ -15,7 +17,7 @@ interface Props {
 
 const {
   title,
-  description = 'Portfolio of Jared Sheohn L. Acebes - Software Developer & Systems Architect.',
+  description = `Portfolio of ${personalInfo.name} - ${personalInfo.title}.`,
   image = '/og-image.jpg',
 } = Astro.props;
 
@@ -34,27 +36,23 @@ const canonicalURL = new URL(
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <script type="application/ld+json" is:inline>
-      {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Jared Sheohn L. Acebes",
-        "url": "https://sheohn.dev",
-        "jobTitle": "Software Developer & Systems Architect",
-        "sameAs": [
-          "https://github.com/yourgithub",
-          "https://linkedin.com/in/yourlinkedin"
-        ]
-      }
-    </script>
-    <script type="application/ld+json" is:inline>
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Jared Sheohn L. Acebes Portfolio",
-        "url": "https://sheohn.dev"
-      }
-    </script>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": personalInfo.name,
+      "url": "https://sheohn.dev",
+      "jobTitle": personalInfo.title,
+      "sameAs": [
+        personalInfo.socials.github,
+        personalInfo.socials.linkedin
+      ]
+    })}></script>
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": `${personalInfo.name} Portfolio`,
+      "url": "https://sheohn.dev"
+    })}></script>
 
     <title>{title}</title>
     <meta name="title" content={title} />
@@ -139,12 +137,12 @@ const canonicalURL = new URL(
       >
         <div>
           <p class="font-display text-3xl text-[var(--color-on-surface)]">
-            Jared Sheohn L. Acebes
+            {personalInfo.name}
           </p>
           <p
             class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
           >
-            Software Developer and Systems Architect building robust, scalable
+            {personalInfo.title} building robust, scalable
             applications.
           </p>
         </div>
@@ -187,13 +185,13 @@ const canonicalURL = new URL(
             class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
           >
             <a
-              href="https://github.com/SuperaNova"
+              href={personalInfo.socials.github}
               target="_blank"
               rel="noreferrer"
               class="transition hover:text-[var(--color-on-surface)]">GitHub</a
             >
             <a
-              href="https://linkedin.com/in/your-profile"
+              href={personalInfo.socials.linkedin}
               target="_blank"
               rel="noreferrer"
               class="transition hover:text-[var(--color-on-surface)]"
