@@ -10,8 +10,16 @@ const index = new Index({
   token: process.env.UPSTASH_VECTOR_REST_TOKEN as string,
 });
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Update these facts to represent your actual resume/portfolio data!
-const myFacts = ['lorem ipsum wo ai ni'];
+const factsPath = path.join(__dirname, 'my_facts.json');
+const myFacts = JSON.parse(fs.readFileSync(factsPath, 'utf8'));
 
 async function updateBrain() {
   console.log('Connecting to Gemini to embed facts into vector space...');

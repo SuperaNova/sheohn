@@ -10,10 +10,10 @@ When someone asks a question on the site, the backend (`api/chat.ts`) searches t
 
 ## Adding New Knowledge
 
-1. **Find the knowledge files:** need to check `src/lib/prompts.ts` or wherever my source text is defined in `update-brain.ts`. Can keep a dedicated folder like `src/knowledge/` with markdown files all about self.
-2. **Write about myself:** Create files like `bio.md`, `experience.md`, `projects.md`. Need to be descriptive here!
+1. **Find the knowledge file:** My source data is defined in a JSON file at `scripts/my_facts.json`. It contains a JSON array of plain-text facts about me.
+2. **Write about myself:** Open `scripts/my_facts.json` and add, remove, or modify the strings in the array to keep my background and projects up to date.
 3. **Run the script:**
-   After I update the text files, I have to embed them. Double check that my `.env` has:
+   After I update the JSON file, I have to embed the data. Double check that my `.env` has:
 
    ```env
    GOOGLE_GENERATIVE_AI_API_KEY=...

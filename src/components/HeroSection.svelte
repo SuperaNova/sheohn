@@ -37,7 +37,7 @@
         style:transition-delay="0ms"
         class="hero-item mb-5 text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
       >
-        <DecoderText text="Executive Portfolio" delay={1800} />
+        <DecoderText text="Software Developer & Systems Architect" delay={1800} />
       </p>
 
       <h1
@@ -51,7 +51,7 @@
         style:transition-delay="240ms"
         class="hero-item mt-6 font-mono text-lg tracking-tight text-[var(--color-on-surface)] md:text-xl"
       >
-        <DecoderText text="wǒ cào nǐ mā" delay={2400} />
+        <DecoderText text="Bachelor of Science in Computer Science @ CIT-U" delay={2400} />
       </p>
 
       <div
@@ -76,8 +76,7 @@
         style:transition-delay="480ms"
         class="hero-item mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg"
       >
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua.
+        AI Trainee Developer at Ace-1 IT Solutions. President of GDG on Campus CIT-U. Passionate about AI-integrated web systems.
       </p>
 
       <div style:transition-delay="600ms" class="hero-item mt-10">
