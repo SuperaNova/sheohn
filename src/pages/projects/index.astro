@@ -54,9 +54,14 @@ const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
                 class="group relative isolate mb-4 block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-[var(--color-surface-container)]"
               >
                 {project.data.image ? (
-                  <div
-                    class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                    style={`background-image: url(${project.data.image})`}
+                  <img
+                    src={project.data.image}
+                    alt={project.data.title}
+                    loading="lazy"
+                    decoding="async"
+                    width="1200"
+                    height="900"
+                    class="absolute inset-0 z-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 ) : (
                   <div class="absolute inset-0 flex items-center justify-center text-sm tracking-widest text-[var(--color-on-surface-muted)] uppercase">
