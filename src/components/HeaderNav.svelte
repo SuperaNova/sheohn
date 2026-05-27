@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { slide } from 'svelte/transition';
   import ThemeToggle from './ThemeToggle.svelte';
 
   const navItems = [
@@ -10,6 +11,7 @@
   ];
 
   let activeId = '';
+  let isMenuOpen = false;
 
   onMount(() => {
     const path = window.location.pathname;
@@ -52,6 +54,55 @@
       {/each}
     </nav>
 
-    <ThemeToggle compact />
+    <!-- Hamburger / Close button (mobile only) -->
+    <div class="flex items-center gap-3 md:hidden">
+      <ThemeToggle compact />
+      <button
+        aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+        class="text-[var(--color-on-surface)] transition hover:text-[var(--color-tertiary)]"
+        on:click={() => (isMenuOpen = !isMenuOpen)}
+      >
+        {#if isMenuOpen}
+          <!-- X icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        {:else}
+          <!-- Hamburger icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        {/if}
+      </button>
+    </div>
+
+    <!-- Desktop ThemeToggle (hidden on mobile, shown via mobile menu instead) -->
+    <div class="hidden md:block">
+      <ThemeToggle compact />
+    </div>
   </div>
+  <!-- Mobile slide-down menu -->
+  {#if isMenuOpen}
+    <nav
+      transition:slide={{ duration: 250 }}
+      class="border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]/95 backdrop-blur-md md:hidden"
+    >
+      <div class="mx-auto flex max-w-[90rem] flex-col gap-4 px-6 py-5">
+        {#each navItems as section (section.id)}
+          {@const isActive = activeId === section.id}
+          <a
+            href={section.path}
+            target={section.external ? '_blank' : undefined}
+            rel={section.external ? 'noreferrer' : undefined}
+            class="text-sm font-medium transition hover:text-[var(--color-on-surface)] {isActive
+              ? 'text-[var(--color-on-surface)] underline decoration-[var(--color-tertiary)] decoration-2 underline-offset-8'
+              : 'text-[var(--color-on-surface-muted)]'}"
+            on:click={() => (isMenuOpen = false)}
+          >
+            {section.label}
+          </a>
+        {/each}
+      </div>
+    </nav>
+  {/if}
 </header>

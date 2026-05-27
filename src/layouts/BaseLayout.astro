@@ -4,6 +4,7 @@ import HeaderNav from '../components/HeaderNav.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/CustomCursor.svelte';
 import AgentChat from '../components/AgentChat.svelte';
+import CommandPalette from '../components/CommandPalette.svelte';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -101,8 +102,8 @@ const canonicalURL = new URL(
     >
     </div>
 
-    <CustomCursor client:load transition:persist />
-    <HeaderNav client:load />
+    <CustomCursor client:idle transition:persist />
+    <HeaderNav client:idle />
 
     <slot />
 
@@ -195,6 +196,7 @@ const canonicalURL = new URL(
       </div>
     </footer>
 
+    {/* @ts-ignore - svelte2tsx false positive */}
     <CommandPalette client:idle />
     <AgentChat client:idle />
   </body>

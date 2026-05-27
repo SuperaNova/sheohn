@@ -144,7 +144,7 @@
               {project.summary}
             </p>
 
-            <div class="mt-8 flex flex-wrap gap-2">
+            <ul class="mt-8 flex list-none flex-wrap gap-2">
               {#each project.stack as tool (`${project.title}-${tool}`)}
                 <li
                   class="list-none rounded bg-[var(--color-surface-container)] px-2.5 py-1.5 text-xs font-medium tracking-wide text-[var(--color-on-surface-muted)]"
@@ -152,7 +152,7 @@
                   {tool}
                 </li>
               {/each}
-            </div>
+            </ul>
 
             <a
               class="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { spring } from 'svelte/motion';
+  import { scrollState } from '../store';
 
   let scrollY = 0;
   let scrollHeight = 0;
@@ -16,6 +17,7 @@
     } else {
       $progress = 0;
     }
+    scrollState.set({ scrollY, scrollHeight, innerHeight });
   }
 </script>
 
