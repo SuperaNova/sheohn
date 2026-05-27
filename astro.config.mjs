@@ -13,6 +13,10 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://sheohn.dev',
   output: 'static',
+  prefetch: {
+    defaultStrategy: 'hover',
+    prefetchAll: true
+  },
   integrations: [svelte(), mdx(), sitemap()],
 
   vite: {
