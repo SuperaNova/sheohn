@@ -25,23 +25,13 @@ import { personalInfo } from '../data/personalInfo';
           >
             About Me
           </h2>
-          <p
-            class="mt-6 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface)]"
-          >
-            I am a Software Developer and Systems Architect focused on building
-            scalable, resilient, and highly interactive applications. I
-            specialize in the intersection of modern frontend architectures and
-            robust backend systems.
-          </p>
-          <p
-            class="mt-4 max-w-2xl leading-[1.6] text-[var(--color-on-surface-muted)]"
-          >
-            With a background in both systems engineering and frontend
-            development, I enjoy bridging the gap between deep technical
-            architecture and seamless user experiences. When I'm not coding, I'm
-            usually exploring new open-source tools or writing technical
-            documentation.
-          </p>
+          {personalInfo.about.paragraphs.map((p, i) => (
+            <p
+              class={`max-w-2xl text-[var(--color-on-surface${i === 0 ? '' : '-muted'})] leading-[1.6] ${i === 0 ? 'mt-6 text-lg' : 'mt-4'}`}
+            >
+              {p}
+            </p>
+          ))}
         </div>
 
         <div
@@ -55,14 +45,12 @@ import { personalInfo } from '../data/personalInfo';
           <h3
             class="font-display mt-3 text-2xl font-semibold text-[var(--color-on-surface)]"
           >
-            Building AI-integrated Web Systems
+            {personalInfo.about.currentFocusTitle}
           </h3>
           <p
             class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
           >
-            Exploring the boundaries of LLMs in production environments and
-            building tools that enhance developer productivity. Currently
-            focused on RAG architectures and edge computing.
+            {personalInfo.about.currentFocusDescription}
           </p>
         </div>
       </div>

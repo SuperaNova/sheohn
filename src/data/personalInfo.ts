@@ -1,12 +1,20 @@
 export const personalInfo = {
   name: "Jared Sheohn L. Acebes",
-  title: "Software Developer & Systems Architect",
+  title: "Computer Science Student",
   education: "Bachelor of Science in Computer Science @ CIT-U",
-  bio: "AI Trainee Developer at Ace-1 IT Solutions. President of GDG on Campus CIT-U. Passionate about AI-integrated web systems.",
-  strategicNote: "Dedicated to driving unhindered technical innovation. Specializing in highly optimized architectures and uncompromising visual precision.",
+  bio: "President of GDG on Campus CIT-U. Systems-focused developer building reliable backend infrastructure, AI workflows, and low-level tools.",
+  strategicNote: "Dedicated to building optimized, system-level architectures and robust, high-performance software across cloud and local environments.",
   socials: {
     github: "https://github.com/SuperaNova",
-    linkedin: "https://linkedin.com/in/your-profile"
+    linkedin: "https://www.linkedin.com/in/jared-sheohn-acebes-316aab297"
+  },
+  about: {
+    paragraphs: [
+      "I am a Software Developer and Systems Engineer focused on building resilient backend infrastructure, AI-integrated pipelines, and low-level architecture. I specialize in highly optimized systems, from orchestrating cloud environments to writing custom language interpreters.",
+      "My work revolves around deep technical execution and hardware-to-software integration. When I'm not coding, I'm usually exploring new open-source tools, optimizing local model executions, or experimenting with system automation."
+    ],
+    currentFocusTitle: "Building Systems & AI Infrastructure",
+    currentFocusDescription: "Exploring the boundaries of local AI execution and building tools that optimize complex technical workflows. Currently focused on multi-agent pipelines, memory-bound model quantization, and robust backend architectures."
   },
   experience: [
     {
@@ -35,7 +43,7 @@ export const personalInfo = {
     },
     {
       id: 'lead-3',
-      date: '2025',
+      date: 'Oct 2025',
       role: 'Management Information Team (MIT) Lead',
       organization: 'Angat Bayanihan Volunteer Network',
       description: 'Developed an information system for public data analysis and coordinated relief deployment to 30,000 families across 44 barangays during the 2025 Bogo earthquake.',
@@ -46,7 +54,7 @@ export const personalInfo = {
       date: 'Expected 2027',
       role: 'Bachelor of Science in Computer Science',
       organization: 'Cebu Institute of Technology - University',
-      description: 'Certifications: CodeChum C Certificate, CodeChum Java Certificate.',
+      description: 'Scholars: DOST-SEI Junior Level Science Scholarship (JLSS) Batch 2025, CIT-U College Dance Troupe.',
       category: 'Education',
     },
   ]
