@@ -8,9 +8,7 @@ test.describe('Projects', () => {
       page.getByRole('heading', { level: 1, name: 'Case Studies' }),
     ).toBeVisible();
 
-    const firstCard = page
-      .locator('a[aria-label^="View case study:"]')
-      .first();
+    const firstCard = page.locator('a[aria-label^="View case study:"]').first();
     await expect(firstCard).toBeVisible();
 
     const href = await firstCard.getAttribute('href');

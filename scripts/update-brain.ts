@@ -35,7 +35,7 @@ async function updateBrain() {
     },
   });
 
-  const vectors = myFacts.map((fact, i) => ({
+  const vectors = myFacts.map((fact: string, i: number) => ({
     id: `fact_${i}`,
     vector: embeddings[i],
     metadata: { text: fact }, // We store the actual string here to return to the LLM later

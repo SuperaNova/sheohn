@@ -95,13 +95,21 @@ import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
           </h3>
           <div class="flex flex-wrap gap-2">
             {
-              ['C++', 'Java', 'Python', 'Rust', 'TypeScript', 'JavaScript', 'Dart', 'SQL', 'NoSQL'].map(
-                (item) => (
-                  <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
-                    {item}
-                  </span>
-                ),
-              )
+              [
+                'C++',
+                'Java',
+                'Python',
+                'Rust',
+                'TypeScript',
+                'JavaScript',
+                'Dart',
+                'SQL',
+                'NoSQL',
+              ].map((item) => (
+                <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
+                  {item}
+                </span>
+              ))
             }
           </div>
         </article>
@@ -124,7 +132,7 @@ import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
                 'Make',
                 'Docker',
                 'Git',
-                'GitHub'
+                'GitHub',
               ].map((item) => (
                 <span class="rounded-md border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-muted)]">
                   {item}
