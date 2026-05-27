@@ -10,7 +10,7 @@ const resend = new Resend(
 
 const ContactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email({ message: 'Invalid email address' }),
   message: z.string().min(10, 'Message must be at least 10 characters'),
 });
 
@@ -56,6 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    console.error('Contact API Error:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

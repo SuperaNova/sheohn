@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 
 import mdx from '@astrojs/mdx';
-import sitemap from '@astrojs/sitemap'; 
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
   output: 'static',
   prefetch: {
     defaultStrategy: 'hover',
-    prefetchAll: true
+    prefetchAll: true,
   },
   integrations: [svelte(), mdx(), sitemap()],
 

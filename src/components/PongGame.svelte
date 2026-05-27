@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null;
@@ -95,7 +95,7 @@
 
     // Draw background (transparent so it shows the div background)
     ctx.clearRect(0, 0, width, height);
-    
+
     // Middle dashed line
     ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
     ctx.beginPath();
@@ -105,17 +105,23 @@
     ctx.stroke();
 
     // Draw player paddle (tertiary color / green)
-    ctx.fillStyle = '#10b981'; 
+    ctx.fillStyle = '#10b981';
     ctx.fillRect(PADDLE_WIDTH, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
 
     // Draw AI paddle (error color / red)
-    ctx.fillStyle = '#ef4444'; 
+    ctx.fillStyle = '#ef4444';
     ctx.fillRect(width - PADDLE_WIDTH * 2, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
 
     // Draw ball
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(ballX + BALL_SIZE / 2, ballY + BALL_SIZE / 2, BALL_SIZE / 2, 0, Math.PI * 2);
+    ctx.arc(
+      ballX + BALL_SIZE / 2,
+      ballY + BALL_SIZE / 2,
+      BALL_SIZE / 2,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
 
     // Draw scores
@@ -132,27 +138,32 @@
   function handleMouseMove(e: MouseEvent) {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const root = document.documentElement;
     // Scale coordinates if canvas style width doesn't match attribute width
     const scaleY = canvas.height / rect.height;
     const mouseY = (e.clientY - rect.top) * scaleY;
-    playerY = Math.max(0, Math.min(height - PADDLE_HEIGHT, mouseY - PADDLE_HEIGHT / 2));
+    playerY = Math.max(
+      0,
+      Math.min(height - PADDLE_HEIGHT, mouseY - PADDLE_HEIGHT / 2),
+    );
     if (!playing) playing = true;
   }
-  
+
   function handleTouchMove(e: TouchEvent) {
     if (!canvas || e.touches.length === 0) return;
     e.preventDefault(); // prevent scrolling
     const rect = canvas.getBoundingClientRect();
     const scaleY = canvas.height / rect.height;
     const touchY = (e.touches[0].clientY - rect.top) * scaleY;
-    playerY = Math.max(0, Math.min(height - PADDLE_HEIGHT, touchY - PADDLE_HEIGHT / 2));
+    playerY = Math.max(
+      0,
+      Math.min(height - PADDLE_HEIGHT, touchY - PADDLE_HEIGHT / 2),
+    );
     if (!playing) playing = true;
   }
 
   onMount(() => {
     ctx = canvas.getContext('2d');
-    
+
     // Set internal resolution strictly
     canvas.width = width;
     canvas.height = height;
@@ -167,22 +178,30 @@
   });
 </script>
 
-<div class="relative mx-auto mt-8 w-full max-w-[600px] rounded-xl border border-[var(--color-on-surface-muted)] bg-[var(--color-surface-container)] shadow-2xl overflow-hidden aspect-[3/2]">
-  <div class="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-3 text-xs font-semibold tracking-widest text-[var(--color-on-surface-muted)]">
+<div
+  class="relative mx-auto mt-8 w-full max-w-[600px] rounded-xl border border-[var(--color-on-surface-muted)] bg-[var(--color-surface-container)] shadow-2xl overflow-hidden aspect-[3/2]"
+>
+  <div
+    class="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-3 text-xs font-semibold tracking-widest text-[var(--color-on-surface-muted)]"
+  >
     <span>YOU</span>
     <span>SYS.AI</span>
   </div>
-  
+
   <canvas
     bind:this={canvas}
     on:mousemove={handleMouseMove}
     on:touchmove|nonpassive={handleTouchMove}
     class="block w-full h-full touch-none cursor-none"
   ></canvas>
-  
+
   {#if !playing && playerScore === 0 && aiScore === 0}
-    <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <span class="animate-pulse rounded bg-black/50 px-3 py-1 text-sm font-semibold text-white backdrop-blur">
+    <div
+      class="pointer-events-none absolute inset-0 flex items-center justify-center"
+    >
+      <span
+        class="animate-pulse rounded bg-black/50 px-3 py-1 text-sm font-semibold text-white backdrop-blur"
+      >
         Move mouse to start
       </span>
     </div>

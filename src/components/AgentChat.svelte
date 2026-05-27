@@ -1,6 +1,7 @@
 <script lang="ts">
+  import type { Component } from 'svelte';
   let loaded = $state(false);
-  let ChatPanel: any = $state(null);
+  let ChatPanel: Component | null = $state(null);
 
   function loadAgent() {
     loaded = true;
