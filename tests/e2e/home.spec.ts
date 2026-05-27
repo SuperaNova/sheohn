@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Home page', () => {
   test('loads hero and featured projects section', async ({ page }) => {
@@ -12,6 +13,15 @@ test.describe('Home page', () => {
       page.getByRole('link', { name: 'View All Projects' }),
     ).toHaveAttribute('href', '/projects');
     await expect(page.locator('section#projects')).toBeVisible();
+
+    // Accessibility scan
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .disableRules(['landmark-complementary-is-top-level', 'landmark-unique'])
+      .analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+
+    // Visual regression test
+    await expect(page).toHaveScreenshot('homepage.png', { fullPage: true });
   });
 
   test('footer navigation routes to stack section', async ({ page }) => {
