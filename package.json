@@ -17,7 +17,18 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:unit": "vitest",
-    "precommit": "powershell -ExecutionPolicy Bypass -File ./scripts/pre-commit.ps1"
+    "test:unit:coverage": "vitest run --coverage",
+    "lighthouse": "lhci autorun",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,svelte,astro,mjs,js}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{md,mdx,json,jsonc,yaml,yml,css,html}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.59",
@@ -43,6 +54,7 @@
     "@astrojs/check": "^0.9.2",
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
@@ -50,11 +62,14 @@
     "@types/node": "^25.9.1",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^10.1.0",
     "eslint-plugin-astro": "^1.6.0",
     "eslint-plugin-svelte": "^3.17.1",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^4.0.1",

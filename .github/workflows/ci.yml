@@ -65,8 +65,47 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run vitest
-        run: npm run test:unit -- --run
+      - name: Run vitest with coverage
+        run: npm run test:unit:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  lighthouse:
+    name: Lighthouse audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: stub
+          UPSTASH_VECTOR_REST_URL: https://stub.upstash.io
+          UPSTASH_VECTOR_REST_TOKEN: stub
+          UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: stub
+          RESEND_API_KEY: stub
+
+      - name: Run Lighthouse CI
+        run: npm run lighthouse
 
   e2e:
     name: E2E tests (Playwright)
