@@ -96,6 +96,12 @@
             class="group/image relative isolate block aspect-video w-full overflow-hidden rounded-2xl bg-[var(--color-surface-container)] md:aspect-[4/3] md:w-3/5"
           >
             {#if project.image}
+              <!-- 
+                TODO (Performance): These images are currently loading as raw background images.
+                When replacing temporary images with real ones, either compress them to webp/avif,
+                or use an optimized <img loading="lazy" /> element instead of a background image
+                to drastically improve initial page load times on slow connections.
+              -->
               <div
                 class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover/image:scale-105"
                 style="background-image: url({project.image})"
@@ -138,7 +144,7 @@
               {project.summary}
             </p>
 
-            <div class="mt-8 flex flex-wrap gap-2">
+            <ul class="mt-8 flex list-none flex-wrap gap-2">
               {#each project.stack as tool (`${project.title}-${tool}`)}
                 <li
                   class="list-none rounded bg-[var(--color-surface-container)] px-2.5 py-1.5 text-xs font-medium tracking-wide text-[var(--color-on-surface-muted)]"
@@ -146,7 +152,7 @@
                   {tool}
                 </li>
               {/each}
-            </div>
+            </ul>
 
             <a
               class="mt-8 inline-flex items-center gap-2 self-start rounded-lg bg-[var(--color-surface-container)] px-5 py-2.5 text-sm font-semibold tracking-wide text-[var(--color-on-surface)] transition hover:bg-[var(--color-tertiary)] hover:text-black"

@@ -17,28 +17,29 @@
 
     document.body.style.overflow = 'hidden';
 
-    const duration = 1200;
-    const intervalTime = 20;
-    const steps = duration / intervalTime;
-    let currentStep = 0;
+    const duration = 600;
+    const startTime = performance.now();
+    let rafId: number;
 
-    const interval = setInterval(() => {
-      currentStep++;
-      const Math_pow = Math.pow(1 - currentStep / steps, 4);
-      const easeOutQuart = 1 - Math_pow;
+    function tick(now: number) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const easeOutQuart = 1 - Math.pow(1 - t, 4);
       progress = Math.min(Math.round(easeOutQuart * 100), 100);
 
-      if (currentStep >= steps) {
-        clearInterval(interval);
+      if (t < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
         setTimeout(() => {
           isLoading = false;
           document.body.style.overflow = '';
-        }, 400);
+        }, 100);
       }
-    }, intervalTime);
+    }
+    rafId = requestAnimationFrame(tick);
 
     return () => {
-      clearInterval(interval);
+      cancelAnimationFrame(rafId);
       document.body.style.overflow = '';
     };
   });
@@ -47,7 +48,7 @@
 {#if isLoading}
   <div
     id="global-loader"
-    out:fly={{ y: '-100%', duration: 800, easing: cubicOut }}
+    out:fly={{ y: '-100%', duration: 500, easing: cubicOut }}
     class="bg-[var(--color-surface)] text-[var(--color-on-surface)] fixed inset-0 z-[100] flex flex-col justify-end p-6 md:p-12"
   >
     <!-- Faint Architectural Grid Backdrop for loader -->

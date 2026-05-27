@@ -15,12 +15,18 @@
 
   onMount(() => {
     show = true;
+    let rafId: number;
     const timeout = setTimeout(() => {
       isDecoding = true;
-      let iteration = 0;
       const length = text.length;
+      const startTime = performance.now();
+      const msPerStep = 30; // match original 30ms interval
+      const stepsPerIteration = 3; // match original iteration += 1/3
 
-      const interval = setInterval(() => {
+      function tick(now: number) {
+        const elapsed = now - startTime;
+        const iteration = elapsed / msPerStep / stepsPerIteration;
+
         displayText = text
           .split('')
           .map((letter, index) => {
@@ -32,17 +38,19 @@
           .join('');
 
         if (iteration >= length) {
-          clearInterval(interval);
           isDecoding = false;
+        } else {
+          rafId = requestAnimationFrame(tick);
         }
+      }
 
-        iteration += 1 / 3;
-      }, 30);
-
-      return () => clearInterval(interval);
+      rafId = requestAnimationFrame(tick);
     }, delay);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(rafId);
+    };
   });
 </script>
 
