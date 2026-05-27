@@ -1,0 +1,17 @@
+# Build output
+dist/
+.vercel/
+.astro/
+
+# Test / audit output
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Lockfiles + machine files
+package-lock.json
+.husky/_/
+
+# Generated content
+public/sitemap-*.xml

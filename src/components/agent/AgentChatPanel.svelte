@@ -1,16 +1,17 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
   import { setFocus } from '../../store';
 
   let { startMinimized = false } = $props();
 
-  let isMinimized = $state(startMinimized);
+  let isMinimized = $state(untrack(() => startMinimized));
   let chatError = $state('');
   let inputValue = $state('');
   let messagesEndEl = $state<HTMLDivElement | null>(null);
 
-  let chat: Chat | null = null;
+  let chat = $state<Chat | null>(null);
   try {
     chat = new Chat({
       transport: new DefaultChatTransport({ api: '/api/chat' }),

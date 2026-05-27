@@ -2,11 +2,14 @@
   "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse-ci/main/docs/configuration.md",
   "ci": {
     "collect": {
-      "staticDistDir": "./dist",
+      "staticDistDir": "./.vercel/output/static",
       "url": [
-        "http://localhost/",
-        "http://localhost/about/",
-        "http://localhost/projects/"
+        "http://localhost/?theme=light",
+        "http://localhost/?theme=dark",
+        "http://localhost/about/?theme=light",
+        "http://localhost/about/?theme=dark",
+        "http://localhost/projects/?theme=light",
+        "http://localhost/projects/?theme=dark"
       ],
       "numberOfRuns": 1,
       "settings": {
