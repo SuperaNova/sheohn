@@ -24,7 +24,7 @@
 </script>
 
 <header
-  class="absolute inset-x-0 top-0 z-50 border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]"
+  class="fixed inset-x-0 top-0 z-50 border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]/95 backdrop-blur-md"
 >
   <div
     class="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between px-6 md:px-10"
