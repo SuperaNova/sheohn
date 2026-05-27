@@ -19,6 +19,8 @@
     "test:unit": "vitest",
     "test:unit:coverage": "vitest run --coverage",
     "lighthouse": "lhci autorun",
+    "lighthouse:local": "npm run build && lhci autorun",
+    "preflight": "npm run format:check && npm run lint && npm run check && npm run test:unit:coverage && npm run build && npm run lighthouse && npm run test:e2e",
     "prepare": "husky"
   },
   "lint-staged": {

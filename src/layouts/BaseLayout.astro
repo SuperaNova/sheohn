@@ -92,8 +92,16 @@ const canonicalURL = new URL(
 
     <script is:inline>
       function applyThemeAndLoader() {
-        // 1. Prevent Dark Mode Flicker
+        const isLocalAudit =
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1';
+        const urlTheme = isLocalAudit
+          ? new URLSearchParams(window.location.search).get('theme')
+          : null;
+        const override =
+          urlTheme === 'light' || urlTheme === 'dark' ? urlTheme : null;
         const theme =
+          override ||
           localStorage.getItem('theme') ||
           (window.matchMedia('(prefers-color-scheme: dark)').matches
             ? 'dark'

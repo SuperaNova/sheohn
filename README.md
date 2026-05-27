@@ -16,26 +16,30 @@ Live at [sheohn.dev](https://sheohn.dev).
 
 ## Scripts
 
-| Command             | What it does                                |
-| ------------------- | ------------------------------------------- |
-| `npm run dev`       | Start dev server at `http://localhost:4321` |
-| `npm run build`     | Production build to `./dist/`               |
-| `npm run preview`   | Preview the production build locally        |
-| `npm run lint`      | ESLint over `src/`                          |
-| `npm run format`    | Prettier across the repo                    |
-| `npm run check`     | `astro check` (TS strict + Astro)           |
-| `npm run test:unit` | Vitest unit tests                           |
-| `npm run test:e2e`  | Playwright end-to-end                       |
+| Command                      | What it does                                                         |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                | Start dev server at `http://localhost:4321`                          |
+| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)    |
+| `npm run preview`            | Preview the production build locally                                 |
+| `npm run lint`               | ESLint over `src/`                                                   |
+| `npm run format`             | Prettier write across the repo                                       |
+| `npm run format:check`       | Prettier check (no writes) — what CI runs                            |
+| `npm run check`              | `astro check` (TS strict + Astro)                                    |
+| `npm run test:unit`          | Vitest in watch mode                                                 |
+| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                            |
+| `npm run test:e2e`           | Playwright end-to-end                                                |
+| `npm run lighthouse:local`   | Build + Lighthouse audit locally                                     |
+| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e |
 
-### Pre-push checklist
+### Hooks (managed by Husky)
 
-Run before every push to keep CI green:
+| Hook       | Fires on     | What it runs                                           |
+| ---------- | ------------ | ------------------------------------------------------ |
+| pre-commit | `git commit` | `lint-staged` (prettier + eslint on staged files only) |
+| pre-push   | `git push`   | `lint` + `check` + `test:unit:coverage`                |
 
-```bash
-npm run format
-npm run lint
-npm run check
-```
+Bypass with `--no-verify` if you need to (rarely).
+Run `npm run preflight` before a big push if you want full CI parity locally.
 
 ## Environment
 
