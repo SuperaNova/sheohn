@@ -25,13 +25,15 @@ import { personalInfo } from '../data/personalInfo';
           >
             About Me
           </h2>
-          {personalInfo.about.paragraphs.map((p, i) => (
-            <p
-              class={`max-w-2xl text-[var(--color-on-surface${i === 0 ? '' : '-muted'})] leading-[1.6] ${i === 0 ? 'mt-6 text-lg' : 'mt-4'}`}
-            >
-              {p}
-            </p>
-          ))}
+          {
+            personalInfo.about.paragraphs.map((p, i) => (
+              <p
+                class={`max-w-2xl text-[var(--color-on-surface${i === 0 ? '' : '-muted'})] leading-[1.6] ${i === 0 ? 'mt-6 text-lg' : 'mt-4'}`}
+              >
+                {p}
+              </p>
+            ))
+          }
         </div>
 
         <div

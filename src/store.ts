@@ -21,8 +21,12 @@ export const commandPaletteOpen = writable<boolean>(false);
 
 export const theme = writable<'light' | 'dark'>('dark');
 
+let themeInitialized = false;
+
 export function initTheme() {
-  if (typeof window === 'undefined') return;
+  if (themeInitialized || typeof window === 'undefined') return;
+  themeInitialized = true;
+
   const saved = window.localStorage.getItem('theme');
   const initialTheme =
     saved === 'light' || saved === 'dark'

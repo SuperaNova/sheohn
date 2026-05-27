@@ -1,23 +1,25 @@
 <script lang="ts">
-  import { spring } from 'svelte/motion';
+  import { Spring } from 'svelte/motion';
   import { inview } from '../lib/actions/inview';
   import { scrollState } from '../store';
   import DecoderText from './DecoderText.svelte';
   import { personalInfo } from '../data/personalInfo';
 
-  const parallaxY = spring(0, {
+  const parallaxY = new Spring(0, {
     stiffness: 0.11,
     damping: 0.28,
   });
 
-  scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
-    if (scrollHeight > innerHeight && innerHeight > 0) {
-      const scrollYProgress = scrollY / (scrollHeight - innerHeight);
-      $parallaxY = scrollYProgress * -40; // Map [0, 1] to [0, -40]
-    } else {
-      $parallaxY = 0;
-    }
-  });
+  $effect(() =>
+    scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
+      if (scrollHeight > innerHeight && innerHeight > 0) {
+        const scrollYProgress = scrollY / (scrollHeight - innerHeight);
+        parallaxY.target = scrollYProgress * -40;
+      } else {
+        parallaxY.target = 0;
+      }
+    }),
+  );
 </script>
 
 <section
@@ -30,7 +32,7 @@
   ></div>
 
   <div
-    style:transform="translateY({$parallaxY}px)"
+    style:transform="translateY({parallaxY.current}px)"
     class="grid w-full items-end gap-12 lg:grid-cols-[1.2fr_0.8fr]"
   >
     <div>
@@ -38,10 +40,7 @@
         style:transition-delay="0ms"
         class="hero-item mb-5 text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
       >
-        <DecoderText
-          text={personalInfo.title}
-          delay={1800}
-        />
+        <DecoderText text={personalInfo.title} delay={1800} />
       </p>
 
       <h1
@@ -55,10 +54,7 @@
         style:transition-delay="240ms"
         class="hero-item mt-6 font-mono text-lg tracking-tight text-[var(--color-on-surface)] md:text-xl"
       >
-        <DecoderText
-          text={personalInfo.education}
-          delay={2400}
-        />
+        <DecoderText text={personalInfo.education} delay={2400} />
       </p>
 
       <div

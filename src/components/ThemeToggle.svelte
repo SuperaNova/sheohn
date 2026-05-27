@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { theme, initTheme, toggleTheme } from '../store';
 
-  export let compact = false;
+  let { compact = false }: { compact?: boolean } = $props();
 
   onMount(() => {
     initTheme();

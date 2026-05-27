@@ -10,8 +10,8 @@
     { id: 'resume', label: 'Resume', path: '/resume.pdf', external: true },
   ];
 
-  let activeId = '';
-  let isMenuOpen = false;
+  let activeId = $state('');
+  let isMenuOpen = $state(false);
 
   onMount(() => {
     const path = window.location.pathname;
