@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { inview } from '../lib/actions/inview';
+  import { inview } from '../../lib/actions/inview';
 
   let { id = '', class: klass = '', className = '', children } = $props();
 </script>

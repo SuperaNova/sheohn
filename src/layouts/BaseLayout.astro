@@ -1,10 +1,10 @@
 ---
 import '../styles/global.css';
-import HeaderNav from '../components/HeaderNav.svelte';
+import HeaderNav from '../components/chrome/HeaderNav.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
-import CustomCursor from '../components/CustomCursor.svelte';
-import AgentChat from '../components/AgentChat.svelte';
-import CommandPalette from '../components/CommandPalette.svelte';
+import CustomCursor from '../components/chrome/CustomCursor.svelte';
+import AgentChat from '../components/agent/AgentChat.svelte';
+import CommandPalette from '../components/chrome/CommandPalette.svelte';
 import { ClientRouter } from 'astro:transitions';
 
 import { personalInfo } from '../data/personalInfo';

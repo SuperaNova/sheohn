@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { commandPaletteOpen, toggleTheme } from '../store';
+  import { commandPaletteOpen, toggleTheme } from '../../store';
   import { fade, fly } from 'svelte/transition';
   import { navigate } from 'astro:transitions/client';
 
