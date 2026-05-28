@@ -4,7 +4,7 @@ import SectionReveal from '../../components/ui/SectionReveal.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
-const sortedProjects = allProjects.sort((a, b) => a.data.order - b.data.order);
+const sortedProjects = allProjects.sort((a, b) => b.data.order - a.data.order);
 import { personalInfo } from '../../data/personalInfo';
 ---
 
