@@ -45,7 +45,7 @@
 
       <h1
         style:transition-delay="120ms"
-        class="hero-item font-display text-5xl leading-[1.02] text-[var(--color-on-surface)] sm:text-6xl md:text-7xl"
+        class="hero-item font-display text-5xl leading-[1.04] text-[var(--color-on-surface)] sm:text-[56px] md:text-6xl"
       >
         {personalInfo.name}
       </h1>
@@ -84,7 +84,7 @@
 
       <div style:transition-delay="600ms" class="hero-item mt-10">
         <a
-          href="#footer"
+          href="#contact"
           class="inline-flex rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-transform hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.985]"
         >
           Initiate Strategic Engagement

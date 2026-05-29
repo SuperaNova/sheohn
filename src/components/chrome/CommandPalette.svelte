@@ -29,6 +29,11 @@
       action: () => goto('/about'),
     },
     {
+      id: 'contact',
+      label: 'Go to Contact',
+      action: () => goto('/#contact'),
+    },
+    {
       id: 'theme',
       label: 'Toggle Dark/Light Mode',
       action: () => {

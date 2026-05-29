@@ -28,7 +28,7 @@ const canonicalURL = new URL(
 ---
 
 <!doctype html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -100,12 +100,10 @@ const canonicalURL = new URL(
           : null;
         const override =
           urlTheme === 'light' || urlTheme === 'dark' ? urlTheme : null;
-        const theme =
-          override ||
-          localStorage.getItem('theme') ||
-          (window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light');
+        // Default to light on first visit to showcase the canonical design.
+        // Returning users keep their explicit choice (localStorage); OS preference
+        // is intentionally ignored so the design lands the same way every time.
+        const theme = override || localStorage.getItem('theme') || 'light';
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         } else {
@@ -136,98 +134,19 @@ const canonicalURL = new URL(
     >
     </div>
 
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1000] focus:rounded-md focus:bg-[var(--color-tertiary)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+    >
+      Skip to main content
+    </a>
+
     <CustomCursor client:idle transition:persist />
     <HeaderNav client:idle />
 
-    <slot />
-
-    <footer
-      id="footer"
-      class="relative z-10 scroll-mt-24 border-t-2 border-[var(--color-on-surface-muted)] bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] py-16"
-    >
-      <div
-        class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10"
-      >
-        <div>
-          <p class="font-display text-3xl text-[var(--color-on-surface)]">
-            {personalInfo.name}
-          </p>
-          <p
-            class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
-          >
-            {personalInfo.title} building robust, scalable applications.
-          </p>
-        </div>
-
-        <div>
-          <p
-            class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface)] uppercase"
-          >
-            Navigation
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a href="/" class="transition hover:text-[var(--color-on-surface)]"
-              >Home</a
-            >
-            <a
-              href="/projects"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >Projects</a
-            >
-            <a
-              href="/about#stack"
-              class="transition hover:text-[var(--color-on-surface)]">Stack</a
-            >
-            <a
-              href="/about"
-              class="transition hover:text-[var(--color-on-surface)]">About</a
-            >
-          </nav>
-        </div>
-
-        <div>
-          <p
-            class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface)] uppercase"
-          >
-            Connect
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a
-              href={personalInfo.socials.github}
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]">GitHub</a
-            >
-            <a
-              href={personalInfo.socials.linkedin}
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >LinkedIn</a
-            >
-            <a
-              href="mailto:jared@sheohn.dev"
-              class="transition hover:text-[var(--color-on-surface)]">Email</a
-            >
-            <a
-              href="/resume.pdf"
-              class="font-medium text-[var(--color-on-surface)] transition hover:text-[var(--color-on-surface-muted)]"
-              >Download Resume</a
-            >
-          </nav>
-        </div>
-      </div>
-
-      <div
-        class="mx-auto mt-12 w-full max-w-[90rem] border-t border-white/10 px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10"
-      >
-        &copy; {new Date().getFullYear()} sheohn.dev
-      </div>
-    </footer>
+    <div id="main-content">
+      <slot />
+    </div>
 
     <CommandPalette client:idle />
     <AgentChat client:idle />
