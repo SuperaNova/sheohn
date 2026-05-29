@@ -53,6 +53,28 @@ body {
     color 300ms ease;
 }
 
+/* Global keyboard-focus indicator — every interactive element gets a visible
+   ring when navigated by keyboard. Mouse clicks still suppress it via
+   :focus-visible's intent detection. */
+:focus-visible {
+  outline: 2px solid var(--color-tertiary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Respect users who prefer reduced motion: disable transitions and
+   transform-based parallax, scroll smoothing, etc. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .font-display {
   font-family: 'Playfair Display', Georgia, serif;
   letter-spacing: -0.02em;

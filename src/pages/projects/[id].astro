@@ -48,7 +48,7 @@ const { Content, headings } = await render(entry);
         <header class="mb-12">
           <div class="mb-6 flex flex-wrap items-center gap-3">
             <span
-              class="text-[10px] font-bold tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase"
+              class="text-xs font-bold tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase"
             >
               {entry.data.category} • {entry.data.status}
             </span>
@@ -83,7 +83,7 @@ const { Content, headings } = await render(entry);
           {
             entry.data.role && (
               <div class="flex flex-col gap-2">
-                <span class="text-[10px] font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
+                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
                   Role
                 </span>
                 <span class="text-sm font-medium text-[var(--color-on-surface)]">
@@ -95,7 +95,7 @@ const { Content, headings } = await render(entry);
           {
             entry.data.timeline && (
               <div class="flex flex-col gap-2">
-                <span class="text-[10px] font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
+                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
                   Timeline
                 </span>
                 <span class="text-sm font-medium text-[var(--color-on-surface)]">
@@ -107,7 +107,7 @@ const { Content, headings } = await render(entry);
           {
             entry.data.team && (
               <div class="flex flex-col gap-2">
-                <span class="text-[10px] font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
+                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
                   Team
                 </span>
                 <span class="text-sm font-medium text-[var(--color-on-surface)]">
@@ -119,12 +119,12 @@ const { Content, headings } = await render(entry);
           {
             entry.data.stack && entry.data.stack.length > 0 && (
               <div class="flex w-full flex-col gap-3 md:ml-auto md:w-auto">
-                <span class="text-[10px] font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
+                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
                   Core Stack
                 </span>
                 <div class="flex flex-wrap gap-2">
                   {entry.data.stack.map((skill) => (
-                    <span class="rounded-full border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-[11px] font-medium tracking-wide text-[var(--color-on-surface-muted)]">
+                    <span class="rounded-full border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-3 py-1.5 text-xs font-medium tracking-wide text-[var(--color-on-surface-muted)]">
                       {skill}
                     </span>
                   ))}
@@ -136,7 +136,7 @@ const { Content, headings } = await render(entry);
 
         {/* Markdown Content */}
         <div
-          class="prose dark:prose-invert prose-lg prose-headings:font-display prose-headings:text-[var(--color-on-surface)] prose-headings:font-normal prose-headings:tracking-tight prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-4 prose-p:text-[var(--color-on-surface-muted)] prose-p:leading-relaxed prose-p:text-[16px] prose-a:text-[var(--color-tertiary)] hover:prose-a:text-[var(--color-on-surface)] prose-a:transition-colors prose-a:font-medium prose-strong:text-[var(--color-on-surface)] prose-strong:font-semibold prose-ul:text-[var(--color-on-surface-muted)] prose-ul:text-[16px] prose-ol:text-[var(--color-on-surface-muted)] prose-ol:text-[16px] prose-li:my-1 prose-code:text-[var(--color-tertiary)] prose-code:bg-[var(--color-surface-container)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:hidden prose-code:after:hidden prose-pre:bg-[var(--color-surface-container)] prose-pre:border prose-pre:border-[var(--color-outline-variant)] prose-img:w-full prose-img:border prose-img:border-[var(--color-outline-variant)] max-w-none"
+          class="prose dark:prose-invert prose-lg prose-headings:font-display prose-headings:text-[var(--color-on-surface)] prose-headings:font-normal prose-headings:tracking-tight prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-4 prose-p:text-[var(--color-on-surface-muted)] prose-p:leading-relaxed prose-p:text-[17px] prose-a:text-[var(--color-tertiary)] hover:prose-a:text-[var(--color-on-surface)] prose-a:transition-colors prose-a:font-medium prose-strong:text-[var(--color-on-surface)] prose-strong:font-semibold prose-ul:text-[var(--color-on-surface-muted)] prose-ul:text-[17px] prose-ol:text-[var(--color-on-surface-muted)] prose-ol:text-[17px] prose-li:my-1 prose-code:text-[var(--color-tertiary)] prose-code:bg-[var(--color-surface-container)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:hidden prose-code:after:hidden prose-pre:bg-[var(--color-surface-container)] prose-pre:border prose-pre:border-[var(--color-outline-variant)] prose-img:w-full prose-img:border prose-img:border-[var(--color-outline-variant)] max-w-none"
         >
           <Content />
         </div>

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Primary navigation', () => {
   test('header links navigate to projects and about', async ({ page }) => {

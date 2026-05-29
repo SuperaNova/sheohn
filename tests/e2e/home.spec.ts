@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Home page', () => {
@@ -21,14 +21,16 @@ test.describe('Home page', () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test('footer navigation routes to stack section', async ({ page }) => {
-    await page.goto('/');
+  test('contact section renders at the bottom of home', async ({ page }) => {
+    await page.goto('/#contact');
 
-    const footer = page.locator('footer');
-    await footer.getByRole('link', { name: 'Stack' }).click();
-    await page.waitForURL('**/about#stack');
-    const techStackHeading = page.getByRole('heading', { name: 'Tech Stack' });
-    await techStackHeading.scrollIntoViewIfNeeded();
-    await expect(techStackHeading).toBeVisible();
+    const contact = page.locator('section#contact');
+    await contact.scrollIntoViewIfNeeded();
+    await expect(
+      contact.getByRole('heading', { name: /build something|get in touch/i }),
+    ).toBeVisible();
+    await expect(
+      contact.getByRole('link', { name: 'jared.acebes@gmail.com' }),
+    ).toBeVisible();
   });
 });

@@ -66,7 +66,9 @@
 ></div>
 
 <style>
-  @media (pointer: fine) {
+  /* Hide the system cursor only when the user hasn't requested reduced motion.
+     Assistive-tech users who set prefers-reduced-motion keep their real cursor. */
+  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
     :global(*),
     :global(body),
     :global(a),

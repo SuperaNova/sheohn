@@ -129,7 +129,7 @@
           <div class="flex w-full flex-col justify-center py-4 md:w-2/5">
             <div class="mb-4 flex flex-wrap items-center gap-3">
               <span
-                class="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-[11px] font-bold tracking-wider text-[var(--color-tertiary)] uppercase"
+                class="rounded-md bg-[color-mix(in_srgb,var(--color-tertiary-container)_28%,transparent)] px-2.5 py-1 text-xs font-bold tracking-wider text-[var(--color-tertiary)] uppercase"
               >
                 {project.status}
               </span>
