@@ -15,6 +15,17 @@
   --color-tertiary: #2f5a3c;
   --color-tertiary-container: #23452d;
   --color-outline-variant: #c4c8c0;
+
+  /* Console treatment — the system "chrome" language. Theme-independent on
+     purpose: control surfaces (command deck, status line, boot) always read
+     as an instrument panel framing the warm content, regardless of light/dark. */
+  --color-console-surface: #0a0a0a;
+  --color-console-elev: #141414;
+  --color-console-line: rgba(74, 222, 128, 0.16);
+  --color-console-signal: #4ade80;
+  --color-console-signal-strong: #22c55e;
+  --color-console-text: #e6ece6;
+  --color-console-text-dim: #9aa69a;
 }
 
 :root {
@@ -151,7 +162,7 @@ body.scene-dimmed
 
 .is-spotlit {
   position: relative;
-  animation: scene-flash 3.2s ease-out;
+  animation: scene-flash 1.6s ease-out;
   z-index: 20;
 }
 

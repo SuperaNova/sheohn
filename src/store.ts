@@ -17,7 +17,21 @@ export function clearFocus() {
   activeFocus.set(null);
 }
 
-export const commandPaletteOpen = writable<boolean>(false);
+// Whether the unified command deck (palette + agent) is expanded.
+export const commandDeckOpen = writable<boolean>(false);
+
+// A query pushed into the agent from elsewhere (hero starter chips, etc.).
+// CommandDeck owns the Chat instance and listens here; `ts` forces re-fire
+// even when the same text is sent twice.
+export interface AgentQuery {
+  text: string;
+  ts: number;
+}
+export const agentQuery = writable<AgentQuery | null>(null);
+let agentSeq = 0;
+export function dispatchAgentQuery(text: string) {
+  agentQuery.set({ text, ts: ++agentSeq });
+}
 
 // Scene control: the agent emits a command (focus_section tool) and
 // ScenePilot.svelte pans to that section and spotlights it.

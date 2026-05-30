@@ -2,7 +2,11 @@
   import { Spring } from 'svelte/motion';
   import { inview } from '../../lib/actions/inview';
   import { magnetic } from '../../lib/actions/magnetic';
-  import { scrollState } from '../../store';
+  import {
+    scrollState,
+    commandDeckOpen,
+    dispatchAgentQuery,
+  } from '../../store';
   import DecoderText from '../ui/DecoderText.svelte';
   import { personalInfo } from '../../data/personalInfo';
 
@@ -10,6 +14,25 @@
     stiffness: 0.11,
     damping: 0.28,
   });
+
+  // First-move choreography: each chip sends a real query to the agent, which
+  // then physically drives the page (pan / spotlight / open case study).
+  const starters = [
+    {
+      label: 'show me what he built',
+      q: 'What has Jared built? Show me his projects.',
+    },
+    {
+      label: 'open the rust interpreter',
+      q: 'Open the Lexicon Rust interpreter case study.',
+    },
+    { label: "what's his stack?", q: 'What is his tech stack?' },
+    { label: 'is he available?', q: 'Is Jared available for opportunities?' },
+  ];
+
+  function openDeck() {
+    commandDeckOpen.set(true);
+  }
 
   $effect(() =>
     scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
@@ -26,7 +49,7 @@
 <section
   id="home"
   class="content-wrap section-space relative flex min-h-[100svh] scroll-mt-24 items-center pt-24 hero-section"
-  use:inview={{ once: true, amount: 0.5 }}
+  use:inview={{ once: true, amount: 0.2 }}
 >
   <div
     class="site-grid pointer-events-none absolute inset-0 z-0 opacity-10"
@@ -83,20 +106,53 @@
         {personalInfo.bio}
       </p>
 
-      <div style:transition-delay="600ms" class="hero-item mt-10 flex gap-4">
-        <a
-          href="#contact"
+      <div
+        style:transition-delay="600ms"
+        class="hero-item mt-10 flex flex-wrap items-center gap-4"
+      >
+        <button
+          type="button"
+          onclick={openDeck}
           use:magnetic={{ strength: 0.4, max: 12 }}
           class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
         >
-          Get in touch
-          <span
-            aria-hidden="true"
-            class="transition-transform duration-300 group-hover:translate-x-1"
-            >→</span
+          <span aria-hidden="true" class="font-mono text-emerald-300">›</span>
+          Ask the system
+          <kbd
+            class="ml-1 hidden rounded border border-white/20 px-1.5 py-0.5 font-mono text-[10px] text-slate-300 sm:inline"
+            >⌘K</kbd
           >
+        </button>
+        <a
+          href="#contact"
+          class="text-sm font-semibold tracking-wide text-[var(--color-on-surface-muted)] underline-offset-4 transition hover:text-[var(--color-on-surface)] hover:underline"
+        >
+          or get in touch →
         </a>
       </div>
+
+      <!-- Starter commands — first click drives the page via the agent. -->
+      <ul
+        style:transition-delay="680ms"
+        class="hero-item mt-6 flex flex-wrap gap-2 font-mono text-xs"
+      >
+        {#each starters as s (s.label)}
+          <li>
+            <button
+              type="button"
+              onclick={() => dispatchAgentQuery(s.q)}
+              class="group inline-flex items-center gap-1.5 rounded-md border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_60%,transparent)] px-2.5 py-1.5 text-[var(--color-on-surface-muted)] transition-colors hover:border-[var(--color-tertiary)] hover:text-[var(--color-on-surface)]"
+            >
+              <span
+                aria-hidden="true"
+                class="text-[var(--color-tertiary)] transition-transform group-hover:translate-x-0.5"
+                >›</span
+              >
+              {s.label}
+            </button>
+          </li>
+        {/each}
+      </ul>
     </div>
 
     <aside
