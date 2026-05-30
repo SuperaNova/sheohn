@@ -23,7 +23,7 @@ import { personalInfo } from '../data/personalInfo';
 >
   <ScrollProgress client:idle />
 
-  <main class="bg-[var(--color-surface)] pt-16">
+  <main class="bg-[var(--color-surface)]">
     <!-- Svelte Island: animated hero -->
     <HeroSection client:load />
 
@@ -44,11 +44,7 @@ import { personalInfo } from '../data/personalInfo';
         >
           <!-- Left: statement + lettered channel list -->
           <div>
-            <p
-              class="text-xs font-semibold tracking-[0.24em] text-[var(--color-tertiary)] uppercase"
-            >
-              Open Channel
-            </p>
+            <p class="readout">Open Channel</p>
             <h2
               class="font-display mt-6 max-w-md text-5xl leading-[1.0] text-[var(--color-on-surface)] sm:text-6xl lg:text-7xl"
             >

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import HeaderNav from '../components/chrome/HeaderNav.svelte';
+import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
@@ -130,6 +131,10 @@ const canonicalURL = new URL(
   <body
     class="relative selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
   >
+    <!-- Console boot screen: plays once per session (skip-loader guard in the
+         inline head script hides it on return visits / view transitions). -->
+    <Loader client:load />
+
     <div
       class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
     >

@@ -49,6 +49,8 @@
   let chatError = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
   let pending = $state<string | null>(null);
+  // Platform-correct shortcut label; SSR-safe default, corrected on mount.
+  let shortcut = $state('Ctrl K');
 
   // Keep local `expanded` in sync with the shared store (hero CTA, Cmd+K).
   $effect(() => {
@@ -232,6 +234,9 @@
 
   // React to queries dispatched from elsewhere (hero starter chips).
   onMount(() => {
+    shortcut = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
+      ? '⌘K'
+      : 'Ctrl K';
     let lastTs = 0;
     const unsub = agentQuery.subscribe((q) => {
       if (q && q.ts !== lastTs) {
@@ -281,7 +286,12 @@
       </div>
       {#if commandMode}
         <!-- Deterministic command palette -->
-        <ul class="max-h-72 overflow-y-auto p-2 font-mono text-sm">
+        <ul
+          id="deck-command-list"
+          role="listbox"
+          aria-label="Commands"
+          class="max-h-72 overflow-y-auto p-2 font-mono text-sm"
+        >
           {#if filteredCommands.length === 0}
             <li
               class="px-3 py-4 text-center text-[var(--color-console-text-dim)]"
@@ -293,6 +303,9 @@
               <li>
                 <button
                   type="button"
+                  role="option"
+                  id={`deck-cmd-${i}`}
+                  aria-selected={i === selectedIndex}
                   onclick={cmd.run}
                   onmouseenter={() => (selectedIndex = i)}
                   class="flex w-full items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-left transition-colors {i ===
@@ -318,6 +331,9 @@
         <!-- Agent conversation -->
         <div
           bind:this={listEl}
+          role="log"
+          aria-live="polite"
+          aria-label="Agent conversation"
           class="deck-scroll flex max-h-72 flex-col gap-4 overflow-y-auto p-4 font-mono text-[13px] leading-relaxed"
         >
           {#each messages as m (m.id)}
@@ -406,6 +422,13 @@
       bind:value={inputValue}
       onfocus={open}
       onkeydown={onInputKeydown}
+      role={commandMode ? 'combobox' : undefined}
+      aria-expanded={commandMode ? expanded : undefined}
+      aria-controls={commandMode ? 'deck-command-list' : undefined}
+      aria-activedescendant={commandMode && filteredCommands.length
+        ? `deck-cmd-${selectedIndex}`
+        : undefined}
+      aria-autocomplete={commandMode ? 'list' : undefined}
       class="min-w-0 flex-1 bg-transparent font-mono text-sm text-[var(--color-console-text)] placeholder:text-[var(--color-console-text-dim)] focus:outline-none"
       placeholder={pending
         ? 'queued — sends when the agent is free…'
@@ -419,7 +442,7 @@
     {/if}
     <kbd
       class="hidden rounded border border-[var(--color-console-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-console-text-dim)] sm:inline"
-      >⌘K</kbd
+      >{shortcut}</kbd
     >
   </form>
 </div>

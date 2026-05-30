@@ -1,6 +1,8 @@
 export const personalInfo = {
   name: 'Jared Sheohn L. Acebes',
   title: 'Computer Science Student',
+  location: 'Cebu, PH',
+  timezone: 'Asia/Manila',
   education: 'Bachelor of Science in Computer Science @ CIT-U',
   bio: 'President of GDG on Campus CIT-U. Systems-focused developer building reliable backend infrastructure, AI workflows, and low-level tools.',
   strategicNote:
