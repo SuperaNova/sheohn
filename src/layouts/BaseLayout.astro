@@ -4,9 +4,8 @@ import HeaderNav from '../components/chrome/HeaderNav.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
-import AgentChat from '../components/agent/AgentChat.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
-import CommandPalette from '../components/chrome/CommandPalette.svelte';
+import CommandDeck from '../components/agent/CommandDeck.svelte';
 import { ClientRouter } from 'astro:transitions';
 
 import { personalInfo } from '../data/personalInfo';
@@ -152,9 +151,9 @@ const canonicalURL = new URL(
       <slot />
     </div>
 
-    <CommandPalette client:idle />
-    <!-- transition:persist keeps the conversation alive while the agent
-         navigates the site (scene control / opening case studies). -->
-    <AgentChat client:idle transition:persist />
+    <!-- Unified command surface: deterministic /commands + the AI agent in one
+         docked bar. transition:persist keeps the conversation alive while the
+         agent navigates the site (scene control / opening case studies). -->
+    <CommandDeck client:idle transition:persist />
   </body>
 </html>
