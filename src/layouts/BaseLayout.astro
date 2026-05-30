@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import HeaderNav from '../components/chrome/HeaderNav.svelte';
+import NavProgress from '../components/chrome/NavProgress.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import AgentChat from '../components/agent/AgentChat.svelte';
@@ -142,9 +143,10 @@ const canonicalURL = new URL(
       Skip to main content
     </a>
 
+    <NavProgress client:idle transition:persist />
     <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
-    <HeaderNav client:idle />
+    <HeaderNav client:load />
 
     <div id="main-content">
       <slot />

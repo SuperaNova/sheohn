@@ -14,7 +14,7 @@
   let activeId = $state('');
   let isMenuOpen = $state(false);
 
-  onMount(() => {
+  function computeActive() {
     const path = window.location.pathname;
     if (path === '/' || path === '/index.html') {
       activeId = 'home';
@@ -22,7 +22,22 @@
       activeId = 'projects';
     } else if (path.startsWith('/about')) {
       activeId = 'about';
+    } else {
+      activeId = '';
     }
+  }
+
+  onMount(() => {
+    computeActive();
+    // Recompute + close the menu on every view-transition navigation, so the
+    // active underline tracks the page even when hydration is slow (throttled
+    // mobile) or the header instance survives a swap.
+    const onPageLoad = () => {
+      computeActive();
+      isMenuOpen = false;
+    };
+    document.addEventListener('astro:page-load', onPageLoad);
+    return () => document.removeEventListener('astro:page-load', onPageLoad);
   });
 </script>
 
