@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Spring } from 'svelte/motion';
   import { inview } from '../../lib/actions/inview';
+  import { magnetic } from '../../lib/actions/magnetic';
   import { scrollState } from '../../store';
   import DecoderText from '../ui/DecoderText.svelte';
   import { personalInfo } from '../../data/personalInfo';
@@ -45,7 +46,7 @@
 
       <h1
         style:transition-delay="120ms"
-        class="hero-item font-display text-5xl leading-[1.04] text-[var(--color-on-surface)] sm:text-[56px] md:text-6xl"
+        class="hero-item font-display text-6xl leading-[0.95] text-[var(--color-on-surface)] sm:text-7xl lg:text-[5rem]"
       >
         {personalInfo.name}
       </h1>
@@ -82,12 +83,18 @@
         {personalInfo.bio}
       </p>
 
-      <div style:transition-delay="600ms" class="hero-item mt-10">
+      <div style:transition-delay="600ms" class="hero-item mt-10 flex gap-4">
         <a
           href="#contact"
-          class="inline-flex rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-transform hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.985]"
+          use:magnetic={{ strength: 0.4, max: 12 }}
+          class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
         >
-          Initiate Strategic Engagement
+          Get in touch
+          <span
+            aria-hidden="true"
+            class="transition-transform duration-300 group-hover:translate-x-1"
+            >→</span
+          >
         </a>
       </div>
     </div>
@@ -99,7 +106,7 @@
       <p
         class="text-xs tracking-[0.16em] text-[var(--color-tertiary)] uppercase"
       >
-        Strategic Note
+        Currently
       </p>
       <p
         class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
