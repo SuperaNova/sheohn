@@ -9,6 +9,7 @@ import {
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
+import { getCollection } from 'astro:content';
 import { Index } from '@upstash/vector';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
@@ -85,15 +86,59 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   });
   const messages = await convertToModelMessages(rawMessages);
 
+  // Pull live case-study slugs so the agent can open the right project page.
+  const projectEntries = await getCollection('projects');
+  const caseStudies = projectEntries
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((p) => ({
+      slug: p.id,
+      title: p.data.title,
+      summary: p.data.summary,
+    }));
+  const caseStudyContext = `\n\nAVAILABLE CASE STUDIES — to open a project's full page, call open_case_study with the EXACT slug:\n${caseStudies
+    .map((c) => `- ${c.title} (slug: "${c.slug}") — ${c.summary}`)
+    .join('\n')}`;
+
   const result = streamText({
     model: google('gemini-3.1-flash-lite'),
-    system: SYSTEM_PROMPT,
+    system: SYSTEM_PROMPT + caseStudyContext,
     messages,
     stopWhen: stepCountIs(5),
     tools: {
+      open_case_study: tool({
+        description:
+          "Open the full case-study page for one of Jared's projects. Use when the visitor wants to see, read, or dive into a specific project. Pass the exact slug from the case study list in the system prompt.",
+        inputSchema: z.object({
+          slug: z.string().describe('The exact case-study slug, e.g. "animo"'),
+        }),
+        execute: async ({ slug }) => {
+          const match = caseStudies.find((c) => c.slug === slug);
+          return match
+            ? { status: 'opening', slug, title: match.title }
+            : {
+                status: 'not_found',
+                slug,
+                available: caseStudies.map((c) => c.slug),
+              };
+        },
+      }),
+      focus_section: tool({
+        description:
+          'Pan the website to a section and spotlight it for the visitor (dims everything else). Call this to physically direct attention BEFORE answering — e.g. when introducing Jared (about), discussing his skills (stack), his work (projects), or how to reach him (contact). Use sparingly: one section per turn.',
+        inputSchema: z.object({
+          section: z
+            .enum(['hero', 'about', 'stack', 'projects', 'contact'])
+            .describe(
+              'hero = intro, about = bio + experience, stack = tech skills, projects = work, contact = get in touch',
+            ),
+        }),
+        execute: async ({ section }) => {
+          return { status: 'focused', section };
+        },
+      }),
       trigger_ui_state: tool({
         description:
-          'Highlight specific projects on the screen when the user asks about certain technologies.',
+          'Highlight specific project cards when the user asks about a particular technology.',
         inputSchema: z.object({
           focus: z
             .string()
