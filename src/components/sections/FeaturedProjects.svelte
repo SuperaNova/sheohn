@@ -60,11 +60,7 @@
         >
           {title}
         </h2>
-        <span
-          class="mt-3 block text-sm font-medium tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase"
-        >
-          {subtitle}
-        </span>
+        <span class="readout mt-3">{subtitle}</span>
       </div>
 
       <a

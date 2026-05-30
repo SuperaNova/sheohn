@@ -2,17 +2,20 @@
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
   import ThemeToggle from './ThemeToggle.svelte';
+  import { personalInfo } from '../../data/personalInfo';
 
   const navItems = [
-    { id: 'home', label: 'Home', path: '/' },
-    { id: 'projects', label: 'Projects', path: '/projects' },
-    { id: 'about', label: 'About', path: '/about' },
-    { id: 'contact', label: 'Contact', path: '/#contact' },
-    { id: 'resume', label: 'Resume', path: '/resume.pdf', external: true },
+    { id: 'home', label: 'home', path: '/' },
+    { id: 'projects', label: 'projects', path: '/projects' },
+    { id: 'about', label: 'about', path: '/about' },
+    { id: 'resume', label: 'resume', path: '/resume.pdf', external: true },
   ];
 
   let activeId = $state('');
   let isMenuOpen = $state(false);
+  // Set client-side only (kept empty on the server) to avoid a hydration
+  // mismatch on the live clock.
+  let clock = $state('');
 
   function computeActive() {
     const path = window.location.pathname;
@@ -27,17 +30,41 @@
     }
   }
 
+  // GitHub-style local time, e.g. "19:39 (UTC+08:00)".
+  function tickClock() {
+    const d = new Date();
+    const time = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: personalInfo.timezone,
+    }).format(d);
+    const offset = (
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: personalInfo.timezone,
+        timeZoneName: 'longOffset',
+      })
+        .formatToParts(d)
+        .find((p) => p.type === 'timeZoneName')?.value ?? 'UTC'
+    ).replace('GMT', 'UTC');
+    clock = `${time} (${offset})`;
+  }
+
   onMount(() => {
     computeActive();
+    tickClock();
+    const clockId = setInterval(tickClock, 30_000);
     // Recompute + close the menu on every view-transition navigation, so the
-    // active underline tracks the page even when hydration is slow (throttled
-    // mobile) or the header instance survives a swap.
+    // active marker tracks the page even when hydration is slow.
     const onPageLoad = () => {
       computeActive();
       isMenuOpen = false;
     };
     document.addEventListener('astro:page-load', onPageLoad);
-    return () => document.removeEventListener('astro:page-load', onPageLoad);
+    return () => {
+      clearInterval(clockId);
+      document.removeEventListener('astro:page-load', onPageLoad);
+    };
   });
 </script>
 
@@ -54,21 +81,47 @@
       sheohn<span class="text-[var(--color-tertiary)]">.dev</span>
     </a>
 
-    <nav class="hidden items-center gap-6 md:flex">
+    <nav class="hidden items-center gap-6 font-mono text-[13px] md:flex">
       {#each navItems as section (section.id)}
         {@const isActive = activeId === section.id}
         <a
           href={section.path}
           target={section.external ? '_blank' : undefined}
           rel={section.external ? 'noreferrer' : undefined}
-          class="text-sm font-medium transition hover:text-[var(--color-on-surface)] {isActive
-            ? 'text-[var(--color-on-surface)] underline decoration-[var(--color-tertiary)] decoration-2 underline-offset-8'
-            : 'text-[var(--color-on-surface-muted)]'}"
+          class="tracking-wide transition {isActive
+            ? 'text-[var(--color-tertiary)] underline decoration-2 underline-offset-[6px]'
+            : 'text-[var(--color-on-surface-muted)] hover:text-[var(--color-on-surface)]'}"
         >
           {section.label}
         </a>
       {/each}
     </nav>
+
+    <!-- Desktop: local-time readout (GitHub style) + theme -->
+    <div class="hidden items-center gap-4 md:flex">
+      {#if clock}
+        <div
+          class="hidden items-center gap-1.5 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)] lg:flex"
+          title="Jared's local time"
+        >
+          <svg
+            class="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <span class="tabular-nums">{clock}</span>
+        </div>
+      {/if}
+      <ThemeToggle compact />
+    </div>
 
     <!-- Hamburger / Close button (mobile only) -->
     <div class="flex items-center gap-3 md:hidden">
@@ -113,17 +166,13 @@
         {/if}
       </button>
     </div>
-
-    <!-- Desktop ThemeToggle (hidden on mobile, shown via mobile menu instead) -->
-    <div class="hidden md:block">
-      <ThemeToggle compact />
-    </div>
   </div>
+
   <!-- Mobile slide-down menu -->
   {#if isMenuOpen}
     <nav
       transition:slide={{ duration: 250 }}
-      class="border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]/95 backdrop-blur-md md:hidden"
+      class="border-b-2 border-[var(--color-on-surface-muted)] bg-[var(--color-surface)]/95 font-mono backdrop-blur-md md:hidden"
     >
       <div class="mx-auto flex max-w-[90rem] flex-col gap-4 px-6 py-5">
         {#each navItems as section (section.id)}
@@ -132,14 +181,34 @@
             href={section.path}
             target={section.external ? '_blank' : undefined}
             rel={section.external ? 'noreferrer' : undefined}
-            class="text-sm font-medium transition hover:text-[var(--color-on-surface)] {isActive
-              ? 'text-[var(--color-on-surface)] underline decoration-[var(--color-tertiary)] decoration-2 underline-offset-8'
-              : 'text-[var(--color-on-surface-muted)]'}"
+            class="text-sm tracking-wide transition {isActive
+              ? 'text-[var(--color-tertiary)] underline decoration-2 underline-offset-[6px]'
+              : 'text-[var(--color-on-surface-muted)] hover:text-[var(--color-on-surface)]'}"
             onclick={() => (isMenuOpen = false)}
           >
             {section.label}
           </a>
         {/each}
+        {#if clock}
+          <div
+            class="mt-2 flex items-center gap-2 border-t border-[var(--color-outline-variant)] pt-4 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)]"
+          >
+            <svg
+              class="h-3 w-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            <span class="tabular-nums">{clock}</span>
+          </div>
+        {/if}
       </div>
     </nav>
   {/if}

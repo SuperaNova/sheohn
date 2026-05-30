@@ -34,6 +34,16 @@
     commandDeckOpen.set(true);
   }
 
+  // Show the platform-correct shortcut. SSR-safe default (non-mac); corrected
+  // client-side so it never visually locks the UI to macOS.
+  let shortcut = $state('Ctrl K');
+  $effect(() => {
+    const mac = /Mac|iPhone|iPad/.test(
+      navigator.platform || navigator.userAgent,
+    );
+    shortcut = mac ? '⌘K' : 'Ctrl K';
+  });
+
   $effect(() =>
     scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
       if (scrollHeight > innerHeight && innerHeight > 0) {
@@ -48,7 +58,7 @@
 
 <section
   id="home"
-  class="content-wrap section-space relative flex min-h-[100svh] scroll-mt-24 items-center pt-24 hero-section"
+  class="content-wrap relative flex min-h-[100svh] scroll-mt-24 items-center py-20 hero-section"
   use:inview={{ once: true, amount: 0.2 }}
 >
   <div
@@ -57,7 +67,7 @@
 
   <div
     style:transform="translateY({parallaxY.current}px)"
-    class="grid w-full items-end gap-12 lg:grid-cols-[1.2fr_0.8fr]"
+    class="grid w-full items-center gap-12 lg:grid-cols-[1.2fr_0.8fr]"
   >
     <div>
       <p
@@ -85,13 +95,7 @@
         style:transition-delay="360ms"
         class="hero-item mt-6 flex items-center gap-3"
       >
-        <div class="relative flex h-3 w-3 items-center justify-center">
-          <span
-            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"
-          ></span>
-          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
-          ></span>
-        </div>
+        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
         <span
           class="text-sm font-medium tracking-wide text-[var(--color-on-surface)]"
         >
@@ -120,7 +124,7 @@
           Ask the system
           <kbd
             class="ml-1 hidden rounded border border-white/20 px-1.5 py-0.5 font-mono text-[10px] text-slate-300 sm:inline"
-            >⌘K</kbd
+            >{shortcut}</kbd
           >
         </button>
         <a
@@ -159,11 +163,7 @@
       style:transition-delay="720ms"
       class="hero-item group relative rounded-2xl border border-[var(--color-surface-container-highest)] bg-[color-mix(in_srgb,var(--color-surface-container-high)_50%,transparent)] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-outline-variant)] hover:shadow-[4px_4px_0_0_var(--color-surface-container-highest)] dark:hover:shadow-[4px_4px_0_0_var(--color-primary-container)]"
     >
-      <p
-        class="text-xs tracking-[0.16em] text-[var(--color-tertiary)] uppercase"
-      >
-        Currently
-      </p>
+      <p class="readout">Currently</p>
       <p
         class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
       >

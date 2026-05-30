@@ -3,8 +3,16 @@
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
-  let progress = 0;
-  let isLoading = true;
+  let progress = $state(0);
+  let isLoading = $state(true);
+  let lineCount = $state(0);
+
+  const bootLines = [
+    'booting sheohn.os',
+    'mounting modules … ok',
+    'loading agent core … ok',
+    'system ready',
+  ];
 
   onMount(() => {
     if (
@@ -17,29 +25,49 @@
 
     document.body.style.overflow = 'hidden';
 
-    const duration = 600;
+    const finish = () => {
+      isLoading = false;
+      document.body.style.overflow = '';
+    };
+
+    // Respect reduced motion: skip the boot animation, show the end state.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      progress = 100;
+      lineCount = bootLines.length;
+      const t = setTimeout(finish, 200);
+      return () => {
+        clearTimeout(t);
+        document.body.style.overflow = '';
+      };
+    }
+
+    const duration = 800;
     const startTime = performance.now();
     let rafId: number;
 
+    // Reveal boot-log lines one at a time as the bar fills.
+    const lineId = setInterval(() => {
+      if (lineCount < bootLines.length) lineCount += 1;
+    }, 170);
+
     function tick(now: number) {
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
+      const t = Math.min((now - startTime) / duration, 1);
       const easeOutQuart = 1 - Math.pow(1 - t, 4);
       progress = Math.min(Math.round(easeOutQuart * 100), 100);
 
       if (t < 1) {
         rafId = requestAnimationFrame(tick);
       } else {
-        setTimeout(() => {
-          isLoading = false;
-          document.body.style.overflow = '';
-        }, 100);
+        clearInterval(lineId);
+        lineCount = bootLines.length;
+        setTimeout(finish, 200);
       }
     }
     rafId = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(rafId);
+      clearInterval(lineId);
       document.body.style.overflow = '';
     };
   });
@@ -49,52 +77,47 @@
   <div
     id="global-loader"
     out:fly={{ y: '-100%', duration: 500, easing: cubicOut }}
-    class="bg-[var(--color-surface)] text-[var(--color-on-surface)] fixed inset-0 z-[100] flex flex-col justify-end p-6 md:p-12"
+    class="fixed inset-0 z-[200] flex flex-col justify-end bg-[var(--color-console-surface)] p-6 font-mono text-[var(--color-console-text)] md:p-12"
   >
-    <!-- Faint Architectural Grid Backdrop for loader -->
+    <!-- Faint architectural grid backdrop -->
     <div
-      class="pointer-events-none absolute inset-0 opacity-20 transition-opacity"
+      class="pointer-events-none absolute inset-0 opacity-[0.06]"
       style:background-image="linear-gradient(to right,
-      var(--color-on-surface-muted) 1px, transparent 1px), linear-gradient(to
-      bottom, var(--color-on-surface-muted) 1px, transparent 1px)"
+      var(--color-console-text) 1px, transparent 1px), linear-gradient(to
+      bottom, var(--color-console-text) 1px, transparent 1px)"
       style:background-size="4rem 4rem"
     ></div>
 
-    <div class="relative z-10 flex w-full items-end justify-between">
+    <div class="relative z-10">
+      <!-- Boot log -->
       <div
-        class="text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase fade-in"
+        class="mb-8 space-y-1 text-xs text-[var(--color-console-text-dim)] sm:text-sm"
       >
-        System Initialization
+        {#each bootLines.slice(0, lineCount) as line (line)}
+          <div>
+            <span class="text-[var(--color-console-signal)]">›</span>
+            {line}
+          </div>
+        {/each}
       </div>
-      <div
-        class="font-display text-7xl leading-none tracking-tighter md:text-9xl"
-      >
-        {progress}%
-      </div>
-    </div>
 
-    <div
-      class="relative z-10 mt-6 h-[1px] w-full overflow-hidden bg-[var(--color-surface-container-highest)]"
-    >
-      <div
-        class="h-full bg-[var(--color-on-surface)] transition-all duration-100 ease-linear"
-        style:width="{progress}%"
-      ></div>
+      <div class="flex w-full items-end justify-between">
+        <div
+          class="text-xs tracking-[0.24em] text-[var(--color-console-text-dim)] uppercase"
+        >
+          System Initialization
+        </div>
+        <div class="text-7xl leading-none tracking-tighter md:text-9xl">
+          {progress}%
+        </div>
+      </div>
+
+      <div class="mt-6 h-[2px] w-full overflow-hidden bg-white/10">
+        <div
+          class="h-full bg-[var(--color-console-signal)] transition-all duration-100 ease-linear"
+          style:width="{progress}%"
+        ></div>
+      </div>
     </div>
   </div>
 {/if}
-
-<style>
-  .fade-in {
-    animation: fadeIn 0.5s ease forwards;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-</style>
