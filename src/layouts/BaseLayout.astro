@@ -4,6 +4,7 @@ import HeaderNav from '../components/chrome/HeaderNav.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import AgentChat from '../components/agent/AgentChat.svelte';
+import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandPalette from '../components/chrome/CommandPalette.svelte';
 import { ClientRouter } from 'astro:transitions';
 
@@ -142,6 +143,7 @@ const canonicalURL = new URL(
     </a>
 
     <CustomCursor client:idle transition:persist />
+    <ScenePilot client:idle transition:persist />
     <HeaderNav client:idle />
 
     <div id="main-content">
@@ -149,6 +151,8 @@ const canonicalURL = new URL(
     </div>
 
     <CommandPalette client:idle />
-    <AgentChat client:idle />
+    <!-- transition:persist keeps the conversation alive while the agent
+         navigates the site (scene control / opening case studies). -->
+    <AgentChat client:idle transition:persist />
   </body>
 </html>
