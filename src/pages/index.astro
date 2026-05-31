@@ -1,16 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroSection from '../components/HeroSection.svelte';
-import FeaturedProjects from '../components/FeaturedProjects.svelte';
-import ScrollProgress from '../components/ScrollProgress.svelte';
+import HeroSection from '../components/sections/HeroSection.svelte';
+import WorkManifest from '../components/sections/WorkManifest.svelte';
+import SectionReveal from '../components/ui/SectionReveal.svelte';
+import ContactForm from '../components/sections/ContactForm.svelte';
 import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
 
-const featuredProjects = allProjects
-  .filter((p) => p.data.featured)
-  .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 1)
+// All projects as a console "manifest" preview (newest/most-advanced first);
+// /projects holds the full case-study cards.
+const projects = allProjects
+  .sort((a, b) => b.data.order - a.data.order)
   .map((p) => ({ slug: p.id, ...p.data }));
 import { personalInfo } from '../data/personalInfo';
 ---
@@ -19,15 +20,70 @@ import { personalInfo } from '../data/personalInfo';
   title={`${personalInfo.name} - Portfolio`}
   description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
 >
-  <ScrollProgress client:idle />
-
-  <main class="bg-[var(--color-surface)] pt-16">
-    <!-- Svelte Island: animated hero -->
+  <main class="bg-[var(--color-surface)]">
     <HeroSection client:load />
 
-    <!-- Svelte Island: projects rendered through array/object mapping -->
-    <div class="relative z-10 bg-transparent">
-      <FeaturedProjects client:visible projects={featuredProjects} />
-    </div>
+    <WorkManifest client:visible projects={projects} />
+
+    <SectionReveal
+      client:visible
+      id="contact"
+      class="relative z-10 flex scroll-mt-16 items-center border-t border-[var(--color-outline-variant)] py-24 lg:min-h-screen lg:py-0"
+    >
+      <div class="content-wrap w-full">
+        <div
+          class="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-24"
+        >
+          <div>
+            <p class="readout">Open Channel</p>
+            <h2
+              class="font-display mt-6 max-w-md text-5xl leading-[1.0] text-[var(--color-on-surface)] sm:text-6xl lg:text-7xl"
+            >
+              Let's build something.
+            </h2>
+            <p
+              class="mt-8 max-w-md text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg"
+            >
+              Collaborations, engineering work, or anything systems-flavored —
+              drop a message. Replies usually land within 1–2 days.
+            </p>
+
+            <ol class="mt-12 grid gap-3 font-mono text-sm">
+              <li class="flex items-baseline gap-3">
+                <span class="text-xs text-[var(--color-tertiary)]">a.</span>
+                <a
+                  href="mailto:jared.acebes@gmail.com"
+                  class="text-[var(--color-on-surface)] transition hover:text-[var(--color-tertiary)]"
+                >
+                  jared.acebes@gmail.com
+                </a>
+              </li>
+              <li class="flex items-baseline gap-3">
+                <span class="text-xs text-[var(--color-tertiary)]">b.</span>
+                <a
+                  href={personalInfo.socials.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="text-[var(--color-on-surface)] transition hover:text-[var(--color-tertiary)]"
+                  >GitHub</a
+                >
+              </li>
+              <li class="flex items-baseline gap-3">
+                <span class="text-xs text-[var(--color-tertiary)]">c.</span>
+                <a
+                  href={personalInfo.socials.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="text-[var(--color-on-surface)] transition hover:text-[var(--color-tertiary)]"
+                  >LinkedIn</a
+                >
+              </li>
+            </ol>
+          </div>
+
+          <ContactForm client:visible />
+        </div>
+      </div>
+    </SectionReveal>
   </main>
 </BaseLayout>

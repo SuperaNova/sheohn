@@ -1,8 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SectionReveal from '../components/SectionReveal.svelte';
-import ScrollProgress from '../components/ScrollProgress.svelte';
-import ExperienceTimeline from '../components/ExperienceTimeline.svelte';
+import SectionReveal from '../components/ui/SectionReveal.svelte';
+import ExperienceTimeline from '../components/sections/ExperienceTimeline.svelte';
 import { personalInfo } from '../data/personalInfo';
 ---
 
@@ -10,8 +9,6 @@ import { personalInfo } from '../data/personalInfo';
   title="About Me"
   description={`About ${personalInfo.name} and his technical experience.`}
 >
-  <ScrollProgress client:idle />
-
   <main class="min-h-screen bg-[var(--color-surface)] pt-32">
     <SectionReveal
       client:visible
@@ -25,23 +22,21 @@ import { personalInfo } from '../data/personalInfo';
           >
             About Me
           </h2>
-          {personalInfo.about.paragraphs.map((p, i) => (
-            <p
-              class={`max-w-2xl text-[var(--color-on-surface${i === 0 ? '' : '-muted'})] leading-[1.6] ${i === 0 ? 'mt-6 text-lg' : 'mt-4'}`}
-            >
-              {p}
-            </p>
-          ))}
+          {
+            personalInfo.about.paragraphs.map((p, i) => (
+              <p
+                class={`max-w-2xl text-[var(--color-on-surface${i === 0 ? '' : '-muted'})] leading-[1.6] ${i === 0 ? 'mt-6 text-lg' : 'mt-4'}`}
+              >
+                {p}
+              </p>
+            ))
+          }
         </div>
 
         <div
           class="h-fit rounded-2xl border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container-high)_80%,transparent)] p-8 shadow-sm"
         >
-          <p
-            class="text-xs font-semibold tracking-[0.14em] text-[var(--color-tertiary)] uppercase"
-          >
-            Current Focus
-          </p>
+          <p class="readout">Current Focus</p>
           <h3
             class="font-display mt-3 text-2xl font-semibold text-[var(--color-on-surface)]"
           >
@@ -69,19 +64,12 @@ import { personalInfo } from '../data/personalInfo';
         >
           Tech Stack
         </h2>
-        <span
-          class="text-xs font-medium tracking-[0.2em] text-[var(--color-on-surface-muted)] uppercase"
-          >Technology Overview</span
-        >
+        <span class="readout">Technology Overview</span>
       </div>
 
       <div class="grid gap-12 lg:grid-cols-3">
         <article>
-          <h3
-            class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
-          >
-            Languages
-          </h3>
+          <h3 class="readout mb-6">Languages</h3>
           <div class="flex flex-wrap gap-2">
             {
               [
@@ -104,11 +92,7 @@ import { personalInfo } from '../data/personalInfo';
         </article>
 
         <article>
-          <h3
-            class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
-          >
-            Cloud & AI
-          </h3>
+          <h3 class="readout mb-6">Cloud & AI</h3>
           <div class="flex flex-wrap gap-2">
             {
               [
@@ -132,11 +116,7 @@ import { personalInfo } from '../data/personalInfo';
         </article>
 
         <article>
-          <h3
-            class="mb-6 text-xs font-semibold tracking-[0.2em] text-[var(--color-tertiary)] uppercase"
-          >
-            Data & Analysis
-          </h3>
+          <h3 class="readout mb-6">Data & Analysis</h3>
           <div class="flex flex-wrap gap-2">
             {
               ['Pandas', 'NumPy', 'Matplotlib', 'Jupyter', 'JSON/CSV'].map(

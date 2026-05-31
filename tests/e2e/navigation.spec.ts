@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test.describe('Primary navigation', () => {
   test('header links navigate to projects and about', async ({ page }) => {
@@ -23,7 +23,9 @@ test.describe('Primary navigation', () => {
     const resumeLink = page.locator('header').getByRole('link', {
       name: 'Resume',
     });
-    await expect(resumeLink).toHaveAttribute('href', '/resume.pdf');
+    // href points at the hosted résumé (Vercel Blob / filler), so assert it
+    // resolves to a PDF and opens in a new tab — not a specific local path.
+    await expect(resumeLink).toHaveAttribute('href', /\.pdf($|\?)/);
     await expect(resumeLink).toHaveAttribute('target', '_blank');
   });
 });

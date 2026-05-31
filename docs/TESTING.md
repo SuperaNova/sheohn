@@ -48,4 +48,21 @@ Playwright takes screenshots of components or pages and compares them against "b
   npm run test:e2e -- --update-snapshots
   ```
 
-_(Note: Baseline images are stored in `tests/e2e/_-snapshots/`and should be committed to version control. The`playwright-report`and`test-results` folders are ignored by git).\*
+_(Note: Baseline images are stored in `tests/e2e/_-snapshots/`and should be committed to version control. The`playwright-report`and`test-results` folders are ignored by git).\_
+
+## 3. Performance & SEO Testing (Lighthouse CI)
+
+We run **Lighthouse** automatically against the production build to ensure performance, accessibility, best practices, and SEO scores stay high.
+
+- **Run Lighthouse locally:**
+  ```bash
+  npm run lighthouse:local
+  ```
+
+This command will:
+
+1. Build the Astro project for production.
+2. Run `lhci autorun` to collect metrics across light/dark themes and multiple pages.
+3. Automatically execute `scripts/lh-summary.mjs` to dump a clean, color-coded table of scores directly into your terminal.
+
+If you ever need to debug a failing score, the raw HTML reports are saved locally in the `.lighthouseci/` directory (which is ignored by version control).

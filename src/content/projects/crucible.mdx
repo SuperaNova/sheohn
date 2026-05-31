@@ -1,7 +1,7 @@
 ---
-title: 'Crucible - Autonomous Sprite Synthesis Pipeline'
+title: 'Crucible — Autonomous Sprite Synthesis Pipeline'
 summary: 'Automated multi-agent pipeline using Google ADK to orchestrate state handoffs across vision and diffusion models.'
-category: 'AI / Pipeline'
+category: 'AI / Pipeline Architecture'
 stack:
   [
     'Python',
@@ -10,19 +10,123 @@ stack:
     'Flux.1',
     'Google ADK',
   ]
-role: 'Lead Architect'
-timeline: '2026'
-team: 'Solo'
-status: 'Completed'
-image: '/project1.png'
+role: 'AI Engineer'
+timeline: 'April 2026'
+team: '2 Person Team'
+status: 'Ongoing'
+image: 'crucible/crucible.webp'
 featured: true
-order: 1
+order: 3
 ---
+
+import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
 
 ## Overview
 
-Crucible is an automated multi-agent pipeline architected using Google ADK to orchestrate state handoffs across vision and diffusion models. A data validation heuristic was engineered for strict quality control prior to inference.
+Crucible is an autonomous intelligence pipeline built to procedurally generate combined 16-bit RPG sprites. It replaces conventional sequential processing with a **Google Agent Development Kit (ADK)** driven multi-agent system, orchestrating strict state handoffs across vision models (VLMs), reasoning LLMs, and diffusion models.
 
-## Optimization
+### The Problem: Raw Pixels vs. Semantic Fusion
 
-Local model execution was optimized via float16 quantization to strictly bound memory footprints under 6GB VRAM. This enforced reproducible generation using fixed-seed API configurations and structured LLM reasoning.
+> **The Goal:** How do we logically combine two game items to make a completely new one?
+
+If you rely on traditional image processing and mathematically average the raw pixels of a "Sword" and a "Green Gem", you don't get an Emerald Sword—you get a blurry, brown mess. We needed a system that could combine the underlying _concepts_ of the items rather than their surface-level pixel data. We needed semantic fusion.
+
+---
+
+## The Research Tradeoff: Why Not VAE Latent Interpolation?
+
+A natural systems-level approach to sprite fusion is to train a Variational Autoencoder (VAE) on the sprite dataset. You encode both sprites into latent vectors (`z_a` and `z_b`) and decode an interpolated point between them:
+
+`z_fused = (1 - alpha) * z_a + alpha * z_b, alpha in [0, 1]`
+
+Because a well-trained VAE enforces a smooth posterior (`q(z|x) ~ N(mu, sigma^2 I)`) via the Kullback-Leibler (KL) divergence term in the Evidence Lower Bound (ELBO) loss:
+
+`L = E[log p(x|z)] - D_KL(q(z|x) || p(z))`
+
+Points mathematically between $z_a$ and $z_b$ on the learned manifold are more likely to decode into coherent images than random interpolations in standard pixel space.
+
+**The Bottleneck:** The dataset contained roughly 7,000 items after our cleaning heuristics. At this scale, the reconstruction loss dominates and the KL term collapses. The posterior begins memorizing rather than generalizing, meaning the resulting latent space is not smooth enough for reliable, cross-category item interpolation.
+
+Instead of fighting mathematical dataset limitations, we sidestepped the problem entirely. We reframed sprite fusion from a _latent manifold_ problem into a _language grounding_ problem.
+
+---
+
+## Architecture: Pipeline Decomposition & ADK
+
+By utilizing the **RPG Framework** (Recaption, Plan, Generate) proposed by _Yang et al., 2024_, we built a Multi-Agent System (MAS). Instead of a monolithic script, we separated perception (eyes), reasoning (brain), and rendering (brush) into distinct, autonomous units communicating via a shared session state using Google ADK.
+
+<img
+  src="/crucible/crucible-diagram.webp"
+  alt="Crucible Multi-Agent Pipeline Architecture"
+  width="800"
+  height="450"
+  class="my-8 rounded-lg border border-gray-800 shadow-xl"
+/>
+
+### 1. Agent 1: The Appraiser (Vision)
+
+Utilizing a Vision-Language Model (VLM), the Appraiser performs zero-shot semantic extraction. It evaluates the two input sprites, identifies their visual properties, elements, and materials, and writes the structured findings directly to `state['appraisal']`.
+
+### 2. Agent 2: The Master Smith (Reasoning)
+
+A text-only LLM agent reads the `{appraisal}` state. Currently, it acts as a creative logic engine, determining how to conceptually fuse the two items. It drafts a high-entropy diffusion prompt focusing heavily on textures and material blend logic, writing it to `state['smithing']`.
+
+### 3. Agent 3: The Forger (Generative Execution)
+
+The final stage executes the generation. It takes the text prompt from the Smith and decodes it into a raw artifact utilizing a generative backend (Flux), before passing the image to our custom post-processing engine.
+
+---
+
+## Post-Processing & Optimization
+
+Getting a massive diffusion model to spit out a clean, 16-color RPG sprite required strict post-processing execution and hardware management.
+
+### 1. Memory Bounding
+
+Local model execution was optimized via `float16` quantization. This strictly bounded our memory footprints to under 6GB VRAM, allowing the entire multi-agent pipeline to run on consumer hardware while enforcing reproducible generations using fixed-seed API configurations.
+
+### 2. The Pixel-Lattice Layer
+
+To convert high-fidelity diffusion outputs into accurate game assets, the Forger pipeline applies two strict operations:
+
+- **Pixelation Crunch:** The image is crushed down to 32x32 using `Image.NEAREST` filtering, then scaled back up to 512x512. This violently destroys gradient blending and forces a hard block grid regardless of the source image content.
+- **Palette Quantization:** We apply `Image.quantize(colors=16, method=MEDIANCUT)` _after_ the pixelation crunch. This ensures the 16-color palette is snapped perfectly to the already-hard pixel edges, preventing the muddy intermediate colors that plague standard downscaling.
+
+---
+
+## Project Documentation & Architecture Deck
+
+<PdfEmbed
+  client:visible
+  src="https://aleda1faaxt35aum.public.blob.vercel-storage.com/Crucible.pdf"
+  title="Crucible Architecture Deck"
+  caption="Crucible Research & Architecture"
+/>
+
+---
+
+## Current Focus: Asynchronous Infrastructure & Semantic Compositing
+
+While the theoretical multi-agent handoff works and satisfied the core assignment requirements, running heavy vision and diffusion models on local hardware revealed systemic bottlenecks, and the texture fusion is not yet up to my standards. My current focus is decoupling the pipeline and refactoring the reasoning engine.
+
+### 1. Semantic Material Compositing (In Progress)
+
+Currently, the Master Smith relies too heavily on drafting basic texture prompts—it's mostly just "all talk" on how it decides on textures, which doesn't meet my standards for true synthesis.
+
+Based on the RPG framework research, I am reimagining this stage to act as a true **Semantic Planner** that focuses on extracting explicit, localized details. Instead of simple composition and texture blending, the agent will define strict material logic. For example, it will map out that _"the blade inherits the metallic properties of Item A, but the handle is made of this specific other material and is roughly this color because of how the elements interact."_ This detailed, localized structural blueprint will allow the Forger to perfectly honor semantic fusion rather than just mathematically blending prompts.
+
+### 2. Eliminating Synchronous Pipeline Blocking
+
+Initially, the ADK orchestrator executed sequentially. The Master Smith agent could not begin reasoning until the Appraiser finished, and the Forger could not begin rendering until the Smith finished.
+
+- **The Problem:** Diffusion generation (The Forger) takes exponentially longer than text reasoning. In a high-volume scenario, the lightweight LLM agents sat completely idle waiting for the GPU to finish rendering the previous artifact.
+- **The Ongoing Fix:** I am currently decoupling the pipeline using an asynchronous message broker (like **Redis Pub/Sub** or **RabbitMQ**). By treating the Appraiser and Smith agents as rapid producers, they can throw thousands of fused prompts into a queue, while the GPU-bound Forger acts as an independent consumer, churning through the rendering backlog at its own maximum hardware capacity.
+
+---
+
+## References
+
+- Yang et al. (2024). _Mastering Text-to-Image Diffusion: Recaptioning, Planning, and Generating with Multimodal LLMs._
+- Qin et al. (2024). _DiffusionGPT: LLM-Driven Text-to-Image Generation System._
+- Zhai et al. (2023). _Sigmoid Loss for Language Image Pre-Training (SigLIP)._
+- Chen, Y.-C., & Jhala, A. (2025). _GameTileNet: A Semantic Dataset for Low-Resolution Game Art in Procedural Content Generation._

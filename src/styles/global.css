@@ -15,6 +15,17 @@
   --color-tertiary: #2f5a3c;
   --color-tertiary-container: #23452d;
   --color-outline-variant: #c4c8c0;
+
+  /* Console treatment — the system "chrome" language. Theme-independent on
+     purpose: control surfaces (command deck, status line, boot) always read
+     as an instrument panel framing the warm content, regardless of light/dark. */
+  --color-console-surface: #161616;
+  --color-console-elev: #1f1f1f;
+  --color-console-line: rgba(74, 222, 128, 0.22);
+  --color-console-signal: #4ade80;
+  --color-console-signal-strong: #22c55e;
+  --color-console-text: #e6ece6;
+  --color-console-text-dim: #9aa69a;
 }
 
 :root {
@@ -37,7 +48,15 @@ html.dark {
   --color-primary-container: #2f5a3c;
   --color-tertiary: #3c724d;
   --color-tertiary-container: #2b5438;
-  --color-outline-variant: #c4c8c0;
+  /* Dark dividers/borders: a subtle warm line on near-black, not the light
+     #c4c8c0 used in light mode. */
+  --color-outline-variant: #2c2f2a;
+}
+
+/* Always reserve the scrollbar gutter so the centered header (and content)
+   don't shift horizontally between a scrolling page and a short one. */
+html {
+  scrollbar-gutter: stable;
 }
 
 html,
@@ -53,6 +72,28 @@ body {
     color 300ms ease;
 }
 
+/* Global keyboard-focus indicator — every interactive element gets a visible
+   ring when navigated by keyboard. Mouse clicks still suppress it via
+   :focus-visible's intent detection. */
+:focus-visible {
+  outline: 2px solid var(--color-tertiary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Respect users who prefer reduced motion: disable transitions and
+   transform-based parallax, scroll smoothing, etc. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .font-display {
   font-family: 'Playfair Display', Georgia, serif;
   letter-spacing: -0.02em;
@@ -60,6 +101,23 @@ body {
 
 .content-wrap {
   @apply mx-auto w-full max-w-[74rem] px-6 md:px-12;
+}
+
+/* Console "readout" — the shared label voice for section eyebrows. Reads like
+   a line printed by the system rather than a heading. */
+.readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-tertiary);
+}
+.readout::before {
+  content: '›';
+  opacity: 0.7;
 }
 
 .section-space {
@@ -75,13 +133,47 @@ body {
   backdrop-filter: blur(12px);
 }
 
+@keyframes noise-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  10% {
+    transform: translate3d(-5%, -5%, 0);
+  }
+  20% {
+    transform: translate3d(-10%, 5%, 0);
+  }
+  30% {
+    transform: translate3d(5%, -10%, 0);
+  }
+  40% {
+    transform: translate3d(-5%, 15%, 0);
+  }
+  50% {
+    transform: translate3d(-10%, 5%, 0);
+  }
+  60% {
+    transform: translate3d(15%, 0, 0);
+  }
+  70% {
+    transform: translate3d(0, 10%, 0);
+  }
+  80% {
+    transform: translate3d(-15%, 0, 0);
+  }
+  90% {
+    transform: translate3d(10%, 5%, 0);
+  }
+  100% {
+    transform: translate3d(5%, 0, 0);
+  }
+}
+
 .site-noise {
-  /* Static noise texture replaces the expensive SVG feTurbulence filter.
-     This tiny 100x100 repeating PNG provides the same grain effect
-     without forcing GPU compositing on every frame. */
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVN3WJP3Fj7f92UPVkLY8LGXbIEAIiOsCMgQWaIQkgBhhBASQMWFiApWFBURnEhVxILVCkidiOKgKLhnQYqIWotVXDjuH9yntX167+3t+9f7vOec5/zOec8PgBESJpHmomoAOVKFPDrYH49PSMTJvYACFUjgBCAQ5svCZwXFAADwA3l4fnSwP/wBr28AAgBw1S4kEsfh/4O6UCZXACCRAOAiEucLAZBSAMguVMgUAMgYALBTs2QKAJQAAGx5fEIiAKoNAOz0ST4FANipk9wXANiiHKkIAI0BAJkoRyQCQLsAYFWBUiwCwMIAoKxAIi4EwK4BgFm2MkcCgL0FAHaOWJAPQGAAgJlCLMwAIDgCAEMeE80DIEwDoDDSv+CpX3CFuEgBAMDLlc2XS9IzFLiV0Bp38vDg4iHiwmyxQmEXKRBmCeQinJebIxNI5wNMzgwAABr50cH+OD+Q5+bk4eZm52zv9MWi/mvwbyI+IfHf/ryMAgQAEE7P79pf5eXWA3DHAbB1v2upWwDaVgBo3/ldM9sJoFoK0Hr5i3k4/EAenqFQyDwdHAoLC+0lYqG9MOOLPv8z4W/gi372/EAe/tt68ABxmkCZrcCjg/1xYW52rlKO58sEQjFu9+cj/seFf/2OKdHiNLFcLBWK8ViJuFAiTcd5uVKRRCHJleIS6X8y8R+W/QmTdw0ArIZPwE62B7XLbMB+7gECiw5Y0nYAQH7zLYwaC5EAEGc0Mnn3AACTv/mPQCsBAM2XpOMAALzoGFyolBdMxggAAESggSqwQQcMwRSswA6cwR28wBcCYQZEQAwkwDwQQgbkgBwKoRiWQRlUwDrYBLWwAxqgEZrhELTBMTgN5+ASXIHrcBcGYBiewhi8hgkEQcgIE2EhOogRYo7YIs4IF5mOBCJhSDSSgKQDKcAEcSwA5fYfgVwBdgR8AKCEIQOD+AgIA');
   background-repeat: repeat;
   background-size: 100px 100px;
+  animation: noise-shift 0.8s steps(10) infinite;
 }
 
 .site-grid {
@@ -108,4 +200,43 @@ body {
 /* Instantly hide the loader to prevent flicker on return visits */
 html.skip-loader #global-loader {
   display: none !important;
+}
+
+/* Agent spotlight: dim + blur everything except the focused section. */
+body.scene-dimmed
+  :is(#home, #projects, #contact, #about, #stack):not(.is-spotlit) {
+  opacity: 0.32;
+  filter: blur(2px) saturate(0.6);
+  transition:
+    opacity 0.5s ease,
+    filter 0.5s ease;
+}
+
+:is(#home, #projects, #contact, #about, #stack) {
+  transition:
+    opacity 0.5s ease,
+    filter 0.5s ease;
+  border-radius: 1rem;
+}
+
+.is-spotlit {
+  position: relative;
+  animation: scene-flash 1.6s ease-out;
+  z-index: 20;
+}
+
+@keyframes scene-flash {
+  0% {
+    background: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  12% {
+    background: color-mix(in srgb, var(--color-tertiary) 7%, transparent);
+    box-shadow: 0 0 80px -20px
+      color-mix(in srgb, var(--color-tertiary) 55%, transparent);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
 }

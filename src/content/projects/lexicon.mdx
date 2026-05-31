@@ -1,21 +1,69 @@
 ---
-title: 'Lexicon - Custom Programming Language Interpreter & Web IDE'
-summary: 'A tree-walking custom language interpreter built from scratch in Rust, with an interactive web playground via Wasm.'
-category: 'Compilers / Web'
-stack: ['Rust', 'WebAssembly (Wasm)', 'React', 'Astro']
-role: 'Core Developer'
-timeline: '2026'
-team: 'Solo'
+title: 'Lexicon — Custom Language Interpreter & Web IDE'
+summary: 'A tree-walking custom language interpreter built in Rust, featuring a dual-target CLI and an interactive Wasm-powered web playground.'
+category: 'Compilers / WebAssembly'
+stack: ['Rust', 'WebAssembly', 'GitHub Actions', 'SolidJS', 'TypeScript']
+role: 'Systems Engineer'
+timeline: 'Feb-May 2026'
+team: '2 Person Team'
 status: 'Completed'
-image: '/project2.png'
-featured: true
+image: 'lexicon/lexicon.webp'
+featured: false
 order: 2
 ---
 
 ## Overview
 
-Engineered a tree-walking custom language interpreter from scratch in Rust, utilizing an Abstract Syntax Tree (AST) architecture for robust parsing and execution.
+Engineered a completely custom tree-walking language interpreter from scratch in Rust, architected as a dual-target system: a native Command Line Interface (CLI) and an interactive Web IDE powered by WebAssembly (Wasm).
 
-## Web IDE Integration
+### Constraint-Driven Engineering
 
-Architected an interactive web playground using React and Astro, seamlessly integrating the core Rust engine via WebAssembly (Wasm) to deliver incredibly fast, real-time client-side code execution.
+This project was developed under strict academic requirements for the **CS322: Programming Languages** architecture course. The grammar, syntax, and keywords of the "Lexor" language were entirely predefined by the project specification. The engineering objective was to architect a compiler pipeline (Lexer, Parser, and Evaluator) to flawlessly parse, structure, and execute that exact specification efficiently and safely.
+
+---
+
+## Core Interpreter Architecture (Rust)
+
+The underlying engine is isolated in a robust Rust workspace, following a classic three-stage interpretation model.
+
+- **Lexical Analysis:** The Lexer implements Rust's standard `Iterator` trait, allowing the Parser to natively stream tokens safely. It utilizes lookahead mechanics (`peek_char`) to cleanly distinguish multi-character operators without consuming the stream.
+- **Dual-Engine Parsing:** Parsing raw text into an Abstract Syntax Tree (AST) utilizes two distinct algorithms. **Top-Down Recursive Descent** handles structural blocks (like `IF` and `FOR`). To enforce strict Order of Operations for mathematics, we implemented a **Pratt Parser** relying on a central Precedence Table, allowing expressions to bind dynamically without deeply nested logic.
+- **The Evaluator & Memory:** The Evaluator walks the generated AST, managing variables via an `Environment` struct that acts as localized memory. Crucially, the execution logic is decoupled from standard I/O via an injected `EnvironmentIO` trait. This abstraction allows the exact same evaluator to run natively in a terminal (CLI) or inside a web browser without blocking threads.
+
+---
+
+## CI/CD & Automated Wasm Publishing
+
+To bridge the gap between the Rust core and the web frontend, we implemented a fully automated CI/CD pipeline using **GitHub Actions**.
+
+Rather than manually compiling and moving binaries, the Wasm compilation and publishing process is entirely hands-off. Whenever a new version tag is pushed to the repository, the GitHub Actions workflow automatically:
+
+1. Compiles the Rust workspace targeting `wasm32-unknown-unknown`.
+2. Packages the binary using `wasm-pack`.
+3. Publishes the updated `@superanova/lexor_wasm` package directly to the registry.
+
+This pipeline ensures the Web IDE always has access to the latest compiler engine without introducing manual deployment bottlenecks.
+
+---
+
+## The Lexicon Web IDE
+
+To showcase the Lexor language, we architected **Lexicon**, a lightweight, interactive Web IDE using **SolidJS**, **CodeMirror v6**, and **Tailwind CSS**.
+
+### Zero-Cost Scaling
+
+Instead of provisioning containerized backend servers to execute arbitrary user code (like Replit), the Wasm module runs entirely inside the client's browser. This provides zero-latency execution, guarantees sandbox security, and allowed us to deploy the IDE statically via GitHub Pages with absolute zero hosting costs.
+
+### Asynchronous Wasm I/O Bridge
+
+To prevent complex scripts from freezing the browser's main UI thread, the Wasm binary runs inside an isolated Web Worker.
+
+Because Web Workers do not have access to the browser's DOM (meaning native `window.prompt()` fails), we engineered a custom asynchronous API bridge between the Wasm worker and the SolidJS main thread. When the interpreter hits a `SCAN` statement, it pauses execution, messages the frontend API to trigger the input UI, and waits for the user's response before resuming. This successfully decoupled standard I/O from the execution thread, delivering a flawless interactive terminal experience directly in the browser.
+
+---
+
+## Live Demo & Source Code
+
+- **Web IDE Playground:** [superanova.github.io/Lexicon](https://superanova.github.io/Lexicon/)
+- **Frontend Repository (SolidJS/Wasm):** [github.com/SuperaNova/Lexicon](https://github.com/SuperaNova/Lexicon)
+- **Core Interpreter Repository (Rust):** [github.com/SuperaNova/lexor_interpreter](https://github.com/SuperaNova/lexor_interpreter)

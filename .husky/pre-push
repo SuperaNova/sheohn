@@ -1,0 +1,2 @@
+echo "→ pre-push: lint + type-check + unit tests"
+npm run lint && npm run check && npm run test:unit:coverage

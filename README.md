@@ -1,69 +1,102 @@
-# Astro Starter Kit: Minimal
+# sheohn.dev
 
-```sh
-npm create astro@latest -- --template minimal
+Personal portfolio of **Jared Sheohn L. Acebes** — Software Developer & Systems Architect.
+
+Live at [sheohn.dev](https://sheohn.dev).
+
+## Stack
+
+- **Astro 6** (static output, Vercel adapter) with MDX content collections
+- **Svelte 5** (runes) for interactive islands
+- **Tailwind CSS v4** via `@tailwindcss/vite` (config lives in `src/styles/global.css` under `@theme`)
+- **Vercel AI SDK** (`ai` v6 + `@ai-sdk/google` + `@ai-sdk/svelte`) — streaming chat agent backed by Gemini
+- **Upstash Vector** for RAG (1536-dim Gemini embeddings)
+- **Upstash Redis + Ratelimit** on `/api/chat` and `/api/contact`
+- **Resend** for contact-form delivery
+
+## Scripts
+
+| Command                      | What it does                                                         |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                | Start dev server at `http://localhost:4321`                          |
+| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)    |
+| `npm run preview`            | Preview the production build locally                                 |
+| `npm run lint`               | ESLint over `src/`                                                   |
+| `npm run format`             | Prettier write across the repo                                       |
+| `npm run format:check`       | Prettier check (no writes) — what CI runs                            |
+| `npm run check`              | `astro check` (TS strict + Astro)                                    |
+| `npm run test:unit`          | Vitest in watch mode                                                 |
+| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                            |
+| `npm run test:e2e`           | Playwright end-to-end                                                |
+| `npm run lighthouse:local`   | Build + Lighthouse audit locally                                     |
+| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e |
+
+### Hooks (managed by Husky)
+
+| Hook       | Fires on     | What it runs                                           |
+| ---------- | ------------ | ------------------------------------------------------ |
+| pre-commit | `git commit` | `lint-staged` (prettier + eslint on staged files only) |
+| pre-push   | `git push`   | `lint` + `check` + `test:unit:coverage`                |
+
+Bypass with `--no-verify` if you need to (rarely).
+Run `npm run preflight` before a big push if you want full CI parity locally.
+
+## Environment
+
+Copy the keys below into a local `.env` (gitignored). All are required for the AI chat + contact flows.
+
+```
+GOOGLE_GENERATIVE_AI_API_KEY=
+UPSTASH_VECTOR_REST_URL=
+UPSTASH_VECTOR_REST_TOKEN=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+RESEND_API_KEY=
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## AI Chatbot Architecture
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+The integrated AI assistant allows visitors to query your portfolio and triggers UI changes on the fly. If you want to repurpose this for yourself, here is how the core pieces fit together:
 
-Any static assets, like images, can be placed in the `public/` directory.
+1. **API & LLM Setup (`src/pages/api/chat.ts`)**:
+   Uses the Vercel AI SDK to handle streaming from Google Gemini. It includes server-side tool definitions (like `focus_section` and `open_case_study`). It also integrates Upstash Ratelimit and Upstash Vector DB for RAG (Retrieval-Augmented Generation).
+2. **Prompts (`src/lib/prompts.ts`)**:
+   Contains the `SYSTEM_PROMPT`. Change this to configure the personality, tone, and specific instructions for the agent.
+3. **Frontend Agent UI (`src/components/agent/CommandDeck.svelte`)**:
+   The chat interface at the bottom of the screen. It intercepts tool calls streaming back from the API and maps them to local state changes (e.g., changing the theme or pushing a command to the `store.ts`).
+4. **Agent Action Engine (`src/components/agent/ScenePilot.svelte`)**:
+   Listens to commands emitted by the `CommandDeck` (via stores) and actually performs the DOM actions, like scrolling smoothly to a specific section.
+5. **State Bridge (`src/store.ts`)**:
+   Houses the Svelte stores (`agentQuery`, `sceneCommand`, `routeCommand`) that act as the message bus between the UI and the AI components.
 
-## 🧞 Commands
+## Project layout
 
-All commands are run from the root of the project, from a terminal:
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+src/
+├── components/ Svelte 5 islands (AgentChat, HeaderNav, HeroSection, ...)
+├── content/projects/ MDX case studies (filename = URL slug)
+├── content.config.ts Astro Content Collection schema (Zod)
+├── data/ Centralized personal info (bio, experience, socials)
+├── layouts/ Astro layouts (BaseLayout with SEO + ClientRouter)
+├── lib/ Server helpers (system prompt, inview action)
+├── pages/ Routes; api/\* are SSR endpoints
+└── styles/global.css Tailwind v4 entry + design tokens
+scripts/
+├── update-brain.ts Push facts into Upstash Vector (RAG sync)
+└── test-chat.ts Local smoke test for /api/chat
+.config/CLAUDE.md Agent rules — read before making changes
 
-## 👀 Want to learn more?
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Agent rules (for AI assistants)
 
----
+See [`.config/CLAUDE.md`](./.config/CLAUDE.md) for the full set. The short version:
 
-## Pre-Push Checklist (CI/CD Safety)
-
-To ensure GitHub Actions or Vercel CI/CD doesn't unexpectedly fail on your branches, always run these commands locally before committing / pushing code:
-
-1. **Auto-Format Code:**
-   Ensures all files match Prettier's strict styling rules.
-
-   ```bash
-   npm run format
-   ```
-
-2. **Lint Code (find errors):**
-   Catches undeclared variables, unused imports, or bad syntax.
-
-   ```bash
-   npm run lint
-   ```
-
-3. **Type-Check (Astro + TS strict mode):**
-   Ensures all TypeScript interfaces, JSX props, and Astro components compile successfully without throwing errors.
-   ```bash
-   npm run check
-   ```
+- Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) for new components
+- Use `var(--color-*)` design tokens from `global.css`; no hardcoded hex
+- Native Svelte stores for global state — not Zustand
+- No React / Vue / Framer Motion
+```

@@ -1,11 +1,16 @@
 ---
 import '../styles/global.css';
-import HeaderNav from '../components/HeaderNav.svelte';
+import HeaderNav from '../components/chrome/HeaderNav.svelte';
+import Loader from '../components/chrome/Loader.svelte';
+import NavProgress from '../components/chrome/NavProgress.svelte';
+import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
-import CustomCursor from '../components/CustomCursor.svelte';
-import AgentChat from '../components/AgentChat.svelte';
-import CommandPalette from '../components/CommandPalette.svelte';
+import CustomCursor from '../components/chrome/CustomCursor.svelte';
+import ScenePilot from '../components/agent/ScenePilot.svelte';
+import CommandDeck from '../components/agent/CommandDeck.svelte';
 import { ClientRouter } from 'astro:transitions';
+import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from '@vercel/speed-insights/astro';
 
 import { personalInfo } from '../data/personalInfo';
 
@@ -28,49 +33,52 @@ const canonicalURL = new URL(
 ---
 
 <!doctype html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <script type="application/ld+json" is:inline set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": personalInfo.name,
-      "url": "https://sheohn.dev",
-      "jobTitle": personalInfo.title,
-      "sameAs": [
-        personalInfo.socials.github,
-        personalInfo.socials.linkedin
-      ]
-    })}></script>
-    <script type="application/ld+json" is:inline set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": `${personalInfo.name} Portfolio`,
-      "url": "https://sheohn.dev"
-    })}></script>
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: personalInfo.name,
+        url: 'https://sheohn.dev',
+        jobTitle: personalInfo.title,
+        sameAs: [personalInfo.socials.github, personalInfo.socials.linkedin],
+      })}
+    />
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: `${personalInfo.name} Portfolio`,
+        url: 'https://sheohn.dev',
+      })}
+    />
 
     <title>{title}</title>
     <meta name="title" content={title} />
     <meta name="description" content={description} />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={new URL(image, canonicalURL)} />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(image, canonicalURL)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(image, canonicalURL)} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -87,12 +95,18 @@ const canonicalURL = new URL(
 
     <script is:inline>
       function applyThemeAndLoader() {
-        // 1. Prevent Dark Mode Flicker
-        const theme =
-          localStorage.getItem('theme') ||
-          (window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light');
+        const isLocalAudit =
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1';
+        const urlTheme = isLocalAudit
+          ? new URLSearchParams(window.location.search).get('theme')
+          : null;
+        const override =
+          urlTheme === 'light' || urlTheme === 'dark' ? urlTheme : null;
+        // Default to light on first visit to showcase the canonical design.
+        // Returning users keep their explicit choice (localStorage); OS preference
+        // is intentionally ignored so the design lands the same way every time.
+        const theme = override || localStorage.getItem('theme') || 'light';
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
         } else {
@@ -107,7 +121,6 @@ const canonicalURL = new URL(
         }
       }
 
-      // Run on initial load
       applyThemeAndLoader();
 
       // Run on every page navigation (Astro View Transitions)
@@ -118,106 +131,52 @@ const canonicalURL = new URL(
   <body
     class="relative selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
   >
+    <!-- Console boot screen: plays once per session (skip-loader guard in the
+         inline head script hides it on return visits / view transitions). -->
+    <Loader client:load />
+
+    <!-- Ambient Background Glows -->
+    <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <div
+        class="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-[var(--color-tertiary)] opacity-[0.06] blur-[120px] dark:opacity-[0.10]"
+      >
+      </div>
+      <div
+        class="absolute top-[60%] -right-[10%] h-[60%] w-[50%] rounded-full bg-[var(--color-tertiary)] opacity-[0.04] blur-[120px] dark:opacity-[0.08]"
+      >
+      </div>
+    </div>
+
     <div
-      class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
+      class="site-noise pointer-events-none fixed -inset-[100%] z-50 opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
     >
     </div>
 
-    <CustomCursor client:idle transition:persist />
-    <HeaderNav client:idle />
-
-    <slot />
-
-    <footer
-      id="footer"
-      class="relative z-10 scroll-mt-24 border-t-2 border-[var(--color-on-surface-muted)] bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)] py-16"
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[1000] focus:rounded-md focus:bg-[var(--color-tertiary)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
     >
-      <div
-        class="mx-auto grid w-full max-w-[90rem] gap-12 px-6 md:grid-cols-[1.2fr_0.8fr_0.9fr] md:px-10"
-      >
-        <div>
-          <p class="font-display text-3xl text-[var(--color-on-surface)]">
-            {personalInfo.name}
-          </p>
-          <p
-            class="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
-          >
-            {personalInfo.title} building robust, scalable
-            applications.
-          </p>
-        </div>
+      Skip to main content
+    </a>
 
-        <div>
-          <p
-            class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface)] uppercase"
-          >
-            Navigation
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a href="/" class="transition hover:text-[var(--color-on-surface)]"
-              >Home</a
-            >
-            <a
-              href="/projects"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >Projects</a
-            >
-            <a
-              href="/about#stack"
-              class="transition hover:text-[var(--color-on-surface)]">Stack</a
-            >
-            <a
-              href="/about"
-              class="transition hover:text-[var(--color-on-surface)]">About</a
-            >
-          </nav>
-        </div>
+    <NavProgress client:idle transition:persist />
+    <ScrollProgress client:idle transition:persist />
+    <CustomCursor client:idle transition:persist />
+    <ScenePilot client:idle transition:persist />
+    <HeaderNav client:load transition:persist />
 
-        <div>
-          <p
-            class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface)] uppercase"
-          >
-            Connect
-          </p>
-          <nav
-            class="mt-4 grid gap-2 text-sm text-[var(--color-on-surface-muted)]"
-          >
-            <a
-              href={personalInfo.socials.github}
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]">GitHub</a
-            >
-            <a
-              href={personalInfo.socials.linkedin}
-              target="_blank"
-              rel="noreferrer"
-              class="transition hover:text-[var(--color-on-surface)]"
-              >LinkedIn</a
-            >
-            <a
-              href="mailto:jared@sheohn.dev"
-              class="transition hover:text-[var(--color-on-surface)]">Email</a
-            >
-            <a
-              href="/resume.pdf"
-              class="font-medium text-[var(--color-on-surface)] transition hover:text-[var(--color-on-surface-muted)]"
-              >Download Resume</a
-            >
-          </nav>
-        </div>
-      </div>
+    <!-- pb leaves a scroll runway so the docked command deck never sits on top
+         of the last content on a page. -->
+    <div id="main-content" class="pb-28">
+      <slot />
+    </div>
 
-      <div
-        class="mx-auto mt-12 w-full max-w-[90rem] border-t border-white/10 px-6 pt-6 text-xs text-[var(--color-on-surface-muted)] md:px-10"
-      >
-        &copy; {new Date().getFullYear()} sheohn.dev
-      </div>
-    </footer>
+    <!-- Unified command surface: deterministic /commands + the AI agent in one
+         docked bar. transition:persist keeps the conversation alive while the
+         agent navigates the site (scene control / opening case studies). -->
+    <CommandDeck client:idle transition:persist />
 
-    <CommandPalette client:idle />
-    <AgentChat client:idle />
+    <Analytics />
+    <SpeedInsights />
   </body>
 </html>
