@@ -36,11 +36,71 @@
     },
   ];
 
+  // ── Safe inline linkifier ───────────────────────────────────────────────────
+  // The agent streams plain text that may contain markdown links
+  // ([label](url)) or bare URLs (the resume fallback link). We render those as
+  // real anchors WITHOUT dangerouslySetInnerHTML: text is split into segments
+  // and each piece goes through Svelte's normal auto-escaping. URLs are
+  // protocol-validated (http/https/mailto only) so a prompt-injected
+  // javascript: link can never become clickable.
+  type Segment =
+    | { kind: 'text'; value: string }
+    | { kind: 'link'; label: string; href: string };
+
+  function safeHref(url: string): string | null {
+    try {
+      const u = new URL(url, 'https://sheohn.dev');
+      if (
+        u.protocol === 'http:' ||
+        u.protocol === 'https:' ||
+        u.protocol === 'mailto:'
+      ) {
+        return u.href;
+      }
+    } catch {
+      /* malformed URL — fall through */
+    }
+    return null;
+  }
+
+  function linkify(text: string): Segment[] {
+    const segments: Segment[] = [];
+    // markdown link  OR  bare http(s) url
+    const re = /\[([^\]]+)\]\(([^)\s]+)\)|((?:https?:\/\/)[^\s<>()]+)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last)
+        segments.push({ kind: 'text', value: text.slice(last, m.index) });
+      if (m[1] !== undefined) {
+        const href = safeHref(m[2]);
+        segments.push(
+          href
+            ? { kind: 'link', label: m[1], href }
+            : { kind: 'text', value: m[0] },
+        );
+      } else {
+        const href = safeHref(m[3]);
+        segments.push(
+          href
+            ? { kind: 'link', label: m[3], href }
+            : { kind: 'text', value: m[0] },
+        );
+      }
+      last = re.lastIndex;
+    }
+    if (last < text.length)
+      segments.push({ kind: 'text', value: text.slice(last) });
+    return segments;
+  }
+
   let inputEl = $state<HTMLInputElement | null>(null);
   let listEl = $state<HTMLDivElement | null>(null);
   let deckRoot = $state<HTMLDivElement | null>(null);
   let inputValue = $state('');
   let selectedIndex = $state(0);
+  // Highlighted recommended chip for keyboard (↑/↓) navigation; -1 = none.
+  let starterIndex = $state(-1);
   let expanded = $state(false);
   let chatError = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
@@ -57,7 +117,11 @@
     });
   });
 
-  // ── Agent ──────────────────────────────────────────────────────────────────
+  // ── Agent Interface (Vercel AI SDK Integration) ────────────────────────────
+  // This chunk sets up the streaming connection to /api/chat.
+  // It specifically hooks into `onToolCall` to intercept LLM function calls
+  // (like `set_theme` or `focus_section`) and execute them locally using the Svelte stores
+  // rather than letting the server handle them. This is how the AI physically "drives" the UI.
   let chat = $state<Chat | null>(null);
   try {
     chat = new Chat({
@@ -88,6 +152,8 @@
           (args?.mode === 'light' || args?.mode === 'dark')
         ) {
           setTheme(args.mode);
+        } else if (payload.toolName === 'open_resume') {
+          window.open(personalInfo.resumeUrl, '_blank');
         }
       },
       onError: (err) => console.error('[CommandDeck] agent error:', err),
@@ -112,10 +178,13 @@
     );
   });
 
-  // Reset the highlighted row whenever the candidate list changes.
   $effect(() => {
     void filteredCommands;
     selectedIndex = 0;
+  });
+
+  $effect(() => {
+    if (inputValue.trim() !== '') starterIndex = -1;
   });
 
   // Grows as tokens stream in, so the autoscroll effect keeps firing.
@@ -134,7 +203,6 @@
     }, 0);
   });
 
-  // Pin the thread to the bottom by scrolling its own container.
   $effect(() => {
     void streamTick;
     void messages.length;
@@ -142,7 +210,6 @@
     if (el) el.scrollTop = el.scrollHeight;
   });
 
-  // Flush a queued message as soon as the current reply finishes streaming.
   let wasLoading = false;
   $effect(() => {
     const loading = isLoading;
@@ -202,14 +269,35 @@
   }
 
   function onInputKeydown(e: KeyboardEvent) {
-    if (!commandMode) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      selectedIndex = (selectedIndex + 1) % filteredCommands.length;
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      selectedIndex =
-        (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
+    if (commandMode) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % filteredCommands.length;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex =
+          (selectedIndex - 1 + filteredCommands.length) %
+          filteredCommands.length;
+      }
+      return;
+    }
+    // Suggestion nav while the input is empty. The chips sit in a horizontal
+    // row, so ←/→ are the primary axis; ↑/↓ are accepted too so it works
+    // however the visitor reaches for it. Enter fires the highlighted chip.
+    if (inputValue.trim() === '' && starters.length) {
+      const next = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+      const prev = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
+      if (next) {
+        e.preventDefault();
+        starterIndex = (starterIndex + 1) % starters.length;
+      } else if (prev) {
+        e.preventDefault();
+        starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
+      } else if (e.key === 'Enter' && starterIndex >= 0) {
+        e.preventDefault();
+        ask(starters[starterIndex].q);
+        starterIndex = -1;
+      }
     }
   }
 
@@ -233,7 +321,6 @@
     if (!deckRoot.contains(e.target as Node)) close();
   }
 
-  // React to queries dispatched from elsewhere (hero starter chips).
   onMount(() => {
     shortcut = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
       ? '⌘K'
@@ -260,6 +347,44 @@
   data-cursor-green="true"
   class="fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
 >
+  {#snippet richText(text: string)}
+    {#each linkify(text) as seg, si (si)}
+      {#if seg.kind === 'link'}
+        <a
+          href={seg.href}
+          target="_blank"
+          rel="noreferrer noopener"
+          class="text-[var(--color-console-signal)] underline underline-offset-2 transition-colors hover:text-[var(--color-console-signal-strong)]"
+          >{seg.label}</a
+        >
+      {:else}<span>{seg.value}</span>{/if}
+    {/each}
+  {/snippet}
+
+  {#snippet suggestionChips(showHint: boolean)}
+    <div class="flex flex-wrap items-center gap-2">
+      {#each starters as s, i (s.label)}
+        <button
+          type="button"
+          onclick={() => ask(s.q)}
+          aria-current={starterIndex === i ? 'true' : undefined}
+          class="rounded-md border px-2.5 py-1 text-xs transition-colors {starterIndex ===
+          i
+            ? 'border-[var(--color-console-signal)] bg-[var(--color-console-signal)]/10 text-[var(--color-console-text)]'
+            : 'border-[var(--color-console-line)] text-[var(--color-console-text-dim)] hover:border-[var(--color-console-signal)]/50 hover:text-[var(--color-console-text)]'}"
+        >
+          {s.label}
+        </button>
+      {/each}
+      {#if showHint}
+        <span
+          class="ml-auto hidden font-mono text-[10px] text-[var(--color-console-text-dim)]/70 sm:inline"
+          >←→ pick · ↵ run</span
+        >
+      {/if}
+    </div>
+  {/snippet}
+
   {#if expanded}
     <div
       transition:fly={{ y: 16, duration: 220 }}
@@ -352,7 +477,9 @@
                 {#if m.parts}
                   {#each m.parts as p, i (i)}
                     {#if p.type === 'text'}
-                      <span>{(p as { type: 'text'; text: string }).text}</span>
+                      {@render richText(
+                        (p as { type: 'text'; text: string }).text,
+                      )}
                     {:else if typeof p.type === 'string' && (p.type.startsWith('tool-') || p.type === 'dynamic-tool')}
                       {@const part = p as {
                         type: string;
@@ -369,7 +496,7 @@
                     {/if}
                   {/each}
                 {:else}
-                  {m.content || ''}
+                  {@render richText(m.content || '')}
                 {/if}
               </div>
             </div>
@@ -386,6 +513,10 @@
             </div>
           {/if}
         </div>
+        <!-- Persistent recommended commands — reachable after chatting too. -->
+        <div class="border-t border-[var(--color-console-line)] p-3">
+          {@render suggestionChips(true)}
+        </div>
       {:else}
         <!-- Empty state: starter queries that each drive the page -->
         <div class="p-4 font-mono text-[13px]">
@@ -394,16 +525,8 @@
             about Jared, or type
             <span class="text-[var(--color-console-signal)]">/</span> for commands.
           </p>
-          <div class="mt-3 flex flex-wrap gap-2">
-            {#each starters as s (s.label)}
-              <button
-                type="button"
-                onclick={() => ask(s.q)}
-                class="rounded-md border border-[var(--color-console-line)] px-2.5 py-1 text-xs text-[var(--color-console-text-dim)] transition-colors hover:border-[var(--color-console-signal)]/50 hover:text-[var(--color-console-text)]"
-              >
-                {s.label}
-              </button>
-            {/each}
+          <div class="mt-3">
+            {@render suggestionChips(true)}
           </div>
         </div>
       {/if}

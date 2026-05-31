@@ -89,7 +89,6 @@
     ></div>
 
     <div class="relative z-10">
-      <!-- Boot log -->
       <div
         class="mb-8 space-y-1 text-xs text-[var(--color-console-text-dim)] sm:text-sm"
       >

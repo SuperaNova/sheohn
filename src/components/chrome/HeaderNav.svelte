@@ -103,7 +103,6 @@
       {/each}
     </nav>
 
-    <!-- Desktop: local-time readout (GitHub style) + theme -->
     <div class="hidden items-center gap-4 md:flex">
       {#if clock}
         <div
@@ -129,7 +128,6 @@
       <ThemeToggle compact />
     </div>
 
-    <!-- Hamburger / Close button (mobile only) -->
     <div class="flex items-center gap-3 md:hidden">
       <ThemeToggle compact />
       <button
@@ -138,7 +136,6 @@
         onclick={() => (isMenuOpen = !isMenuOpen)}
       >
         {#if isMenuOpen}
-          <!-- X icon -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6"
@@ -154,7 +151,6 @@
             />
           </svg>
         {:else}
-          <!-- Hamburger icon -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-6 w-6"
@@ -174,7 +170,6 @@
     </div>
   </div>
 
-  <!-- Mobile slide-down menu -->
   {#if isMenuOpen}
     <nav
       transition:slide={{ duration: 250 }}

@@ -9,6 +9,8 @@ import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandDeck from '../components/agent/CommandDeck.svelte';
 import { ClientRouter } from 'astro:transitions';
+import Analytics from '@vercel/analytics/astro';
+import SpeedInsights from '@vercel/speed-insights/astro';
 
 import { personalInfo } from '../data/personalInfo';
 
@@ -66,14 +68,12 @@ const canonicalURL = new URL(
     <meta name="title" content={title} />
     <meta name="description" content={description} />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={new URL(image, canonicalURL)} />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content={canonicalURL} />
     <meta name="twitter:title" content={title} />
@@ -121,7 +121,6 @@ const canonicalURL = new URL(
         }
       }
 
-      // Run on initial load
       applyThemeAndLoader();
 
       // Run on every page navigation (Astro View Transitions)
@@ -168,13 +167,16 @@ const canonicalURL = new URL(
 
     <!-- pb leaves a scroll runway so the docked command deck never sits on top
          of the last content on a page. -->
-    <main id="main-content" class="pb-28">
+    <div id="main-content" class="pb-28">
       <slot />
-    </main>
+    </div>
 
     <!-- Unified command surface: deterministic /commands + the AI agent in one
          docked bar. transition:persist keeps the conversation alive while the
          agent navigates the site (scene control / opening case studies). -->
     <CommandDeck client:idle transition:persist />
+
+    <Analytics />
+    <SpeedInsights />
   </body>
 </html>

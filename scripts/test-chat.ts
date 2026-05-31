@@ -51,11 +51,9 @@ async function testChat(label: string, messages: any[]) {
   console.log(`Bytes received: ${fullText.length}`);
 }
 
-// Test 1: Single turn
 testChat('single turn', [
   { role: 'user', content: 'What is Jareds tech stack?' },
 ])
-  // Test 2: Multi-turn simulation
   .then(() =>
     testChat('multi turn', [
       { role: 'user', content: 'hello' },

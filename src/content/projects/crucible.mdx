@@ -13,8 +13,8 @@ stack:
 role: 'AI Engineer'
 timeline: 'April 2026'
 team: '2 Person Team'
-status: 'Completed'
-image: '/project1.png'
+status: 'Ongoing'
+image: 'crucible/crucible.webp'
 featured: true
 order: 3
 ---
@@ -56,7 +56,7 @@ Instead of fighting mathematical dataset limitations, we sidestepped the problem
 By utilizing the **RPG Framework** (Recaption, Plan, Generate) proposed by _Yang et al., 2024_, we built a Multi-Agent System (MAS). Instead of a monolithic script, we separated perception (eyes), reasoning (brain), and rendering (brush) into distinct, autonomous units communicating via a shared session state using Google ADK.
 
 <img
-  src="/crucible/pipeline-concept.png"
+  src="/crucible/crucible-diagram.webp"
   alt="Crucible Multi-Agent Pipeline Architecture"
   width="800"
   height="450"
@@ -69,11 +69,11 @@ Utilizing a Vision-Language Model (VLM), the Appraiser performs zero-shot semant
 
 ### 2. Agent 2: The Master Smith (Reasoning)
 
-A text-only LLM agent reads the `{appraisal}` state. It acts as the creative logic engine, determining exactly how to fuse the two concepts together without losing their core identities. It drafts a high-entropy diffusion prompt and writes it to `state['smithing']`.
+A text-only LLM agent reads the `{appraisal}` state. Currently, it acts as a creative logic engine, determining how to conceptually fuse the two items. It drafts a high-entropy diffusion prompt focusing heavily on textures and material blend logic, writing it to `state['smithing']`.
 
-### 3. Agent 3: The Forger (Execution)
+### 3. Agent 3: The Forger (Generative Execution)
 
-The final stage is a deterministic pipeline. It decodes the high-entropy prompt into a raw artifact utilizing a generative backend (Flux), before passing the image to our custom post-processing engine.
+The final stage executes the generation. It takes the text prompt from the Smith and decodes it into a raw artifact utilizing a generative backend (Flux), before passing the image to our custom post-processing engine.
 
 ---
 
@@ -105,16 +105,22 @@ To convert high-fidelity diffusion outputs into accurate game assets, the Forger
 
 ---
 
-## Retrospective: Technical Debt & Infrastructure
+## Current Focus: Asynchronous Infrastructure & Semantic Compositing
 
-While the theoretical multi-agent handoff works flawlessly, running heavy vision and diffusion models on local hardware revealed severe systemic bottlenecks that would need to be addressed before scaling this pipeline to production.
+While the theoretical multi-agent handoff works and satisfied the core assignment requirements, running heavy vision and diffusion models on local hardware revealed systemic bottlenecks, and the texture fusion is not yet up to my standards. My current focus is decoupling the pipeline and refactoring the reasoning engine.
 
-### Synchronous Pipeline Blocking
+### 1. Semantic Material Compositing (In Progress)
 
-Currently, the ADK orchestrator executes sequentially. The Master Smith agent cannot begin reasoning until the Appraiser finishes, and the Forger cannot begin rendering until the Smith finishes.
+Currently, the Master Smith relies too heavily on drafting basic texture prompts—it's mostly just "all talk" on how it decides on textures, which doesn't meet my standards for true synthesis.
 
-- **The Problem:** Diffusion generation (The Forger) takes exponentially longer than text reasoning. In a high-volume scenario, the lightweight LLM agents sit completely idle waiting for the GPU to finish rendering the previous artifact.
-- **The Infrastructure Fix:** To scale this, the pipeline must be heavily decoupled using an asynchronous message broker (like **Redis Pub/Sub** or **RabbitMQ**). The Appraiser and Smith agents should act as rapid producers, throwing thousands of fused prompts into a queue, while the GPU-bound Forger acts as an independent consumer, churning through the rendering backlog at its own maximum hardware capacity.
+Based on the RPG framework research, I am reimagining this stage to act as a true **Semantic Planner** that focuses on extracting explicit, localized details. Instead of simple composition and texture blending, the agent will define strict material logic. For example, it will map out that _"the blade inherits the metallic properties of Item A, but the handle is made of this specific other material and is roughly this color because of how the elements interact."_ This detailed, localized structural blueprint will allow the Forger to perfectly honor semantic fusion rather than just mathematically blending prompts.
+
+### 2. Eliminating Synchronous Pipeline Blocking
+
+Initially, the ADK orchestrator executed sequentially. The Master Smith agent could not begin reasoning until the Appraiser finished, and the Forger could not begin rendering until the Smith finished.
+
+- **The Problem:** Diffusion generation (The Forger) takes exponentially longer than text reasoning. In a high-volume scenario, the lightweight LLM agents sat completely idle waiting for the GPU to finish rendering the previous artifact.
+- **The Ongoing Fix:** I am currently decoupling the pipeline using an asynchronous message broker (like **Redis Pub/Sub** or **RabbitMQ**). By treating the Appraiser and Smith agents as rapid producers, they can throw thousands of fused prompts into a queue, while the GPU-bound Forger acts as an independent consumer, churning through the rendering backlog at its own maximum hardware capacity.
 
 ---
 

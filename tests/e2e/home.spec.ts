@@ -15,7 +15,6 @@ test.describe('Home page', () => {
     );
     await expect(page.locator('section#projects')).toBeVisible();
 
-    // Accessibility scan
     const accessibilityScanResults = await new AxeBuilder({ page })
       .disableRules(['landmark-complementary-is-top-level', 'landmark-unique'])
       .analyze();

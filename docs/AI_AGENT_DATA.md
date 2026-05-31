@@ -8,6 +8,18 @@ The chatbot relies on a script in `scripts/update-brain.ts`. This script reads m
 
 When someone asks a question on the site, the backend (`api/chat.ts`) searches the Vector database for the most relevant chunks of text, and feeds them into the LLM (Gemini/Claude/OpenAI) so it can generate an accurate, non-hallucinated response about me.
 
+```mermaid
+flowchart TD
+    A[scripts/my_facts.json] -->|update-brain.ts| B(Generate Vector Embeddings)
+    B --> C[(Upstash Vector DB)]
+
+    D[Visitor asks a question] --> E{api/chat.ts}
+    E -->|1. Searches| C
+    C -->|2. Returns top facts| E
+    E -->|3. Injects facts as context| F[LLM / Gemini]
+    F -->|4. Generates response| G[Command Deck UI]
+```
+
 ## Adding New Knowledge
 
 1. **Find the knowledge file:** My source data is defined in a JSON file at `scripts/my_facts.json`. It contains a JSON array of plain-text facts about me.

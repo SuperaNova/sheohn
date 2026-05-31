@@ -9,6 +9,12 @@
     type SceneTarget,
   } from '../../store';
 
+  // ── Agent Action Engine (Scene Controller) ──────────────────────────────────
+  // ScenePilot is an invisible component that acts as the "hands" of the AI agent.
+  // When the agent decides to pan the page (via the focus_section tool), it updates
+  // the `sceneCommand` store. ScenePilot listens to that store and performs the
+  // cinematic scroll and highlight animations.
+  //
   // Maps an agent scene target to a DOM element id + the route it lives on.
   const MAP: Record<SceneTarget, { id: string; route: string }> = {
     hero: { id: 'home', route: '/' },
@@ -106,7 +112,6 @@
   }
 
   onMount(() => {
-    // 1. React to agent scene commands.
     const unsubCmd = sceneCommand.subscribe((cmd) => {
       if (cmd && cmd.ts !== lastTs) {
         lastTs = cmd.ts;
@@ -114,7 +119,6 @@
       }
     });
 
-    // 1b. React to direct route navigation (e.g. open a case study page).
     const unsubRoute = routeCommand.subscribe((cmd) => {
       if (cmd && cmd.ts !== lastRouteTs) {
         lastRouteTs = cmd.ts;
@@ -122,7 +126,6 @@
       }
     });
 
-    // 2. Reflect spotlight state into the DOM (dim the rest, light the target).
     const unsubSpot = spotlight.subscribe((id) => {
       document
         .querySelectorAll('.is-spotlit')

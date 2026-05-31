@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Dedicated e2e port so the suite always boots a fresh dev server on the
+// current source — never reusing whatever happens to be on the normal dev
+// port (4321). Isolated + deterministic locally and in CI.
+const PORT = 4399;
+const HOST = `http://localhost:${PORT}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -8,7 +14,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL: HOST,
     trace: 'on-first-retry',
   },
   projects: [
@@ -26,8 +32,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:4321',
+    command: `npm run build && npm run preview -- --port ${PORT} --host`,
+    url: HOST,
+    timeout: 120_000,
     reuseExistingServer: !process.env.CI,
   },
 });

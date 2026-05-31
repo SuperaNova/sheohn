@@ -15,8 +15,8 @@ export const starters: Starter[] = [
     q: 'What has Jared built? Show me his projects.',
   },
   {
-    label: 'open the rust interpreter',
-    q: 'Open the Lexicon Rust interpreter case study.',
+    label: 'show me his resume',
+    q: 'Can I see your resume?',
   },
   { label: "what's his stack?", q: 'What is his tech stack?' },
   { label: 'is he available?', q: 'Is Jared available for opportunities?' },

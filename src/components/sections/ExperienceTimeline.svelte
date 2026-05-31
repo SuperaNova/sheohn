@@ -15,7 +15,6 @@
       style:transition-delay="{index * 100}ms"
       use:inview={{ once: true, amount: 0.8 }}
     >
-      <!-- Timeline Dot -->
       <div
         class="absolute top-1.5 -left-[31px] h-3 w-3 rounded-full bg-[var(--color-primary-container)] ring-4 ring-[var(--color-surface-container-low)] md:-left-[47px]"
       ></div>
