@@ -21,13 +21,10 @@ import { personalInfo } from '../data/personalInfo';
   description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
 >
   <main class="bg-[var(--color-surface)]">
-    <!-- Svelte Island: animated hero -->
     <HeroSection client:load />
 
-    <!-- Console "work manifest": all projects as a deployed-modules list -->
     <WorkManifest client:visible projects={projects} />
 
-    <!-- Contact — full-viewport closing statement -->
     <SectionReveal
       client:visible
       id="contact"
@@ -37,7 +34,6 @@ import { personalInfo } from '../data/personalInfo';
         <div
           class="grid items-center gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-24"
         >
-          <!-- Left: statement + lettered channel list -->
           <div>
             <p class="readout">Open Channel</p>
             <h2
@@ -85,7 +81,6 @@ import { personalInfo } from '../data/personalInfo';
             </ol>
           </div>
 
-          <!-- Right: form -->
           <ContactForm client:visible />
         </div>
       </div>

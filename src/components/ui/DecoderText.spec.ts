@@ -6,7 +6,6 @@ test('renders the decoder text container', () => {
   // @ts-expect-error - Svelte 5 component type mismatch with testing-library
   render(DecoderText, { text: 'Test Initial Render', delay: 0 });
 
-  // It should render the span containing the text
   const textElement = screen.getByText('Test Initial Render');
   expect(textElement).toBeInTheDocument();
   expect(textElement).toHaveClass('inline-block');

@@ -44,18 +44,15 @@
     // Keep AI in bounds
     aiY = Math.max(0, Math.min(height - PADDLE_HEIGHT, aiY));
 
-    // Ball movement
     if (playing) {
       ballX += ballSpeedX;
       ballY += ballSpeedY;
     }
 
-    // Top and bottom collision
     if (ballY <= 0 || ballY + BALL_SIZE >= height) {
       ballSpeedY = -ballSpeedY;
     }
 
-    // Player paddle collision
     if (
       ballX <= PADDLE_WIDTH * 2 &&
       ballY + BALL_SIZE >= playerY &&
@@ -68,7 +65,6 @@
       ballSpeedY = deltaY * 0.2;
     }
 
-    // AI paddle collision
     if (
       ballX + BALL_SIZE >= width - PADDLE_WIDTH * 2 &&
       ballY + BALL_SIZE >= aiY &&
@@ -80,7 +76,6 @@
       ballSpeedY = deltaY * 0.2;
     }
 
-    // Scoring
     if (ballX < 0) {
       aiScore++;
       resetBall();
@@ -96,7 +91,6 @@
     // Draw background (transparent so it shows the div background)
     ctx.clearRect(0, 0, width, height);
 
-    // Middle dashed line
     ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
     ctx.beginPath();
     ctx.setLineDash([10, 15]);
@@ -112,7 +106,6 @@
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(width - PADDLE_WIDTH * 2, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // Draw ball
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(
@@ -124,7 +117,6 @@
     );
     ctx.fill();
 
-    // Draw scores
     ctx.font = 'bold 48px monospace';
     ctx.fillStyle = 'rgba(150, 150, 150, 0.15)';
     ctx.textAlign = 'right';

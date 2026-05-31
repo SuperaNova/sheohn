@@ -18,8 +18,8 @@
       isDecoding = true;
       const length = text.length;
       const startTime = performance.now();
-      const msPerStep = 30; // match original 30ms interval
-      const stepsPerIteration = 3; // match original iteration += 1/3
+      const msPerStep = 30;
+      const stepsPerIteration = 3;
 
       function tick(now: number) {
         const elapsed = now - startTime;

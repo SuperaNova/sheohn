@@ -74,7 +74,6 @@
     <div
       class="overflow-hidden rounded-xl border border-[var(--color-outline-variant)] font-mono"
     >
-      <!-- column header -->
       <div
         class="flex items-center gap-4 border-b border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_45%,transparent)] px-4 py-2.5 text-[10px] tracking-[0.18em] text-[var(--color-on-surface-muted)] uppercase md:px-6"
       >
@@ -86,7 +85,6 @@
         <span class="w-4" aria-hidden="true"></span>
       </div>
 
-      <!-- rows -->
       {#each projects as project, i (project.slug)}
         {@const dim =
           $overlayActive && $activeFocus && !matches(project, $activeFocus)}
@@ -96,7 +94,6 @@
           class="manifest-row group block border-b border-[var(--color-outline-variant)] px-4 transition-all duration-300 last:border-b-0 md:px-6
             {dim ? 'opacity-30' : ''}"
         >
-          <!-- index line -->
           <div class="flex items-center gap-4 py-3.5 text-sm">
             <span class="w-6 tabular-nums text-[var(--color-on-surface-muted)]">
               {String(i + 1).padStart(2, '0')}

@@ -15,7 +15,6 @@ beforeAll(() => {
 
 test('magnetic action initializes and destroys without errors', () => {
   const el = document.createElement('div');
-  // It handles null return or object with destroy
   const action = magnetic(el);
 
   if (action && action.destroy) {

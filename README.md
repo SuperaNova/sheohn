@@ -54,22 +54,41 @@ UPSTASH_REDIS_REST_TOKEN=
 RESEND_API_KEY=
 ```
 
+```
+
+## AI Chatbot Architecture
+
+The integrated AI assistant allows visitors to query your portfolio and triggers UI changes on the fly. If you want to repurpose this for yourself, here is how the core pieces fit together:
+
+1. **API & LLM Setup (`src/pages/api/chat.ts`)**:
+   Uses the Vercel AI SDK to handle streaming from Google Gemini. It includes server-side tool definitions (like `focus_section` and `open_case_study`). It also integrates Upstash Ratelimit and Upstash Vector DB for RAG (Retrieval-Augmented Generation).
+2. **Prompts (`src/lib/prompts.ts`)**:
+   Contains the `SYSTEM_PROMPT`. Change this to configure the personality, tone, and specific instructions for the agent.
+3. **Frontend Agent UI (`src/components/agent/CommandDeck.svelte`)**:
+   The chat interface at the bottom of the screen. It intercepts tool calls streaming back from the API and maps them to local state changes (e.g., changing the theme or pushing a command to the `store.ts`).
+4. **Agent Action Engine (`src/components/agent/ScenePilot.svelte`)**:
+   Listens to commands emitted by the `CommandDeck` (via stores) and actually performs the DOM actions, like scrolling smoothly to a specific section.
+5. **State Bridge (`src/store.ts`)**:
+   Houses the Svelte stores (`agentQuery`, `sceneCommand`, `routeCommand`) that act as the message bus between the UI and the AI components.
+
 ## Project layout
 
 ```
+
 src/
-├── components/        Svelte 5 islands (AgentChat, HeaderNav, HeroSection, ...)
-├── content/projects/  MDX case studies (filename = URL slug)
-├── content.config.ts  Astro Content Collection schema (Zod)
-├── data/              Centralized personal info (bio, experience, socials)
-├── layouts/           Astro layouts (BaseLayout with SEO + ClientRouter)
-├── lib/               Server helpers (system prompt, inview action)
-├── pages/             Routes; api/* are SSR endpoints
-└── styles/global.css  Tailwind v4 entry + design tokens
+├── components/ Svelte 5 islands (AgentChat, HeaderNav, HeroSection, ...)
+├── content/projects/ MDX case studies (filename = URL slug)
+├── content.config.ts Astro Content Collection schema (Zod)
+├── data/ Centralized personal info (bio, experience, socials)
+├── layouts/ Astro layouts (BaseLayout with SEO + ClientRouter)
+├── lib/ Server helpers (system prompt, inview action)
+├── pages/ Routes; api/\* are SSR endpoints
+└── styles/global.css Tailwind v4 entry + design tokens
 scripts/
-├── update-brain.ts    Push facts into Upstash Vector (RAG sync)
-└── test-chat.ts       Local smoke test for /api/chat
-.config/CLAUDE.md      Agent rules — read before making changes
+├── update-brain.ts Push facts into Upstash Vector (RAG sync)
+└── test-chat.ts Local smoke test for /api/chat
+.config/CLAUDE.md Agent rules — read before making changes
+
 ```
 
 ## Agent rules (for AI assistants)
@@ -80,3 +99,4 @@ See [`.config/CLAUDE.md`](./.config/CLAUDE.md) for the full set. The short versi
 - Use `var(--color-*)` design tokens from `global.css`; no hardcoded hex
 - Native Svelte stores for global state — not Zustand
 - No React / Vue / Framer Motion
+```

@@ -21,7 +21,7 @@ const redis = new Redis({
 
 const ratelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5, '1 h'),
+  limiter: Ratelimit.slidingWindow(3, '1 h'),
   analytics: true,
   prefix: 'ratelimit_contact',
 });
@@ -50,7 +50,6 @@ function escapeHtml(s: string): string {
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  // Only accept JSON POSTs.
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
@@ -101,7 +100,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
 
     const { data, error } = await resend.emails.send({
-      from: 'Portfolio Contact <onboarding@resend.dev>',
+      from: 'Portfolio Contact <hello@contact.sheohn.dev>',
       to: 'jared.acebes@gmail.com',
       subject: `New Portfolio Message from ${name.slice(0, 60)}`,
       replyTo: email,

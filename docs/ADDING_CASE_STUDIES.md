@@ -30,8 +30,8 @@ team: 'Jared' # Optional
 Write the case study content here using standard Markdown (or MDX components)...
 ```
 
-4. **Write the content:** Below the `---` line, just write it in mdx stuff
-5. **Add an image:** If I linked an `image` in the frontmatter, I need to make sure the actual image file is dropped in the `public/` folder.
+4. **Write the content:** Below the `---` line, write your case study using standard Markdown or MDX components.
+5. **Add an image:** If you linked an `image` in the frontmatter, ensure the actual image file is placed in the `public/` directory (e.g., `public/images/project.png`). Use web-optimized formats like WebP or compressed PNGs.
 6. **Preview:** Run `npm run dev` and check `/projects` to make sure it looks clean.
 
 ## Making a Project "Featured"

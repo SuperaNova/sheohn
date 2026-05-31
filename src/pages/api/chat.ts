@@ -14,6 +14,24 @@ import { Index } from '@upstash/vector';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
+import { personalInfo } from '../../data/personalInfo';
+
+/**
+ * AI Chatbot API Endpoint (/api/chat)
+ *
+ * This endpoint processes messages from the frontend CommandDeck, runs them through
+ * Google Gemini via the Vercel AI SDK, and streams the text and tool-calls back.
+ *
+ * Architecture Flow:
+ * 1. Rate Limiting: IP-based throttling using Upstash Redis.
+ * 2. Validation: Strict Zod parsing of the incoming message shape to prevent abuse.
+ * 3. LLM Invocation: Sends context, user messages, and tool definitions to Gemini.
+ * 4. RAG Integration: One of the tools (`query_jared_memory`) queries an Upstash Vector DB
+ *    to retrieve personal facts, injecting them into the LLM context.
+ *
+ * To add new capabilities (e.g., "play a sound"), add a new tool to the `tools` object below
+ * and update `src/lib/prompts.ts` so the LLM knows when to use it.
+ */
 export const prerender = false;
 
 // Initialize the Vector DB client outside the route so it natively caches on the Edge/Serverless function
@@ -74,7 +92,6 @@ const ChatBodySchema = z.object({
 const MAX_BODY_BYTES = 32_000;
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  // Only accept JSON POSTs; reject anything else before doing any work.
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
@@ -100,7 +117,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     });
   }
 
-  // Bound the raw payload, then parse.
   let payload: unknown;
   try {
     const raw = await request.text();
@@ -112,7 +128,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  // Validate shape + roles (caps message count, blocks injected system turns).
   const parsed = ChatBodySchema.safeParse(payload);
   if (!parsed.success) {
     return new Response('Bad Request', { status: 400 });
@@ -144,9 +159,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     .map((c) => `- ${c.title} (slug: "${c.slug}") — ${c.summary}`)
     .join('\n')}`;
 
+  const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
+
   const result = streamText({
     model: google('gemini-3.1-flash-lite'),
-    system: SYSTEM_PROMPT + caseStudyContext,
+    system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
     messages,
     stopWhen: stepCountIs(5),
     tools: {
@@ -165,6 +182,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
                 slug,
                 available: caseStudies.map((c) => c.slug),
               };
+        },
+      }),
+      open_resume: tool({
+        description:
+          "Open Jared's resume (CV) PDF in a new tab. Call this whenever the user asks to see his resume. CRITICAL: You MUST also output a clickable markdown link to his resume in your text response just in case their browser blocks the popup. Format it EXACTLY like this: [Click here to view resume](URL_FROM_SYSTEM_CONTEXT) — NEVER output the raw naked URL string.",
+        inputSchema: z.object({}),
+        execute: async () => {
+          return { status: 'opening_resume', url: personalInfo.resumeUrl };
         },
       }),
       focus_section: tool({

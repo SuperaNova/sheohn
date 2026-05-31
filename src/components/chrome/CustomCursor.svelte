@@ -52,7 +52,6 @@
   });
 </script>
 
-<!-- Single solid instant cursor -->
 <div
   class="pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full transition-colors duration-200 md:block {isGreenHover
     ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
