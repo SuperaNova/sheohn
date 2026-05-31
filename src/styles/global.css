@@ -19,9 +19,9 @@
   /* Console treatment — the system "chrome" language. Theme-independent on
      purpose: control surfaces (command deck, status line, boot) always read
      as an instrument panel framing the warm content, regardless of light/dark. */
-  --color-console-surface: #0a0a0a;
-  --color-console-elev: #141414;
-  --color-console-line: rgba(74, 222, 128, 0.16);
+  --color-console-surface: #161616;
+  --color-console-elev: #1f1f1f;
+  --color-console-line: rgba(74, 222, 128, 0.22);
   --color-console-signal: #4ade80;
   --color-console-signal-strong: #22c55e;
   --color-console-text: #e6ece6;
@@ -49,6 +49,12 @@ html.dark {
   --color-tertiary: #3c724d;
   --color-tertiary-container: #2b5438;
   --color-outline-variant: #c4c8c0;
+}
+
+/* Always reserve the scrollbar gutter so the centered header (and content)
+   don't shift horizontally between a scrolling page and a short one. */
+html {
+  scrollbar-gutter: stable;
 }
 
 html,
