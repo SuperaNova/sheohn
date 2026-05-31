@@ -9,26 +9,12 @@
   } from '../../store';
   import DecoderText from '../ui/DecoderText.svelte';
   import { personalInfo } from '../../data/personalInfo';
+  import { starters } from '../../data/starters';
 
   const parallaxY = new Spring(0, {
     stiffness: 0.11,
     damping: 0.28,
   });
-
-  // First-move choreography: each chip sends a real query to the agent, which
-  // then physically drives the page (pan / spotlight / open case study).
-  const starters = [
-    {
-      label: 'show me what he built',
-      q: 'What has Jared built? Show me his projects.',
-    },
-    {
-      label: 'open the rust interpreter',
-      q: 'Open the Lexicon Rust interpreter case study.',
-    },
-    { label: "what's his stack?", q: 'What is his tech stack?' },
-    { label: 'is he available?', q: 'Is Jared available for opportunities?' },
-  ];
 
   function openDeck() {
     commandDeckOpen.set(true);

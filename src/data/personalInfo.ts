@@ -11,6 +11,9 @@ export const personalInfo = {
     github: 'https://github.com/SuperaNova',
     linkedin: 'https://www.linkedin.com/in/jared-sheohn-acebes-316aab297',
   },
+  // Résumé PDF. Temporary filler — swap for the Vercel Blob URL once uploaded.
+  resumeUrl:
+    'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
   about: {
     paragraphs: [
       'I am a Software Developer and Systems Engineer focused on building resilient backend infrastructure, AI-integrated pipelines, and low-level architecture. I specialize in highly optimized systems, from orchestrating cloud environments to writing custom language interpreters.',

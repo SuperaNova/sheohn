@@ -8,7 +8,12 @@
     { id: 'home', label: 'home', path: '/' },
     { id: 'projects', label: 'projects', path: '/projects' },
     { id: 'about', label: 'about', path: '/about' },
-    { id: 'resume', label: 'resume', path: '/resume.pdf', external: true },
+    {
+      id: 'resume',
+      label: 'resume',
+      path: personalInfo.resumeUrl,
+      external: true,
+    },
   ];
 
   let activeId = $state('');

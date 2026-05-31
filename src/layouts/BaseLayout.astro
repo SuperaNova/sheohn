@@ -3,6 +3,7 @@ import '../styles/global.css';
 import HeaderNav from '../components/chrome/HeaderNav.svelte';
 import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
+import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 // @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
@@ -34,7 +35,7 @@ const canonicalURL = new URL(
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
@@ -73,11 +74,11 @@ const canonicalURL = new URL(
     <meta property="og:image" content={new URL(image, canonicalURL)} />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={canonicalURL} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(image, canonicalURL)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(image, canonicalURL)} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -148,6 +149,7 @@ const canonicalURL = new URL(
     </a>
 
     <NavProgress client:idle transition:persist />
+    <ScrollProgress client:idle transition:persist />
     <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
     <HeaderNav client:load transition:persist />

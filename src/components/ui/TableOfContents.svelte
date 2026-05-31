@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
 
   type Heading = {
     depth: number;
@@ -7,12 +7,12 @@
     text: string;
   };
 
-  export let headings: Heading[] = [];
+  let { headings = [] }: { headings?: Heading[] } = $props();
 
-  let activeId = '';
-  let observer: IntersectionObserver;
-
-  $: tocHeadings = headings.filter((h) => h.depth > 1 && h.depth <= 3);
+  let activeId = $state('');
+  const tocHeadings = $derived(
+    headings.filter((h) => h.depth > 1 && h.depth <= 3),
+  );
 
   onMount(() => {
     const elements = headings
@@ -21,7 +21,7 @@
 
     if (elements.length === 0) return;
 
-    observer = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -36,12 +36,8 @@
     );
 
     elements.forEach((el) => observer.observe(el));
-  });
 
-  onDestroy(() => {
-    if (observer) {
-      observer.disconnect();
-    }
+    return () => observer.disconnect();
   });
 </script>
 
@@ -63,7 +59,7 @@
         <li class="relative {heading.depth === 3 ? 'ml-4' : ''}">
           {#if isActive}
             <div
-              class="absolute top-1/2 -left-[5px] z-10 h-2 w-2 -translate-y-1/2 rounded-full bg-[#f26522]"
+              class="absolute top-1/2 -left-[5px] z-10 h-2 w-2 -translate-y-1/2 rounded-full bg-[var(--color-tertiary)]"
             ></div>
           {/if}
 

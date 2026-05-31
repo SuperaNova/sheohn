@@ -26,7 +26,7 @@
   }: Props = $props();
 
   // "Crucible - Autonomous Sprite Synthesis Pipeline" -> "Crucible"
-  const shortName = (t: string) => t.split(/\s[–-]\s/)[0];
+  const shortName = (t: string) => t.split(/\s[—–-]\s/)[0];
   // Compact, lowercased tech column: "python · gemini · flux"
   const stackLine = (p: ProjectData) =>
     p.stack
