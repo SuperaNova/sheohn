@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SectionReveal from '../components/ui/SectionReveal.svelte';
-import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 import ExperienceTimeline from '../components/sections/ExperienceTimeline.svelte';
 import { personalInfo } from '../data/personalInfo';
 ---
@@ -10,8 +9,6 @@ import { personalInfo } from '../data/personalInfo';
   title="About Me"
   description={`About ${personalInfo.name} and his technical experience.`}
 >
-  <ScrollProgress client:idle />
-
   <main class="min-h-screen bg-[var(--color-surface)] pt-32">
     <SectionReveal
       client:visible

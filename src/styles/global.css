@@ -48,7 +48,9 @@ html.dark {
   --color-primary-container: #2f5a3c;
   --color-tertiary: #3c724d;
   --color-tertiary-container: #2b5438;
-  --color-outline-variant: #c4c8c0;
+  /* Dark dividers/borders: a subtle warm line on near-black, not the light
+     #c4c8c0 used in light mode. */
+  --color-outline-variant: #2c2f2a;
 }
 
 /* Always reserve the scrollbar gutter so the centered header (and content)

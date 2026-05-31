@@ -1,15 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  export let text: string;
-  export let delay = 0;
-  let className = '';
-  export { className as class };
+  let {
+    text,
+    delay = 0,
+    class: className = '',
+  }: { text: string; delay?: number; class?: string } = $props();
 
   const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
 
-  let displayText = '';
-  let isDecoding = false;
+  let displayText = $state('');
+  let isDecoding = $state(false);
+
   onMount(() => {
     let rafId: number;
     const timeout = setTimeout(() => {

@@ -14,6 +14,8 @@
     agentQuery,
     type SceneTarget,
   } from '../../store';
+  import { personalInfo } from '../../data/personalInfo';
+  import { starters } from '../../data/starters';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -29,16 +31,8 @@
     {
       name: 'resume',
       label: 'Open résumé (pdf)',
-      run: () => window.open('/resume.pdf', '_blank'),
+      run: () => window.open(personalInfo.resumeUrl, '_blank'),
     },
-  ];
-
-  // Example queries shown in the empty agent state — each one drives the page.
-  const starters = [
-    'What has Jared built?',
-    'Show me the Rust interpreter',
-    "What's his stack?",
-    'Is he available?',
   ];
 
   let inputEl = $state<HTMLInputElement | null>(null);
@@ -399,13 +393,13 @@
             <span class="text-[var(--color-console-signal)]">/</span> for commands.
           </p>
           <div class="mt-3 flex flex-wrap gap-2">
-            {#each starters as s (s)}
+            {#each starters as s (s.label)}
               <button
                 type="button"
-                onclick={() => ask(s)}
+                onclick={() => ask(s.q)}
                 class="rounded-md border border-[var(--color-console-line)] px-2.5 py-1 text-xs text-[var(--color-console-text-dim)] transition-colors hover:border-[var(--color-console-signal)]/50 hover:text-[var(--color-console-text)]"
               >
-                {s}
+                {s.label}
               </button>
             {/each}
           </div>

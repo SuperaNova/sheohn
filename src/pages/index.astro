@@ -2,7 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSection from '../components/sections/HeroSection.svelte';
 import WorkManifest from '../components/sections/WorkManifest.svelte';
-import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 import SectionReveal from '../components/ui/SectionReveal.svelte';
 import ContactForm from '../components/sections/ContactForm.svelte';
 import { getCollection } from 'astro:content';
@@ -21,8 +20,6 @@ import { personalInfo } from '../data/personalInfo';
   title={`${personalInfo.name} - Portfolio`}
   description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
 >
-  <ScrollProgress client:idle />
-
   <main class="bg-[var(--color-surface)]">
     <!-- Svelte Island: animated hero -->
     <HeroSection client:load />
