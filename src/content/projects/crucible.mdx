@@ -19,6 +19,8 @@ featured: true
 order: 3
 ---
 
+import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
+
 ## Overview
 
 Crucible is an autonomous intelligence pipeline built to procedurally generate combined 16-bit RPG sprites. It replaces conventional sequential processing with a **Google Agent Development Kit (ADK)** driven multi-agent system, orchestrating strict state handoffs across vision models (VLMs), reasoning LLMs, and diffusion models.
@@ -94,25 +96,12 @@ To convert high-fidelity diffusion outputs into accurate game assets, the Forger
 
 ## Project Documentation & Architecture Deck
 
-<div class="my-8 overflow-hidden rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] shadow-sm">
-  <iframe
-    src="https://aleda1faaxt35aum.public.blob.vercel-storage.com/Crucible.pdf"
-    title="Crucible Architecture Deck"
-    loading="lazy"
-    class="h-[75vh] w-full border-none"
-  ></iframe>
-  <div class="flex items-center justify-between bg-[var(--color-surface-container)] px-6 py-4 text-xs text-[var(--color-on-surface-muted)]">
-    <span>Crucible Research & Architecture</span>
-    <a
-      href="https://aleda1faaxt35aum.public.blob.vercel-storage.com/Crucible.pdf"
-      target="_blank"
-      rel="noreferrer"
-      class="font-semibold text-[var(--color-tertiary)] hover:text-[var(--color-on-surface)] hover:underline"
-    >
-      Open in new tab ↗
-    </a>
-  </div>
-</div>
+<PdfEmbed
+  client:visible
+  src="https://aleda1faaxt35aum.public.blob.vercel-storage.com/Crucible.pdf"
+  title="Crucible Architecture Deck"
+  caption="Crucible Research & Architecture"
+/>
 
 ---
 

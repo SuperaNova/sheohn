@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { fly } from 'svelte/transition';
+
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
   import { navigate } from 'astro:transitions/client';
@@ -253,8 +254,9 @@
   onpointerdown={handleOutsidePointer}
 />
 
-<div
+<aside
   bind:this={deckRoot}
+  aria-label="Command Deck"
   data-cursor-green="true"
   class="fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
 >
@@ -411,7 +413,7 @@
   <!-- The persistent docked command bar -->
   <form
     onsubmit={handleSubmit}
-    class="flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-colors focus-within:border-[var(--color-console-signal)]/50"
+    class="flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_0_40px_rgba(74,222,128,0.15)] backdrop-blur-xl transition-all duration-500 focus-within:border-[var(--color-console-signal)]/50 focus-within:shadow-[0_0_50px_rgba(74,222,128,0.25)]"
   >
     <span
       class="font-mono text-sm text-[var(--color-console-signal)]"
@@ -445,7 +447,7 @@
       >{shortcut}</kbd
     >
   </form>
-</div>
+</aside>
 
 <style>
   .deck-scroll {
