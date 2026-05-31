@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, getEntry, render } from 'astro:content';
 import TableOfContents from '../../components/ui/TableOfContents.svelte';
+import Lightbox from '../../components/ui/Lightbox.svelte';
 
 // Required for SSG — tells Astro which dynamic pages to prerender
 export async function getStaticPaths() {
@@ -146,4 +147,9 @@ const { Content, headings } = await render(entry);
       <div class="ml-8 hidden w-64 shrink-0 xl:block 2xl:ml-16"></div>
     </div>
   </main>
+
+  {
+    /* Click-to-zoom overlay for every image in the article (hero + diagrams). */
+  }
+  <Lightbox client:idle />
 </BaseLayout>

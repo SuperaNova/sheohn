@@ -9,9 +9,10 @@ test.describe('Home page', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /Jared Sheohn L\. Acebes/i }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('link', { name: 'View All Projects' }),
-    ).toHaveAttribute('href', '/projects');
+    await expect(page.getByRole('link', { name: /view all/i })).toHaveAttribute(
+      'href',
+      '/projects',
+    );
     await expect(page.locator('section#projects')).toBeVisible();
 
     // Accessibility scan

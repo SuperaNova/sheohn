@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { slide } from 'svelte/transition';
+
   import ThemeToggle from './ThemeToggle.svelte';
   import { personalInfo } from '../../data/personalInfo';
 

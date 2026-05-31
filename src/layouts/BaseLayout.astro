@@ -136,8 +136,20 @@ const canonicalURL = new URL(
          inline head script hides it on return visits / view transitions). -->
     <Loader client:load />
 
+    <!-- Ambient Background Glows -->
+    <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <div
+        class="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-[var(--color-tertiary)] opacity-[0.06] blur-[120px] dark:opacity-[0.10]"
+      >
+      </div>
+      <div
+        class="absolute top-[60%] -right-[10%] h-[60%] w-[50%] rounded-full bg-[var(--color-tertiary)] opacity-[0.04] blur-[120px] dark:opacity-[0.08]"
+      >
+      </div>
+    </div>
+
     <div
-      class="site-noise pointer-events-none fixed inset-0 z-50 opacity-20 mix-blend-overlay dark:opacity-30"
+      class="site-noise pointer-events-none fixed -inset-[100%] z-50 opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
     >
     </div>
 
@@ -156,9 +168,9 @@ const canonicalURL = new URL(
 
     <!-- pb leaves a scroll runway so the docked command deck never sits on top
          of the last content on a page. -->
-    <div id="main-content" class="pb-28">
+    <main id="main-content" class="pb-28">
       <slot />
-    </div>
+    </main>
 
     <!-- Unified command surface: deterministic /commands + the AI agent in one
          docked bar. transition:persist keeps the conversation alive while the

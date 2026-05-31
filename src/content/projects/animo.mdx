@@ -12,6 +12,8 @@ featured: false
 order: 1
 ---
 
+import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
+
 ## Overview
 
 Engineered a serverless Firebase backend and an AI-driven matching engine using Vertex AI and Genkit to optimize agricultural supply-demand pairings.
@@ -88,25 +90,12 @@ In a 72-hour sprint, infrastructure overhead is the enemy of execution.
 
 ## Project Pitch Deck
 
-<div class="my-8 overflow-hidden rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)]">
-  <iframe
-    src="https://aleda1faaxt35aum.public.blob.vercel-storage.com/AniMoIntelliJaysAPACSolutionsChallenge.pdf"
-    title="AniMo Pitch Deck"
-    loading="lazy"
-    class="h-[75vh] w-full border-none"
-  ></iframe>
-  <div class="flex items-center justify-between bg-[var(--color-surface-container)] px-6 py-4 text-xs text-[var(--color-on-surface-muted)]">
-    <span>Team IntelliJays</span>
-    <a
-      href="https://aleda1faaxt35aum.public.blob.vercel-storage.com/AniMoIntelliJaysAPACSolutionsChallenge.pdf"
-      target="_blank"
-      rel="noreferrer"
-      class="font-semibold text-[var(--color-tertiary)] hover:text-[var(--color-on-surface)] hover:underline"
-    >
-      Open in new tab ↗
-    </a>
-  </div>
-</div>
+<PdfEmbed
+  client:visible
+  src="https://aleda1faaxt35aum.public.blob.vercel-storage.com/AniMoIntelliJaysAPACSolutionsChallenge.pdf"
+  title="AniMo Pitch Deck"
+  caption="Team IntelliJays"
+/>
 
 ---
 
