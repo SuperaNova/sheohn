@@ -543,6 +543,8 @@
       aria-hidden="true">›</span
     >
     <input
+      id="command-deck-input"
+      name="command-deck-input"
       bind:this={inputEl}
       bind:value={inputValue}
       onfocus={open}
