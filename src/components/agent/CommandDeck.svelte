@@ -9,6 +9,7 @@
     dispatchScene,
     dispatchRoute,
     toggleTheme,
+    setTheme,
     commandDeckOpen,
     agentQuery,
     type SceneTarget,
@@ -74,7 +75,7 @@
           input?: unknown;
         };
         const args = (payload.args ?? payload.arguments ?? payload.input) as
-          | { focus?: string; section?: string; slug?: string }
+          | { focus?: string; section?: string; slug?: string; mode?: string }
           | undefined;
 
         if (payload.toolName === 'trigger_ui_state' && args?.focus) {
@@ -87,6 +88,11 @@
           dispatchScene(args.section as SceneTarget);
         } else if (payload.toolName === 'open_case_study' && args?.slug) {
           dispatchRoute(`/projects/${args.slug}`);
+        } else if (
+          payload.toolName === 'set_theme' &&
+          (args?.mode === 'light' || args?.mode === 'dark')
+        ) {
+          setTheme(args.mode);
         }
       },
       onError: (err) => console.error('[CommandDeck] agent error:', err),

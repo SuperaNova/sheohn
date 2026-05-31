@@ -136,6 +136,18 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           return { status: 'focused', section };
         },
       }),
+      set_theme: tool({
+        description:
+          'Switch the site between light and dark mode. Use when the visitor asks to change the theme ("dark mode", "lights off", "make it brighter").',
+        inputSchema: z.object({
+          mode: z
+            .enum(['light', 'dark'])
+            .describe('The theme to switch the site to.'),
+        }),
+        execute: async ({ mode }) => {
+          return { status: 'theme_set', mode };
+        },
+      }),
       trigger_ui_state: tool({
         description:
           'Highlight specific project cards when the user asks about a particular technology.',
