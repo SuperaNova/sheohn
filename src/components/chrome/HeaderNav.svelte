@@ -101,7 +101,7 @@
     <div class="hidden items-center gap-4 md:flex">
       {#if clock}
         <div
-          class="hidden items-center gap-1.5 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)] lg:flex"
+          class="hidden min-w-[8.5rem] items-center justify-end gap-1.5 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)] lg:flex"
           title="Jared's local time"
         >
           <svg

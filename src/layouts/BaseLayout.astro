@@ -150,9 +150,11 @@ const canonicalURL = new URL(
     <NavProgress client:idle transition:persist />
     <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
-    <HeaderNav client:load />
+    <HeaderNav client:load transition:persist />
 
-    <div id="main-content">
+    <!-- pb leaves a scroll runway so the docked command deck never sits on top
+         of the last content on a page. -->
+    <div id="main-content" class="pb-28">
       <slot />
     </div>
 

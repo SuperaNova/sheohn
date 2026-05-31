@@ -6,7 +6,9 @@
   const timelineData = personalInfo.experience;
 </script>
 
-<div class="mt-20 ml-2 border-l border-white/10 pl-6 md:ml-4 md:pl-10">
+<div
+  class="mt-20 ml-2 border-l border-[var(--color-on-surface-muted)]/30 pl-6 md:ml-4 md:pl-10"
+>
   {#each timelineData as item, index (item.id)}
     <div
       class="timeline-item relative mb-12 last:mb-0"

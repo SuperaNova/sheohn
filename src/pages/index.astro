@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSection from '../components/sections/HeroSection.svelte';
-import FeaturedProjects from '../components/sections/FeaturedProjects.svelte';
+import WorkManifest from '../components/sections/WorkManifest.svelte';
 import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 import SectionReveal from '../components/ui/SectionReveal.svelte';
 import ContactForm from '../components/sections/ContactForm.svelte';
@@ -9,10 +9,10 @@ import { getCollection } from 'astro:content';
 
 const allProjects = await getCollection('projects');
 
-const featuredProjects = allProjects
-  .filter((p) => p.data.featured)
-  .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 1)
+// All projects as a console "manifest" preview (newest/most-advanced first);
+// /projects holds the full case-study cards.
+const projects = allProjects
+  .sort((a, b) => b.data.order - a.data.order)
   .map((p) => ({ slug: p.id, ...p.data }));
 import { personalInfo } from '../data/personalInfo';
 ---
@@ -27,10 +27,8 @@ import { personalInfo } from '../data/personalInfo';
     <!-- Svelte Island: animated hero -->
     <HeroSection client:load />
 
-    <!-- Svelte Island: projects rendered through array/object mapping -->
-    <div class="relative z-10 bg-transparent">
-      <FeaturedProjects client:visible projects={featuredProjects} />
-    </div>
+    <!-- Console "work manifest": all projects as a deployed-modules list -->
+    <WorkManifest client:visible projects={projects} />
 
     <!-- Contact — full-viewport closing statement -->
     <SectionReveal
