@@ -89,3 +89,8 @@ export function initTheme() {
 export function toggleTheme() {
   theme.update((t) => (t === 'dark' ? 'light' : 'dark'));
 }
+
+// Set the theme directly (used by the agent's set_theme tool).
+export function setTheme(mode: 'light' | 'dark') {
+  theme.set(mode);
+}
