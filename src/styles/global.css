@@ -43,11 +43,11 @@ html.dark {
   --color-surface-container-high: #171717;
   --color-surface-container-highest: #1f1f1f;
   --color-on-surface: #ecf2ec;
-  --color-on-surface-muted: #b7c2b7;
-  --color-primary: #1f3a27;
-  --color-primary-container: #2f5a3c;
-  --color-tertiary: #3c724d;
-  --color-tertiary-container: #2b5438;
+  --color-on-surface-muted: #c9d4c9;
+  --color-primary: #3d6a49;
+  --color-primary-container: #49825b;
+  --color-tertiary: #5fba82;
+  --color-tertiary-container: #49825b;
   /* Dark dividers/borders: a subtle warm line on near-black, not the light
      #c4c8c0 used in light mode. */
   --color-outline-variant: #2c2f2a;
