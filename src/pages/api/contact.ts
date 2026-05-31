@@ -35,6 +35,8 @@ const ContactSchema = z.object({
     .max(5000),
 });
 
+const MAX_BODY_BYTES = 16_000;
+
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
@@ -48,8 +50,19 @@ function escapeHtml(s: string): string {
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  const ip =
-    clientAddress || request.headers.get('x-forwarded-for') || '127.0.0.1';
+  // Only accept JSON POSTs.
+  if (
+    !(request.headers.get('content-type') ?? '').includes('application/json')
+  ) {
+    return new Response(JSON.stringify({ error: 'Unsupported Media Type' }), {
+      status: 415,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Trust only the platform-derived client address; x-forwarded-for is
+  // client-spoofable and would let a caller bypass the rate limiter.
+  const ip = clientAddress ?? '127.0.0.1';
   const { success, limit, reset, remaining } = await ratelimit.limit(ip);
 
   if (!success) {
@@ -65,7 +78,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   }
 
   try {
-    const body = await request.json();
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: 'Payload too large' }), {
+        status: 413,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const body = JSON.parse(raw);
     const result = ContactSchema.safeParse(body);
 
     if (!result.success) {

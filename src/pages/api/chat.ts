@@ -49,14 +49,42 @@ const google = createGoogleGenerativeAI({
     process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-type IncomingMessage = Partial<UIMessage> & {
-  role: UIMessage['role'];
-  content?: string;
-};
+// Incoming message validation. `.passthrough()` on parts keeps the tool-call
+// fields the AI SDK resends in assistant history; the message object itself is
+// strict-stripped. Roles are restricted to user/assistant so a caller can't
+// inject a forged `system` turn to override SYSTEM_PROMPT.
+const ChatPartSchema = z.looseObject({
+  type: z.string(),
+  text: z.string().optional(),
+});
+
+const ChatMessageSchema = z.object({
+  id: z.string().optional(),
+  role: z.enum(['user', 'assistant']),
+  content: z.string().optional(),
+  parts: z.array(ChatPartSchema).max(64).optional(),
+});
+
+const ChatBodySchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1).max(24),
+});
+
+// Hard cap on the raw request body — a cheap DoS guard so a caller can't
+// inflate the LLM context (and the bill) with a giant payload.
+const MAX_BODY_BYTES = 32_000;
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  const ip =
-    clientAddress || request.headers.get('x-forwarded-for') || '127.0.0.1';
+  // Only accept JSON POSTs; reject anything else before doing any work.
+  if (
+    !(request.headers.get('content-type') ?? '').includes('application/json')
+  ) {
+    return new Response('Unsupported Media Type', { status: 415 });
+  }
+
+  // Trust only the platform-derived client address. x-forwarded-for is
+  // client-spoofable and would let a caller rotate identities to slip the
+  // rate limiter.
+  const ip = clientAddress ?? '127.0.0.1';
   const { success, limit, reset, remaining } = await ratelimit.limit(
     `ratelimit_chat_${ip}`,
   );
@@ -72,10 +100,27 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     });
   }
 
-  const body = (await request.json()) as { messages?: IncomingMessage[] };
+  // Bound the raw payload, then parse.
+  let payload: unknown;
+  try {
+    const raw = await request.text();
+    if (raw.length > MAX_BODY_BYTES) {
+      return new Response('Payload Too Large', { status: 413 });
+    }
+    payload = JSON.parse(raw);
+  } catch {
+    return new Response('Bad Request', { status: 400 });
+  }
+
+  // Validate shape + roles (caps message count, blocks injected system turns).
+  const parsed = ChatBodySchema.safeParse(payload);
+  if (!parsed.success) {
+    return new Response('Bad Request', { status: 400 });
+  }
+
   // DefaultChatTransport sends UI messages. Normalize so all have `parts`
   // (first-turn messages may only have `content` without `parts`).
-  const rawMessages: UIMessage[] = (body.messages ?? []).map((m) => {
+  const rawMessages: UIMessage[] = parsed.data.messages.map((m) => {
     if (!m.parts) {
       return {
         ...m,
