@@ -107,6 +107,12 @@
   let pending = $state<string | null>(null);
   // Platform-correct shortcut label; SSR-safe default, corrected on mount.
   let shortcut = $state('Ctrl K');
+  // Keyboard-aware cap for the scrollable list. On mobile the on-screen
+  // keyboard shrinks the *visual* viewport but not CSS vh/dvh, so an open
+  // console would otherwise grow taller than the space above the keyboard and
+  // ride up over the fixed site header. 0 until measured (SSR-safe → the
+  // Tailwind max-h-72 fallback applies on the server / before hydration).
+  let listMaxPx = $state(0);
 
   // Keep local `expanded` in sync with the shared store (hero CTA, Cmd+K).
   $effect(() => {
@@ -334,6 +340,30 @@
     });
     return unsub;
   });
+
+  // Track the visual viewport so the list stays within the room above the
+  // keyboard. ~270px is reserved for the input bar, panel header, chips row,
+  // outer margins, and a gap that keeps the panel clear of the site header.
+  // Capped to the 18rem (288px) desktop default and floored at a usable 120px.
+  onMount(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const CHROME = 270;
+    const measure = () => {
+      listMaxPx = Math.min(288, Math.max(120, Math.round(vv.height - CHROME)));
+    };
+    measure();
+    vv.addEventListener('resize', measure);
+    vv.addEventListener('scroll', measure);
+    // window resize covers orientation changes (and browsers that don't fire a
+    // visualViewport resize for them).
+    window.addEventListener('resize', measure);
+    return () => {
+      vv.removeEventListener('resize', measure);
+      vv.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
+  });
 </script>
 
 <svelte:window
@@ -417,6 +447,7 @@
           id="deck-command-list"
           role="listbox"
           aria-label="Commands"
+          style:max-height={listMaxPx ? `${listMaxPx}px` : undefined}
           class="max-h-72 overflow-y-auto p-2 font-mono text-sm"
         >
           {#if filteredCommands.length === 0}
@@ -461,6 +492,7 @@
           role="log"
           aria-live="polite"
           aria-label="Agent conversation"
+          style:max-height={listMaxPx ? `${listMaxPx}px` : undefined}
           class="deck-scroll flex max-h-72 flex-col gap-4 overflow-y-auto p-4 font-mono text-[13px] leading-relaxed"
         >
           {#each messages as m (m.id)}

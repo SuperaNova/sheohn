@@ -147,9 +147,15 @@ const canonicalURL = new URL(
       </div>
     </div>
 
+    <!-- Clip the oversized animated noise to the viewport. The layer is sized
+         larger than the screen so its drift never reveals an un-noised edge;
+         without this wrapper that overflow widens the layout viewport on
+         mobile (iOS Safari shrink-to-fit), zooming the whole page out. Mirrors
+         the ambient-glow clip container above. -->
     <div
-      class="site-noise pointer-events-none fixed -inset-[100%] z-50 opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
+      class="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
     >
+      <div class="site-noise absolute -inset-[100%]"></div>
     </div>
 
     <a
