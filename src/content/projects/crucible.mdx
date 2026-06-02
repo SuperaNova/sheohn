@@ -1,11 +1,12 @@
 ---
 title: 'Crucible — Autonomous Sprite Synthesis Pipeline'
-summary: 'Automated multi-agent pipeline using Google ADK to orchestrate state handoffs across vision and diffusion models.'
+summary: 'A multi-agent pipeline that fuses two RPG sprites by grounding them in language: SigLIP + Moondream perception, an ADK reasoning agent, and Flux diffusion.'
 category: 'AI / Pipeline Architecture'
 stack:
   [
     'Python',
     'Gemini 3.1 Flash-Lite',
+    'SigLIP (SO400M)',
     'Moondream2 (VLM)',
     'Flux.1',
     'Google ADK',
@@ -13,7 +14,7 @@ stack:
 role: 'AI Engineer'
 timeline: 'April 2026'
 team: '2 Person Team'
-status: 'Ongoing'
+status: 'Completed'
 image: 'crucible/crucible.webp'
 featured: true
 order: 3
@@ -23,7 +24,7 @@ import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
 
 ## Overview
 
-Crucible is an autonomous intelligence pipeline built to procedurally generate combined 16-bit RPG sprites. It replaces conventional sequential processing with a **Google Agent Development Kit (ADK)** driven multi-agent system, orchestrating strict state handoffs across vision models (VLMs), reasoning LLMs, and diffusion models.
+Crucible is an autonomous pipeline built to procedurally generate combined 16-bit RPG sprites. It replaces conventional sequential processing with a cooperative multi-agent pipeline — perception, reasoning, and rendering as distinct role-agents — orchestrated in Python, with the **Google Agent Development Kit (ADK)** driving the reasoning agent and carrying the state handoff between stages.
 
 ### The Problem: Raw Pixels vs. Semantic Fusion
 
@@ -45,7 +46,7 @@ Because a well-trained VAE enforces a smooth posterior (`q(z|x) ~ N(mu, sigma^2 
 
 Points mathematically between $z_a$ and $z_b$ on the learned manifold are more likely to decode into coherent images than random interpolations in standard pixel space.
 
-**The Bottleneck:** The dataset contained roughly 7,000 items after our cleaning heuristics. At this scale, the reconstruction loss dominates and the KL term collapses. The posterior begins memorizing rather than generalizing, meaning the resulting latent space is not smooth enough for reliable, cross-category item interpolation.
+**The Bottleneck:** After our cleaning heuristics, only ~1,460 structurally sound sprites survived (from ~89,400 raw). At this scale the reconstruction loss dominates and the KL term collapses—the posterior memorizes rather than generalizes, so the latent space is not smooth enough for reliable, cross-category item interpolation.
 
 Instead of fighting mathematical dataset limitations, we sidestepped the problem entirely. We reframed sprite fusion from a _latent manifold_ problem into a _language grounding_ problem.
 
@@ -53,7 +54,7 @@ Instead of fighting mathematical dataset limitations, we sidestepped the problem
 
 ## Architecture: Pipeline Decomposition & ADK
 
-By utilizing the **RPG Framework** (Recaption, Plan, Generate) proposed by _Yang et al., 2024_, we built a Multi-Agent System (MAS). Instead of a monolithic script, we separated perception (eyes), reasoning (brain), and rendering (brush) into distinct, autonomous units communicating via a shared session state using Google ADK.
+By utilizing the **RPG Framework** (Recaption, Plan, Generate) proposed by _Yang et al., 2024_, we built a cooperative multi-agent pipeline. Instead of a monolithic script, we separated perception (eyes), reasoning (brain), and rendering (brush) into distinct role-agents communicating through shared state. Only the reasoning agent runs on Google ADK as an `LlmAgent`; the perception and rendering agents are role-defined units in plain Python, coordinated sequentially by a `Forge` orchestrator.
 
 <img
   src="/crucible/crucible-diagram.webp"
@@ -65,25 +66,28 @@ By utilizing the **RPG Framework** (Recaption, Plan, Generate) proposed by _Yang
 
 ### 1. Agent 1: The Appraiser (Vision)
 
-Utilizing a Vision-Language Model (VLM), the Appraiser performs zero-shot semantic extraction. It evaluates the two input sprites, identifies their visual properties, elements, and materials, and writes the structured findings directly to `state['appraisal']`.
+Identity and appearance are split across two specialist vision models, because asking a small generative VLM "what is this?" on a 16×16 icon hallucinates (it once called a blue gem a "health potion"):
+
+- **Identity — SigLIP zero-shot (SO400M):** the sprite is scored against a fixed RPG vocabulary (`sword`, `gemstone`, `potion bottle`, …) with prompt ensembling. Closed-set classification is far more reliable than open generation at this resolution. (This is the SigLIP paper finally doing real work in the pipeline.)
+- **Appearance — Moondream2 (1.8B VLM):** asked for colours, materials, and textures _only_ — never to name the item or list parts. The structured `type + appearance` appraisal is written to shared state for the Smith.
 
 ### 2. Agent 2: The Master Smith (Reasoning)
 
-A text-only LLM agent reads the `{appraisal}` state. Currently, it acts as a creative logic engine, determining how to conceptually fuse the two items. It drafts a high-entropy diffusion prompt focusing heavily on textures and material blend logic, writing it to `state['smithing']`.
+A text-only ADK `LlmAgent` reads the `{appraisal}` state and runs an explicit four-step chain of thought: pick the fused **archetype**, then emit a **part-by-part material blueprint** — for every component (blade, grip, gem, …) a concrete `material`, `color`, source (`A`/`B`/`fused`), and surface `detail`. It does **not** write the diffusion prompt; it emits a structured `parts` object validated by a schema. This is true semantic compositing — e.g. _"the blade is polished gold inherited from B, the grip is oak wood from A"_ — rather than a vague texture blend.
 
 ### 3. Agent 3: The Forger (Generative Execution)
 
-The final stage executes the generation. It takes the text prompt from the Smith and decodes it into a raw artifact utilizing a generative backend (Flux), before passing the image to our custom post-processing engine.
+The Forger assembles the Smith's blueprint into a diffusion prompt **deterministically** — one localized clause per part — so every per-part material choice is guaranteed to reach the model, then renders via Flux.1 (Pollinations) and runs the output through our custom post-processing engine. An optional **ControlNet-Canny** path (SDXL, in the Colab notebook) conditions generation on the `structure_source` silhouette so the fused item keeps the chosen shape.
 
 ---
 
 ## Post-Processing & Optimization
 
-Getting a massive diffusion model to spit out a clean, 16-color RPG sprite required strict post-processing execution and hardware management.
+Getting a massive diffusion model to spit out a clean, 16-color RPG sprite required strict post-processing and hardware management.
 
 ### 1. Memory Bounding
 
-Local model execution was optimized via `float16` quantization. This strictly bounded our memory footprints to under 6GB VRAM, allowing the entire multi-agent pipeline to run on consumer hardware while enforcing reproducible generations using fixed-seed API configurations.
+The two local vision models (SigLIP SO400M and Moondream2) run in `float16` and are loaded and unloaded **in sequence**, so peak VRAM stays ~3.5 GB — within the 6 GB budget of a consumer GPU (GTX 1660 Super). The reasoning and diffusion stages are API-only and use no GPU. Each generation samples a fresh random seed (logged to the console for traceability), giving infinite variations of the same fusion.
 
 ### 2. The Pixel-Lattice Layer
 
@@ -105,22 +109,23 @@ To convert high-fidelity diffusion outputs into accurate game assets, the Forger
 
 ---
 
-## Current Focus: Asynchronous Infrastructure & Semantic Compositing
+## What Shipped
 
-While the theoretical multi-agent handoff works and satisfied the core assignment requirements, running heavy vision and diffusion models on local hardware revealed systemic bottlenecks, and the texture fusion is not yet up to my standards. My current focus is decoupling the pipeline and refactoring the reasoning engine.
+- **Semantic Material Compositing.** The Master Smith evolved from drafting vague texture prompts into a true semantic planner: it emits a localized, per-part material blueprint (material, colour, source item, surface detail) that the Forger renders deterministically — real material logic, not a blended-prompt average.
+- **Reliable identity via SigLIP.** Item recognition moved to a SigLIP zero-shot classifier over a fixed RPG vocabulary, fixing the small-VLM hallucinations (a blue gem read as a "health potion").
+- **Structural fidelity via ControlNet.** An optional SDXL + ControlNet-Canny path conditions generation on the `structure_source` silhouette, so a fused item keeps the intended shape.
 
-### 1. Semantic Material Compositing (In Progress)
+---
 
-Currently, the Master Smith relies too heavily on drafting basic texture prompts—it's mostly just "all talk" on how it decides on textures, which doesn't meet my standards for true synthesis.
+## Recommendations & Future Work
 
-Based on the RPG framework research, I am reimagining this stage to act as a true **Semantic Planner** that focuses on extracting explicit, localized details. Instead of simple composition and texture blending, the agent will define strict material logic. For example, it will map out that _"the blade inherits the metallic properties of Item A, but the handle is made of this specific other material and is roughly this color because of how the elements interact."_ This detailed, localized structural blueprint will allow the Forger to perfectly honor semantic fusion rather than just mathematically blending prompts.
+This was a completed mini-project; the following are directions for anyone extending it rather than active work.
 
-### 2. Eliminating Synchronous Pipeline Blocking
-
-Initially, the ADK orchestrator executed sequentially. The Master Smith agent could not begin reasoning until the Appraiser finished, and the Forger could not begin rendering until the Smith finished.
-
-- **The Problem:** Diffusion generation (The Forger) takes exponentially longer than text reasoning. In a high-volume scenario, the lightweight LLM agents sat completely idle waiting for the GPU to finish rendering the previous artifact.
-- **The Ongoing Fix:** I am currently decoupling the pipeline using an asynchronous message broker (like **Redis Pub/Sub** or **RabbitMQ**). By treating the Appraiser and Smith agents as rapid producers, they can throw thousands of fused prompts into a queue, while the GPU-bound Forger acts as an independent consumer, churning through the rendering backlog at its own maximum hardware capacity.
+- **Asynchronous decoupling.** The GPU-bound Forger dominates latency while the lightweight agents idle. A message broker (Redis Pub/Sub or RabbitMQ) — perception/reasoning as producers, diffusion as an independent consumer — would let the pipeline clear a backlog at full hardware throughput.
+- **A multimodal Smith.** The reasoning agent is currently text-only. Since Gemini is multimodal, feeding it the actual sprites would ground the plan on pixels and fully match the RPG paper's multimodal CoT.
+- **ControlNet as a core stage.** Promote the notebook-only ControlNet path into the main pipeline so `structure_source` always drives the silhouette.
+- **Ground-truth identity.** The dataset ships labels; using them for known sprites would give exact identity and reserve SigLIP zero-shot for unlabeled inputs.
+- **Robustness.** Fail loudly when the Smith returns nothing (instead of rendering a generic fallback), and add an optional fixed seed for reproducible fusions.
 
 ---
 
