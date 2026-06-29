@@ -11,8 +11,7 @@ import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { Index } from '@upstash/vector';
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { createRateLimiter } from '../../lib/ratelimit';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
 
@@ -44,21 +43,7 @@ const index = new Index({
     process.env.UPSTASH_VECTOR_REST_TOKEN,
 });
 
-const redis = new Redis({
-  url:
-    import.meta.env.UPSTASH_REDIS_REST_URL ||
-    process.env.UPSTASH_REDIS_REST_URL,
-  token:
-    import.meta.env.UPSTASH_REDIS_REST_TOKEN ||
-    process.env.UPSTASH_REDIS_REST_TOKEN,
-});
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(10, '1 m'),
-  analytics: true,
-  prefix: 'ratelimit_chat',
-});
+const ratelimit = createRateLimiter('ratelimit_chat', 10, '1 m');
 
 // Explicitly pass the API key; Astro SSR may not expose process.env to the SDK auto-detector
 const google = createGoogleGenerativeAI({

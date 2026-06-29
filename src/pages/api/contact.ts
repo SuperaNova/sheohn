@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { createRateLimiter } from '../../lib/ratelimit';
 
 export const prerender = false;
 
@@ -10,21 +9,7 @@ const resend = new Resend(
   import.meta.env.RESEND_API_KEY || process.env.RESEND_API_KEY,
 );
 
-const redis = new Redis({
-  url:
-    import.meta.env.UPSTASH_REDIS_REST_URL ||
-    process.env.UPSTASH_REDIS_REST_URL,
-  token:
-    import.meta.env.UPSTASH_REDIS_REST_TOKEN ||
-    process.env.UPSTASH_REDIS_REST_TOKEN,
-});
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(3, '1 h'),
-  analytics: true,
-  prefix: 'ratelimit_contact',
-});
+const ratelimit = createRateLimiter('ratelimit_contact', 3, '1 h');
 
 const ContactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
