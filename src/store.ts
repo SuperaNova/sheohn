@@ -23,7 +23,7 @@ export const commandDeckOpen = writable<boolean>(false);
 // A query pushed into the agent from elsewhere (hero starter chips, etc.).
 // CommandDeck owns the Chat instance and listens here; `ts` forces re-fire
 // even when the same text is sent twice.
-export interface AgentQuery {
+interface AgentQuery {
   text: string;
   ts: number;
 }
@@ -40,7 +40,7 @@ export type SceneTarget = 'hero' | 'about' | 'stack' | 'projects' | 'contact';
 // Which section element id is currently spotlit (null = none).
 export const spotlight = writable<string | null>(null);
 
-export interface SceneCommand {
+interface SceneCommand {
   target: SceneTarget;
   ts: number; // monotonic — forces re-trigger even on a repeat target
 }
