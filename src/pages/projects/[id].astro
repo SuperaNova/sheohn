@@ -32,7 +32,7 @@ const { Content, headings } = await render(entry);
   description={entry.data.summary}
   image={entry.data.image}
 >
-  <main class="min-h-screen bg-[var(--color-surface)] pt-32 pb-24">
+  <main class="min-h-screen bg-[var(--color-surface)] pt-20 pb-24 md:pt-32">
     <div
       class="relative mx-auto flex w-full max-w-[110rem] justify-center px-6 lg:px-12"
     >
@@ -131,7 +131,7 @@ const { Content, headings } = await render(entry);
         </div>
 
         <div
-          class="prose dark:prose-invert prose-lg prose-headings:font-display prose-headings:text-[var(--color-on-surface)] prose-headings:font-normal prose-headings:tracking-tight prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-6 prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-4 prose-p:text-[var(--color-on-surface-muted)] prose-p:leading-relaxed prose-p:text-[17px] prose-a:text-[var(--color-tertiary)] hover:prose-a:text-[var(--color-on-surface)] prose-a:transition-colors prose-a:font-medium prose-strong:text-[var(--color-on-surface)] prose-strong:font-semibold prose-ul:text-[var(--color-on-surface-muted)] prose-ul:text-[17px] prose-ol:text-[var(--color-on-surface-muted)] prose-ol:text-[17px] prose-li:my-1 prose-code:text-[var(--color-tertiary)] prose-code:bg-[var(--color-surface-container)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:hidden prose-code:after:hidden prose-pre:bg-[var(--color-surface-container)] prose-pre:border prose-pre:border-[var(--color-outline-variant)] prose-img:w-full prose-img:border prose-img:border-[var(--color-outline-variant)] max-w-none"
+          class="prose dark:prose-invert prose-lg prose-headings:font-display prose-headings:text-[var(--color-on-surface)] prose-headings:font-normal prose-headings:tracking-tight prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-6 prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 md:prose-h2:text-3xl md:prose-h2:mt-16 md:prose-h3:text-2xl md:prose-h3:mt-12 prose-p:text-[var(--color-on-surface-muted)] prose-p:leading-relaxed prose-p:text-base md:prose-p:text-[17px] prose-a:text-[var(--color-tertiary)] hover:prose-a:text-[var(--color-on-surface)] prose-a:transition-colors prose-a:font-medium prose-strong:text-[var(--color-on-surface)] prose-strong:font-semibold prose-ul:text-[var(--color-on-surface-muted)] prose-ul:text-base md:prose-ul:text-[17px] prose-ol:text-[var(--color-on-surface-muted)] prose-ol:text-base md:prose-ol:text-[17px] prose-li:my-1 prose-code:text-[var(--color-tertiary)] prose-code:bg-[var(--color-surface-container)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:hidden prose-code:after:hidden prose-pre:bg-[var(--color-surface-container)] prose-pre:border prose-pre:border-[var(--color-outline-variant)] prose-pre:overflow-x-auto prose-img:w-full prose-img:h-auto prose-img:border prose-img:border-[var(--color-outline-variant)] max-w-none"
         >
           <Content />
         </div>
