@@ -73,18 +73,16 @@
       if (m.index > last)
         segments.push({ kind: 'text', value: text.slice(last, m.index) });
       if (m[1] !== undefined) {
-        const href = safeHref(m[2]);
+        const label = m[1];
+        const href = safeHref(m[2] ?? '');
         segments.push(
-          href
-            ? { kind: 'link', label: m[1], href }
-            : { kind: 'text', value: m[0] },
+          href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
         );
       } else {
-        const href = safeHref(m[3]);
+        const label = m[3] ?? '';
+        const href = safeHref(label);
         segments.push(
-          href
-            ? { kind: 'link', label: m[3], href }
-            : { kind: 'text', value: m[0] },
+          href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
         );
       }
       last = re.lastIndex;
@@ -96,7 +94,7 @@
 
   let inputEl = $state<HTMLInputElement | null>(null);
   let listEl = $state<HTMLDivElement | null>(null);
-  let deckRoot = $state<HTMLDivElement | null>(null);
+  let deckRoot = $state<HTMLElement | null>(null);
   let inputValue = $state('');
   let selectedIndex = $state(0);
   // Highlighted recommended chip for keyboard (↑/↓) navigation; -1 = none.
@@ -197,7 +195,8 @@
   const streamTick = $derived.by(() => {
     if (!chat || !chat.messages.length) return 0;
     return chat.messages.reduce((n, m) => {
-      if (!m.parts) return n + (m.content?.length ?? 0);
+      if (!m.parts)
+        return n + ((m as { content?: string }).content?.length ?? 0);
       return (
         n +
         m.parts.reduce(
@@ -234,7 +233,7 @@
   // still doing tool calls / RAG.
   const showTyping = $derived(
     isLoading &&
-      (messages.length === 0 || messages[messages.length - 1].role === 'user'),
+      (messages.length === 0 || messages[messages.length - 1]?.role === 'user'),
   );
 
   function open() {
@@ -301,7 +300,8 @@
         starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
       } else if (e.key === 'Enter' && starterIndex >= 0) {
         e.preventDefault();
-        ask(starters[starterIndex].q);
+        const starter = starters[starterIndex];
+        if (starter) ask(starter.q);
         starterIndex = -1;
       }
     }
@@ -398,7 +398,7 @@
           type="button"
           onclick={() => ask(s.q)}
           aria-current={starterIndex === i ? 'true' : undefined}
-          class="rounded-md border px-2.5 py-1 text-xs transition-colors {starterIndex ===
+          class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs transition-colors pointer-coarse:min-h-[44px] {starterIndex ===
           i
             ? 'border-[var(--color-console-signal)] bg-[var(--color-console-signal)]/10 text-[var(--color-console-text)]'
             : 'border-[var(--color-console-line)] text-[var(--color-console-text-dim)] hover:border-[var(--color-console-signal)]/50 hover:text-[var(--color-console-text)]'}"
@@ -408,7 +408,7 @@
       {/each}
       {#if showHint}
         <span
-          class="ml-auto hidden font-mono text-[10px] text-[var(--color-console-text-dim)]/70 sm:inline"
+          class="ml-auto hidden font-mono text-[10px] text-[var(--color-console-text-dim)] sm:inline"
           >←→ pick · ↵ run</span
         >
       {/if}
@@ -466,10 +466,10 @@
                   aria-selected={i === selectedIndex}
                   onclick={cmd.run}
                   onmouseenter={() => (selectedIndex = i)}
-                  class="flex w-full items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-left transition-colors {i ===
+                  class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors pointer-coarse:min-h-[44px] {i ===
                   selectedIndex
-                    ? 'border-[var(--color-console-signal)] bg-[var(--color-console-signal)]/10 text-[var(--color-console-text)]'
-                    : 'border-transparent text-[var(--color-console-text-dim)] hover:bg-white/5'}"
+                    ? 'bg-[var(--color-console-signal)]/15 text-[var(--color-console-text)]'
+                    : 'text-[var(--color-console-text-dim)] hover:bg-white/5'}"
                 >
                   <span class="text-[var(--color-console-signal)]"
                     >/{cmd.name}</span
@@ -521,14 +521,14 @@
                       {@const toolName =
                         part.toolName ?? part.type.replace(/^tool-/, '')}
                       <span
-                        class="mt-1 block font-mono text-[11px] break-all text-[var(--color-console-signal)]/55"
+                        class="mt-1 block font-mono text-[11px] break-all text-[var(--color-console-signal)]/80"
                       >
                         › {toolName}({JSON.stringify(part.input)})
                       </span>
                     {/if}
                   {/each}
                 {:else}
-                  {@render richText(m.content || '')}
+                  {@render richText((m as { content?: string }).content || '')}
                 {/if}
               </div>
             </div>
@@ -577,6 +577,10 @@
     <input
       id="command-deck-input"
       name="command-deck-input"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
       bind:this={inputEl}
       bind:value={inputValue}
       onfocus={open}

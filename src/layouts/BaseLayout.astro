@@ -4,7 +4,6 @@ import HeaderNav from '../components/chrome/HeaderNav.svelte';
 import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
-// @ts-expect-error - svelte2tsx false positive on Svelte 5 component with no props
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandDeck from '../components/agent/CommandDeck.svelte';
@@ -95,6 +94,12 @@ const canonicalURL = new URL(
 
     <script is:inline>
       function applyThemeAndLoader() {
+        // Opt in to scroll-reveal start states only when JS is running. CSS
+        // gates the hidden (opacity:0) state behind html.js-reveal, so no-JS
+        // and headless renders keep content visible. Set before paint to avoid
+        // a flash of the resolved content.
+        document.documentElement.classList.add('js-reveal');
+
         const isLocalAudit =
           window.location.hostname === 'localhost' ||
           window.location.hostname === '127.0.0.1';
@@ -147,15 +152,14 @@ const canonicalURL = new URL(
       </div>
     </div>
 
-    <!-- Clip the oversized animated noise to the viewport. The layer is sized
-         larger than the screen so its drift never reveals an un-noised edge;
-         without this wrapper that overflow widens the layout viewport on
-         mobile (iOS Safari shrink-to-fit), zooming the whole page out. Mirrors
-         the ambient-glow clip container above. -->
+    <!-- Static film grain, clipped to the viewport. The grain no longer drifts,
+         so the layer is sized to the screen (inset-0) instead of oversized —
+         far less area to paint and blend. overflow-hidden still guards against
+         the repeating tile bleeding past the edge on mobile. -->
     <div
       class="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
     >
-      <div class="site-noise absolute -inset-[100%]"></div>
+      <div class="site-noise absolute inset-0"></div>
     </div>
 
     <a

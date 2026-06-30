@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from 'svelte';
+
   type Status = 'idle' | 'submitting' | 'success' | 'error';
 
   interface FieldErrors {
@@ -15,16 +17,43 @@
   let errors = $state<FieldErrors>({});
 
   const isSubmitting = $derived(status === 'submitting');
-  const isDisabled = $derived(
-    isSubmitting ||
-      name.trim().length < 2 ||
-      !email.includes('@') ||
-      message.trim().length < 10,
-  );
+
+  // Validate the same constraints the server enforces, with specific copy.
+  // Returns the field errors; empty object means the form is ready to send.
+  function validate(): FieldErrors {
+    const next: FieldErrors = {};
+    if (name.trim().length < 2) {
+      next.name = 'Please enter your name (at least 2 characters).';
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+      next.email = 'Please enter a valid email address.';
+    }
+    if (message.trim().length < 10) {
+      next.message = 'Add a little more — at least 10 characters.';
+    }
+    return next;
+  }
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     if (status === 'submitting') return;
+
+    // Validate on submit rather than disabling the button: the control stays
+    // operable for keyboard/SR users, and a failed attempt surfaces specific,
+    // focusable errors instead of a silent dead button.
+    const clientErrors = validate();
+    if (Object.keys(clientErrors).length > 0) {
+      errors = clientErrors;
+      status = 'idle';
+      await tick();
+      const firstInvalid = (['name', 'email', 'message'] as const).find(
+        (f) => clientErrors[f],
+      );
+      if (firstInvalid) {
+        document.getElementById(`contact-${firstInvalid}`)?.focus();
+      }
+      return;
+    }
 
     errors = {};
     status = 'submitting';
@@ -103,10 +132,12 @@
       bind:value={name}
       aria-invalid={errors.name ? 'true' : undefined}
       aria-describedby={errors.name ? 'contact-name-error' : undefined}
-      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-red-500"
+      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
     />
     {#if errors.name}
-      <p id="contact-name-error" class="text-sm text-red-500">{errors.name}</p>
+      <p id="contact-name-error" class="text-sm text-[var(--color-error)]">
+        {errors.name}
+      </p>
     {/if}
   </div>
 
@@ -127,10 +158,10 @@
       bind:value={email}
       aria-invalid={errors.email ? 'true' : undefined}
       aria-describedby={errors.email ? 'contact-email-error' : undefined}
-      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-red-500"
+      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
     />
     {#if errors.email}
-      <p id="contact-email-error" class="text-sm text-red-500">
+      <p id="contact-email-error" class="text-sm text-[var(--color-error)]">
         {errors.email}
       </p>
     {/if}
@@ -153,10 +184,10 @@
       bind:value={message}
       aria-invalid={errors.message ? 'true' : undefined}
       aria-describedby={errors.message ? 'contact-message-error' : undefined}
-      class="resize-y rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-red-500"
+      class="resize-y rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
     ></textarea>
     {#if errors.message}
-      <p id="contact-message-error" class="text-sm text-red-500">
+      <p id="contact-message-error" class="text-sm text-[var(--color-error)]">
         {errors.message}
       </p>
     {/if}
@@ -169,15 +200,15 @@
         Message sent. Jared will get back to you soon.
       </p>
     {:else if errors.general}
-      <p class="text-red-500">{errors.general}</p>
+      <p class="text-[var(--color-error)]">{errors.general}</p>
     {/if}
   </div>
 
   <button
     type="submit"
-    disabled={isDisabled}
+    disabled={isSubmitting}
     aria-busy={isSubmitting}
-    class="inline-flex w-fit items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-transform hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:scale-100"
+    class="inline-flex w-fit items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-cta-from),var(--color-cta-to))] px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-on-cta)] shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-transform hover:-translate-y-0.5 hover:scale-[1.03] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:scale-100"
   >
     {#if isSubmitting}
       Sending…

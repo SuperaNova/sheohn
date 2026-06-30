@@ -16,6 +16,28 @@
   --color-tertiary-container: #23452d;
   --color-outline-variant: #c4c8c0;
 
+  /* Validation error voice. Deliberately darker than Tailwind red-500
+     (#ef4444 lands at ~3.3:1 on the warm paper — fails AA 1.4.3 for the 14px
+     error copy). #b91c1c clears 4.5:1 on both the page surface (~5.6:1) and the
+     input container (~4.9:1), and stays ≥3:1 as an aria-invalid border. */
+  --color-error: #b91c1c;
+
+  /* Primary CTA gradient (radial: cta-from → cta-to). Split out from
+     primary/primary-container so the dark theme can darken the button enough
+     for slate-100 label text to clear WCAG AA (4.5:1) without dragging down
+     the primary tokens that also colour timeline text and the hard-offset
+     shadow. Light values equal primary-container/primary — no visible change. */
+  --color-cta-from: #2d3b2d;
+  --color-cta-to: #182519;
+
+  /* Foreground on the dark CTA gradient. on-cta is the light label (the value
+     that the cta-from/to split was tuned to clear AA against). on-cta-accent is
+     the leading › marker — the brand's own light forest rather than Tailwind's
+     mint emerald-300, keeping the one-accent rule intact on the content layer.
+     ~5:1 on the light-theme button's lightest stop; lifted in dark below. */
+  --color-on-cta: #f1f5f9;
+  --color-on-cta-accent: #6fbf86;
+
   /* Console treatment — the system "chrome" language. Theme-independent on
      purpose: control surfaces (command deck, status line, boot) always read
      as an instrument panel framing the warm content, regardless of light/dark. */
@@ -48,9 +70,19 @@ html.dark {
   --color-primary-container: #49825b;
   --color-tertiary: #5fba82;
   --color-tertiary-container: #49825b;
+  /* Darker forest than primary-container so slate-100 label text clears AA on
+     the lightest (top-left) stop of the radial: ~5.3:1 vs the old ~4.2:1. */
+  --color-cta-from: #3f7150;
+  --color-cta-to: #234032;
   /* Dark dividers/borders: a subtle warm line on near-black, not the light
      #c4c8c0 used in light mode. */
   --color-outline-variant: #2c2f2a;
+  /* Light red on the near-black surface: #b91c1c is too dark to read here, so
+     lift to red-400 (~7:1 on #050505, ≥4.5:1 on the dark input container). */
+  --color-error: #f87171;
+  /* The dark-theme CTA gradient is lighter forest, so lift the › marker to keep
+     it crisp on it. on-cta (light label) reads in both themes — no override. */
+  --color-on-cta-accent: #8ed6a4;
 }
 
 /* Always reserve the scrollbar gutter so the centered header (and content)
@@ -133,47 +165,14 @@ body {
   backdrop-filter: blur(12px);
 }
 
-@keyframes noise-shift {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  10% {
-    transform: translate3d(-5%, -5%, 0);
-  }
-  20% {
-    transform: translate3d(-10%, 5%, 0);
-  }
-  30% {
-    transform: translate3d(5%, -10%, 0);
-  }
-  40% {
-    transform: translate3d(-5%, 15%, 0);
-  }
-  50% {
-    transform: translate3d(-10%, 5%, 0);
-  }
-  60% {
-    transform: translate3d(15%, 0, 0);
-  }
-  70% {
-    transform: translate3d(0, 10%, 0);
-  }
-  80% {
-    transform: translate3d(-15%, 0, 0);
-  }
-  90% {
-    transform: translate3d(10%, 5%, 0);
-  }
-  100% {
-    transform: translate3d(5%, 0, 0);
-  }
-}
-
+/* Static film grain. The texture reads identically at rest, so we don't pay
+   the cost of animating a full-viewport, mix-blended, inverted layer every
+   frame for the life of the page (a permanent compositing / battery drain on
+   laptops and phones). */
 .site-noise {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVN3WJP3Fj7f92UPVkLY8LGXbIEAIiOsCMgQWaIQkgBhhBASQMWFiApWFBURnEhVxILVCkidiOKgKLhnQYqIWotVXDjuH9yntX167+3t+9f7vOec5/zOec8PgBESJpHmomoAOVKFPDrYH49PSMTJvYACFUjgBCAQ5svCZwXFAADwA3l4fnSwP/wBr28AAgBw1S4kEsfh/4O6UCZXACCRAOAiEucLAZBSAMguVMgUAMgYALBTs2QKAJQAAGx5fEIiAKoNAOz0ST4FANipk9wXANiiHKkIAI0BAJkoRyQCQLsAYFWBUiwCwMIAoKxAIi4EwK4BgFm2MkcCgL0FAHaOWJAPQGAAgJlCLMwAIDgCAEMeE80DIEwDoDDSv+CpX3CFuEgBAMDLlc2XS9IzFLiV0Bp38vDg4iHiwmyxQmEXKRBmCeQinJebIxNI5wNMzgwAABr50cH+OD+Q5+bk4eZm52zv9MWi/mvwbyI+IfHf/ryMAgQAEE7P79pf5eXWA3DHAbB1v2upWwDaVgBo3/ldM9sJoFoK0Hr5i3k4/EAenqFQyDwdHAoLC+0lYqG9MOOLPv8z4W/gi372/EAe/tt68ABxmkCZrcCjg/1xYW52rlKO58sEQjFu9+cj/seFf/2OKdHiNLFcLBWK8ViJuFAiTcd5uVKRRCHJleIS6X8y8R+W/QmTdw0ArIZPwE62B7XLbMB+7gECiw5Y0nYAQH7zLYwaC5EAEGc0Mnn3AACTv/mPQCsBAM2XpOMAALzoGFyolBdMxggAAESggSqwQQcMwRSswA6cwR28wBcCYQZEQAwkwDwQQgbkgBwKoRiWQRlUwDrYBLWwAxqgEZrhELTBMTgN5+ASXIHrcBcGYBiewhi8hgkEQcgIE2EhOogRYo7YIs4IF5mOBCJhSDSSgKQDKcAEcSwA5fYfgVwBdgR8AKCEIQOD+AgIA');
   background-repeat: repeat;
   background-size: 100px 100px;
-  animation: noise-shift 0.8s steps(10) infinite;
 }
 
 .site-grid {
