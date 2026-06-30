@@ -14,9 +14,17 @@
   let isDecoding = $state(false);
 
   onMount(() => {
+    // Already played this session — skip straight to resolved text.
+    const sessionKey = `decoder-done:${text}`;
+    if (sessionStorage.getItem(sessionKey)) {
+      displayText = text;
+      return;
+    }
+
     // Reduced motion: skip the scramble entirely, show the resolved text.
     if (prefersReducedMotion()) {
       displayText = text;
+      sessionStorage.setItem(sessionKey, '1');
       return;
     }
 
@@ -44,6 +52,7 @@
 
         if (iteration >= length) {
           isDecoding = false;
+          sessionStorage.setItem(sessionKey, '1');
         } else {
           rafId = requestAnimationFrame(tick);
         }
