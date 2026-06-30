@@ -201,6 +201,22 @@ html.skip-loader #global-loader {
   display: none !important;
 }
 
+::view-transition-old(root) {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-new(root) {
+    animation: page-enter 220ms ease-out both;
+  }
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
 /* Agent spotlight: dim + blur everything except the focused section. */
 body.scene-dimmed
   :is(#home, #projects, #contact, #about, #stack):not(.is-spotlit) {

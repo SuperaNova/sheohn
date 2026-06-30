@@ -82,6 +82,12 @@
   >
     <a
       href="/"
+      onclick={(e) => {
+        if (window.location.pathname === '/') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }}
       class="font-display text-xl font-bold tracking-wide text-[var(--color-on-surface)]"
     >
       sheohn<span class="text-[var(--color-tertiary)]">.dev</span>
