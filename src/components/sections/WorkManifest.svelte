@@ -125,13 +125,13 @@
             >
           </div>
 
-          <!-- reveal on hover / keyboard focus -->
+          <!-- reveal on hover / keyboard focus; always-open on touch (no hover) -->
           <div
-            class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr]"
+            class="manifest-detail grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr]"
           >
             <div class="overflow-hidden">
               <div
-                class="pb-5 pl-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 md:pl-[3rem]"
+                class="manifest-detail-body pb-5 pl-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 md:pl-[3rem]"
               >
                 <p
                   class="max-w-2xl text-sm leading-relaxed text-[var(--color-on-surface)] md:text-[15px]"
@@ -161,12 +161,14 @@
 </section>
 
 <style>
-  .manifest-inner {
-    opacity: 0;
-    transform: translateY(18px);
-    transition:
-      opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js-reveal) .manifest-inner {
+      opacity: 0;
+      transform: translateY(18px);
+      transition:
+        opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
   }
 
   :global(.work-manifest.in-view) .manifest-inner {
@@ -181,5 +183,17 @@
       var(--color-surface-container) 45%,
       transparent
     );
+  }
+
+  /* Touch devices can't hover, and tapping a row navigates straight to the case
+     study — so the hover/focus-only detail would never be seen. Reveal it inline
+     there instead; the summary and metadata are core content, not decoration. */
+  @media (hover: none) {
+    .manifest-detail {
+      grid-template-rows: 1fr;
+    }
+    .manifest-detail-body {
+      opacity: 1;
+    }
   }
 </style>
