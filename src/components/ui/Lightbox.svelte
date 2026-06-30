@@ -15,6 +15,11 @@
   function handleClick(e: Event) {
     e.preventDefault();
     const img = e.currentTarget as HTMLImageElement;
+    // Touch devices: open in new tab so native pinch-zoom works on the image.
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      window.open(img.currentSrc || img.src, '_blank', 'noopener');
+      return;
+    }
     src = img.currentSrc || img.src;
     alt = img.alt || '';
     open = true;
