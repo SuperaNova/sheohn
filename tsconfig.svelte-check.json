@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "dist",
+    ".vercel",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    ".lighthouseci",
+    ".lighthouseci-mobile",
+    "node_modules",
+    "tests",
+    "**/*.spec.ts"
+  ]
+}

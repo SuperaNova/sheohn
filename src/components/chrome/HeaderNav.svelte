@@ -89,41 +89,15 @@
 
     <nav class="hidden items-center gap-6 font-mono text-[13px] md:flex">
       {#each navItems as section (section.id)}
-        {@const isActive = activeId === section.id}
-        <a
-          href={section.path}
-          target={section.external ? '_blank' : undefined}
-          rel={section.external ? 'noreferrer' : undefined}
-          class="tracking-wide transition {isActive
-            ? 'text-[var(--color-tertiary)] underline decoration-2 underline-offset-[6px]'
-            : 'text-[var(--color-on-surface-muted)] hover:text-[var(--color-on-surface)]'}"
-        >
-          {section.label}
-        </a>
+        {@render navLink(section, 'tracking-wide transition')}
       {/each}
     </nav>
 
     <div class="hidden items-center gap-4 md:flex">
       {#if clock}
-        <div
-          class="hidden min-w-[8.5rem] items-center justify-end gap-1.5 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)] lg:flex"
-          title="Jared's local time"
-        >
-          <svg
-            class="h-3 w-3"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3 2" />
-          </svg>
-          <span class="tabular-nums">{clock}</span>
-        </div>
+        {@render clockChip(
+          'hidden min-w-[8.5rem] items-center justify-end gap-1.5 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)] lg:flex',
+        )}
       {/if}
       <ThemeToggle compact />
     </div>
@@ -177,40 +151,56 @@
     >
       <div class="mx-auto flex max-w-[90rem] flex-col gap-4 px-6 py-5">
         {#each navItems as section (section.id)}
-          {@const isActive = activeId === section.id}
-          <a
-            href={section.path}
-            target={section.external ? '_blank' : undefined}
-            rel={section.external ? 'noreferrer' : undefined}
-            class="text-sm tracking-wide transition {isActive
-              ? 'text-[var(--color-tertiary)] underline decoration-2 underline-offset-[6px]'
-              : 'text-[var(--color-on-surface-muted)] hover:text-[var(--color-on-surface)]'}"
-            onclick={() => (isMenuOpen = false)}
-          >
-            {section.label}
-          </a>
+          {@render navLink(
+            section,
+            'text-sm tracking-wide transition',
+            () => (isMenuOpen = false),
+          )}
         {/each}
         {#if clock}
-          <div
-            class="mt-2 flex items-center gap-2 border-t border-[var(--color-outline-variant)] pt-4 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)]"
-          >
-            <svg
-              class="h-3 w-3"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-            <span class="tabular-nums">{clock}</span>
-          </div>
+          {@render clockChip(
+            'mt-2 flex items-center gap-2 border-t border-[var(--color-outline-variant)] pt-4 font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)]',
+          )}
         {/if}
       </div>
     </nav>
   {/if}
 </header>
+
+{#snippet navLink(
+  section: (typeof navItems)[number],
+  linkClass: string,
+  onNavigate?: () => void,
+)}
+  {@const isActive = activeId === section.id}
+  <a
+    href={section.path}
+    target={section.external ? '_blank' : undefined}
+    rel={section.external ? 'noreferrer' : undefined}
+    class="{linkClass} {isActive
+      ? 'text-[var(--color-tertiary)] underline decoration-2 underline-offset-[6px]'
+      : 'text-[var(--color-on-surface-muted)] hover:text-[var(--color-on-surface)]'}"
+    onclick={onNavigate}
+  >
+    {section.label}
+  </a>
+{/snippet}
+
+{#snippet clockChip(wrapperClass: string)}
+  <div class={wrapperClass} title="Jared's local time">
+    <svg
+      class="h-3 w-3"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+    <span class="tabular-nums">{clock}</span>
+  </div>
+{/snippet}

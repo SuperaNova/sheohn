@@ -141,11 +141,12 @@
   }
 
   function handleTouchMove(e: TouchEvent) {
-    if (!canvas || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    if (!canvas || !touch) return;
     e.preventDefault(); // prevent scrolling
     const rect = canvas.getBoundingClientRect();
     const scaleY = canvas.height / rect.height;
-    const touchY = (e.touches[0].clientY - rect.top) * scaleY;
+    const touchY = (touch.clientY - rect.top) * scaleY;
     playerY = Math.max(
       0,
       Math.min(height - PADDLE_HEIGHT, touchY - PADDLE_HEIGHT / 2),

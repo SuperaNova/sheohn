@@ -46,15 +46,23 @@
 </div>
 
 <style>
-  .timeline-item {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition:
-      opacity 0.5s ease,
-      transform 0.5s ease;
+  /* Visible by default; hidden start-state opts in only with JS + motion
+     allowed, so no-JS / reduced-motion / headless never ship blank. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js-reveal) .timeline-item {
+      opacity: 0;
+      transform: translateX(-20px);
+      transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+    }
   }
 
-  :global(.timeline-item.in-view) {
+  /* .in-view is added at runtime by the inview action, so it must be marked
+     :global() or Svelte prunes this rule as unused (the markup's classes are
+     fully static). Keeping .timeline-item scoped also makes this outrank the
+     html.js-reveal hidden rule above. */
+  :global(html.js-reveal) .timeline-item:global(.in-view) {
     opacity: 1;
     transform: translateX(0);
   }

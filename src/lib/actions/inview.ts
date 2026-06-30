@@ -11,7 +11,7 @@ export function inview(
 
   const observer = new IntersectionObserver(
     ([entry]) => {
-      if (entry.isIntersecting) {
+      if (entry?.isIntersecting) {
         node.dispatchEvent(new CustomEvent('inview'));
         node.classList.add('in-view');
         if (once) observer.unobserve(node);

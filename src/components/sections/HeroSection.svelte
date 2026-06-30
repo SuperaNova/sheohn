@@ -2,6 +2,7 @@
   import { Spring } from 'svelte/motion';
   import { inview } from '../../lib/actions/inview';
   import { magnetic } from '../../lib/actions/magnetic';
+  import { prefersReducedMotion } from '../../lib/motion';
   import {
     scrollState,
     commandDeckOpen,
@@ -30,16 +31,20 @@
     shortcut = mac ? '⌘K' : 'Ctrl K';
   });
 
-  $effect(() =>
-    scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
+  $effect(() => {
+    if (prefersReducedMotion()) {
+      parallaxY.target = 0;
+      return;
+    }
+    return scrollState.subscribe(({ scrollY, scrollHeight, innerHeight }) => {
       if (scrollHeight > innerHeight && innerHeight > 0) {
         const scrollYProgress = scrollY / (scrollHeight - innerHeight);
         parallaxY.target = scrollYProgress * -40;
       } else {
         parallaxY.target = 0;
       }
-    }),
-  );
+    });
+  });
 </script>
 
 <section
@@ -65,7 +70,7 @@
 
       <h1
         style:transition-delay="120ms"
-        class="hero-item font-display text-6xl leading-[0.95] text-[var(--color-on-surface)] sm:text-7xl lg:text-[5rem]"
+        class="hero-item font-display text-6xl leading-[0.95] text-balance text-[var(--color-on-surface)] sm:text-7xl lg:text-[5rem]"
       >
         {personalInfo.name}
       </h1>
@@ -81,7 +86,7 @@
         style:transition-delay="360ms"
         class="hero-item mt-6 flex items-center gap-3"
       >
-        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        <span class="h-2 w-2 rounded-full bg-[var(--color-tertiary)]"></span>
         <span
           class="text-sm font-medium tracking-wide text-[var(--color-on-surface)]"
         >
@@ -91,7 +96,7 @@
 
       <p
         style:transition-delay="480ms"
-        class="hero-item mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-on-surface-muted)] md:text-lg"
+        class="hero-item mt-4 max-w-2xl text-base leading-relaxed text-pretty text-[var(--color-on-surface-muted)] md:text-lg"
       >
         {personalInfo.bio}
       </p>
@@ -104,12 +109,15 @@
           type="button"
           onclick={openDeck}
           use:magnetic={{ strength: 0.4, max: 12 }}
-          class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-primary-container),var(--color-primary))] px-6 py-3 text-sm font-semibold tracking-wide text-slate-100 shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
+          class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-cta-from),var(--color-cta-to))] px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-on-cta)] shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
         >
-          <span aria-hidden="true" class="font-mono text-emerald-300">›</span>
+          <span
+            aria-hidden="true"
+            class="font-mono text-[var(--color-on-cta-accent)]">›</span
+          >
           Ask the system
           <kbd
-            class="ml-1 hidden rounded border border-white/20 px-1.5 py-0.5 font-mono text-[10px] text-slate-300 sm:inline"
+            class="ml-1 hidden rounded border border-white/20 px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-on-cta)]/70 sm:inline"
             >{shortcut}</kbd
           >
         </button>
@@ -131,7 +139,7 @@
             <button
               type="button"
               onclick={() => dispatchAgentQuery(s.q)}
-              class="group inline-flex items-center gap-1.5 rounded-md border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_60%,transparent)] px-2.5 py-1.5 text-[var(--color-on-surface-muted)] transition-colors hover:border-[var(--color-tertiary)] hover:text-[var(--color-on-surface)]"
+              class="group inline-flex items-center gap-1.5 rounded-md border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_60%,transparent)] px-2.5 py-1.5 text-[var(--color-on-surface-muted)] transition-colors pointer-coarse:min-h-[44px] hover:border-[var(--color-tertiary)] hover:text-[var(--color-on-surface)]"
             >
               <span
                 aria-hidden="true"
@@ -160,12 +168,14 @@
 </section>
 
 <style>
-  .hero-item {
-    opacity: 0;
-    transform: translateY(18px);
-    transition:
-      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js-reveal) .hero-item {
+      opacity: 0;
+      transform: translateY(18px);
+      transition:
+        opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
   }
 
   :global(.hero-section.in-view) .hero-item {
