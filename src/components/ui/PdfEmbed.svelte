@@ -17,7 +17,8 @@
 <div
   class="my-8 overflow-hidden rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] shadow-sm"
 >
-  <div class="relative h-[75vh] w-full">
+  <!-- Desktop: embedded iframe viewer -->
+  <div class="relative hidden h-[75vh] w-full md:block">
     {#if !loaded}
       <div
         class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-surface-container)] text-[var(--color-on-surface-muted)]"
@@ -39,8 +40,25 @@
       class:opacity-100={loaded}
     ></iframe>
   </div>
+
+  <!-- Mobile: link-only fallback (PDF iframes are unusable on iOS/Android) -->
+  <div class="flex flex-col items-center gap-4 px-6 py-10 md:hidden">
+    <span
+      class="font-mono text-xs tracking-wide text-[var(--color-on-surface-muted)]"
+      >{caption}</span
+    >
+    <a
+      href={src}
+      target="_blank"
+      rel="noreferrer"
+      class="inline-flex items-center gap-2 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-5 py-3 text-sm font-semibold text-[var(--color-tertiary)] transition hover:text-[var(--color-on-surface)]"
+    >
+      Open document ↗
+    </a>
+  </div>
+
   <div
-    class="flex items-center justify-between bg-[var(--color-surface-container)] px-6 py-4 text-xs text-[var(--color-on-surface-muted)]"
+    class="hidden items-center justify-between bg-[var(--color-surface-container)] px-6 py-4 text-xs text-[var(--color-on-surface-muted)] md:flex"
   >
     <span>{caption}</span>
     <a
