@@ -81,11 +81,7 @@
   >
     <!-- Faint architectural grid backdrop -->
     <div
-      class="pointer-events-none absolute inset-0 opacity-[0.06]"
-      style:background-image="linear-gradient(to right,
-      var(--color-console-text) 1px, transparent 1px), linear-gradient(to
-      bottom, var(--color-console-text) 1px, transparent 1px)"
-      style:background-size="4rem 4rem"
+      class="grid-backdrop pointer-events-none absolute inset-0 opacity-[0.06]"
     ></div>
 
     <div class="relative z-10">
@@ -120,3 +116,12 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .grid-backdrop {
+    background-image:
+      linear-gradient(to right, var(--color-console-text) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-console-text) 1px, transparent 1px);
+    background-size: 4rem 4rem;
+  }
+</style>

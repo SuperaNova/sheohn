@@ -53,18 +53,23 @@
 </script>
 
 <div
-  class="pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full transition-colors duration-200 md:block {isGreenHover
+  class="cursor-dot pointer-events-none fixed top-0 left-0 z-[9999] hidden rounded-full md:block {isGreenHover
     ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
     : 'bg-[var(--color-on-surface)] shadow-[0_2px_8px_rgba(0,0,0,0.15)]'}"
   style:transform="translate({mouseX}px, {mouseY}px) translate(-50%, -50%)"
   style:width="20px"
   style:height="20px"
   style:opacity={isVisible ? 1 : 0}
-  style:transition="opacity 0.15s ease-out, background-color 0.2s, box-shadow
-  0.2s"
 ></div>
 
 <style>
+  .cursor-dot {
+    transition:
+      opacity 0.15s ease-out,
+      background-color 0.2s,
+      box-shadow 0.2s;
+  }
+
   /* Hide the system cursor only when the user hasn't requested reduced motion.
      Assistive-tech users who set prefers-reduced-motion keep their real cursor. */
   @media (pointer: fine) and (prefers-reduced-motion: no-preference) {

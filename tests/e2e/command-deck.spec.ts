@@ -175,12 +175,12 @@ test.describe('Command deck', () => {
       name: 'Click here to view resume',
     });
 
-    for (let i = 0; i < prompts.length; i++) {
-      await deckInput(page).fill(prompts[i]);
+    for (const [i, prompt] of prompts.entries()) {
+      await deckInput(page).fill(prompt);
       await deckInput(page).press('Enter');
       // The guest message lands and a fresh reply (with its link) renders before
       // we send the next one — this also proves the queue drains in order.
-      await expect(deck(page).getByText(prompts[i])).toBeVisible();
+      await expect(deck(page).getByText(prompt)).toBeVisible();
       await expect(replyLink).toHaveCount(i + 1);
     }
   });
