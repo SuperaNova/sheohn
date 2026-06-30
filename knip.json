@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["scripts/**/*.{ts,mjs}"],
+  "project": ["src/**/*.{ts,astro,svelte}", "scripts/**/*.{ts,mjs}"],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "@tailwindcss/typography",
+    "tsx",
+    "lint-staged",
+    "@secretlint/secretlint-rule-preset-recommend"
+  ]
+}

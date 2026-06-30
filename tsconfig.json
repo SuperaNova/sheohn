@@ -1,5 +1,9 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true
+  },
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": [
     "dist",
@@ -8,6 +12,7 @@
     "playwright-report",
     "test-results",
     ".lighthouseci",
+    ".lighthouseci-mobile",
     "node_modules"
   ]
 }

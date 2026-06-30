@@ -1,2 +1,2 @@
-echo "→ pre-push: lint + type-check + unit tests"
-npm run lint && npm run check && npm run test:unit:coverage
+echo "→ pre-push: lint + type-check + svelte-check + knip + unit tests"
+npm run lint && npm run check && npm run check:svelte && npm run knip && npm run test:unit:coverage

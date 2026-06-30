@@ -37,6 +37,15 @@ jobs:
       - name: Astro / TypeScript check
         run: npm run check
 
+      - name: svelte-check
+        run: npm run check:svelte
+
+      - name: Knip (unused files / exports / deps)
+        run: npm run knip
+
+      - name: Secretlint (secret scan)
+        run: npm run secretlint
+
       - name: Build
         run: npm run build
         env:
@@ -104,5 +113,8 @@ jobs:
           UPSTASH_REDIS_REST_TOKEN: stub
           RESEND_API_KEY: stub
 
-      - name: Run Lighthouse CI
+      - name: Run Lighthouse CI (desktop)
         run: npm run lighthouse
+
+      - name: Run Lighthouse CI (mobile)
+        run: npm run lighthouse:mobile
