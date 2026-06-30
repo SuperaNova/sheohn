@@ -16,30 +16,47 @@ Live at [sheohn.dev](https://sheohn.dev).
 
 ## Scripts
 
-| Command                      | What it does                                                         |
-| ---------------------------- | -------------------------------------------------------------------- |
-| `npm run dev`                | Start dev server at `http://localhost:4321`                          |
-| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)    |
-| `npm run preview`            | Preview the production build locally                                 |
-| `npm run lint`               | ESLint over `src/`                                                   |
-| `npm run format`             | Prettier write across the repo                                       |
-| `npm run format:check`       | Prettier check (no writes) — what CI runs                            |
-| `npm run check`              | `astro check` (TS strict + Astro)                                    |
-| `npm run test:unit`          | Vitest in watch mode                                                 |
-| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                            |
-| `npm run test:e2e`           | Playwright end-to-end                                                |
-| `npm run lighthouse:local`   | Build + Lighthouse audit locally                                     |
-| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e |
+| Command                      | What it does                                                               |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                | Start dev server at `http://localhost:4321`                                |
+| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)          |
+| `npm run preview`            | Preview the production build locally                                       |
+| `npm run lint`               | ESLint over `src/`                                                         |
+| `npm run format`             | Prettier write across the repo                                             |
+| `npm run format:check`       | Prettier check (no writes) — what CI runs                                  |
+| `npm run check`              | `astro check` (TS strict + Astro)                                          |
+| `npm run check:svelte`       | `svelte-check` over components (deeper `.svelte` types than `astro check`) |
+| `npm run knip`               | Unused files / exports / dependencies                                      |
+| `npm run secretlint`         | Scan the repo for committed secrets                                        |
+| `npm run test:unit`          | Vitest in watch mode                                                       |
+| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                                  |
+| `npm run test:e2e`           | Playwright end-to-end                                                      |
+| `npm run lighthouse:local`   | Build + Lighthouse audit locally (desktop)                                 |
+| `npm run lighthouse:mobile`  | Lighthouse audit with mobile emulation                                     |
+| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e       |
 
 ### Hooks (managed by Husky)
 
-| Hook       | Fires on     | What it runs                                           |
-| ---------- | ------------ | ------------------------------------------------------ |
-| pre-commit | `git commit` | `lint-staged` (prettier + eslint on staged files only) |
-| pre-push   | `git push`   | `lint` + `check` + `test:unit:coverage`                |
+| Hook       | Fires on     | What it runs                                                      |
+| ---------- | ------------ | ----------------------------------------------------------------- |
+| pre-commit | `git commit` | `lint-staged` (prettier + eslint + secretlint on staged files)    |
+| pre-push   | `git push`   | `lint` + `check` + `check:svelte` + `knip` + `test:unit:coverage` |
 
 Bypass with `--no-verify` if you need to (rarely).
 Run `npm run preflight` before a big push if you want full CI parity locally.
+
+> **svelte-check** type-checks `.svelte` components deeper than `astro check` does (it catches script-body type errors `astro check` misses). It runs against `tsconfig.svelte-check.json` (the project config minus test files, which `astro check` + the test runners already cover) and is a blocking gate in pre-push and CI.
+
+### Whole-site Lighthouse sweep (optional)
+
+`lhci` (above) gates a fixed list of routes per PR. For an ad-hoc crawl of **every** page at once — handy when adding routes or hunting per-page SEO/a11y gaps — run [unlighthouse](https://unlighthouse.dev) on demand (no install needed):
+
+```bash
+npm run dev            # or: npm run preview after a build
+npx unlighthouse --site http://localhost:4321
+```
+
+It opens an interactive dashboard scoring perf / a11y / best-practices / SEO across the crawled site. Use it as a periodic sweep; `lhci` remains the PR gate.
 
 ## Environment
 
