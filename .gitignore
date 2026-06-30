@@ -49,6 +49,7 @@ blob-report/
 # Lighthouse CI
 .lighthouseci/
 .lighthouseci-mobile/
+.lighthouseci-live/
 
 # impeccable (design tool working state)
 .impeccable/

@@ -24,6 +24,7 @@
     "lighthouse": "lhci autorun && node scripts/lh-summary.mjs",
     "lighthouse:mobile": "lhci autorun --config=lighthouserc.mobile.json && node scripts/lh-summary.mjs --dir .lighthouseci-mobile",
     "lighthouse:local": "npm run build && lhci autorun && node scripts/lh-summary.mjs",
+    "lighthouse:live": "lhci autorun --config=lighthouserc.live.json && node scripts/lh-summary.mjs --dir .lighthouseci-live",
     "preflight": "npm run format:check && npm run lint && npm run check && npm run check:svelte && npm run knip && npm run secretlint && npm run test:unit:coverage && npm run build && npm run lighthouse && npm run lighthouse:mobile && npm run test:e2e",
     "prepare": "husky"
   },

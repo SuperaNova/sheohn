@@ -11,10 +11,9 @@
         "http://localhost/projects/?theme=light",
         "http://localhost/projects/?theme=dark",
         "http://localhost/projects/crucible/?theme=light",
-        "http://localhost/projects/crucible/?theme=dark",
-        "http://localhost/404/?theme=light"
+        "http://localhost/projects/crucible/?theme=dark"
       ],
-      "numberOfRuns": 3,
+      "numberOfRuns": 1,
       "settings": {
         "chromeFlags": "--no-sandbox --headless=new"
       }

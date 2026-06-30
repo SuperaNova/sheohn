@@ -2,16 +2,15 @@
   "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse-ci/main/docs/configuration.md",
   "ci": {
     "collect": {
-      "staticDistDir": "./.vercel/output/static",
       "url": [
-        "http://localhost/?theme=light",
-        "http://localhost/?theme=dark",
-        "http://localhost/about/?theme=light",
-        "http://localhost/about/?theme=dark",
-        "http://localhost/projects/?theme=light",
-        "http://localhost/projects/?theme=dark",
-        "http://localhost/projects/crucible/?theme=light",
-        "http://localhost/projects/crucible/?theme=dark"
+        "https://www.sheohn.dev/?theme=light",
+        "https://www.sheohn.dev/?theme=dark",
+        "https://www.sheohn.dev/about/?theme=light",
+        "https://www.sheohn.dev/about/?theme=dark",
+        "https://www.sheohn.dev/projects/?theme=light",
+        "https://www.sheohn.dev/projects/?theme=dark",
+        "https://www.sheohn.dev/projects/crucible/?theme=light",
+        "https://www.sheohn.dev/projects/crucible/?theme=dark"
       ],
       "numberOfRuns": 1,
       "settings": {
@@ -29,7 +28,7 @@
     },
     "upload": {
       "target": "filesystem",
-      "outputDir": "./.lighthouseci"
+      "outputDir": "./.lighthouseci-live"
     }
   }
 }
