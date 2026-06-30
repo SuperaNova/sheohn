@@ -68,6 +68,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={alt || 'Image preview'}
+    tabindex="-1"
     onclick={close}
     transition:fade={{ duration: 180 }}
   >
