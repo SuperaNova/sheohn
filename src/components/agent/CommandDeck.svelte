@@ -583,7 +583,9 @@
       spellcheck="false"
       bind:this={inputEl}
       bind:value={inputValue}
-      onfocus={open}
+      onfocus={() => {
+        if (!window.matchMedia('(pointer: coarse)').matches) open();
+      }}
       onkeydown={onInputKeydown}
       role={commandMode ? 'combobox' : undefined}
       aria-expanded={commandMode ? expanded : undefined}
