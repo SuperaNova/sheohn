@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { prefersReducedMotion } from '../../lib/motion';
 
   let {
     text,
@@ -13,6 +14,12 @@
   let isDecoding = $state(false);
 
   onMount(() => {
+    // Reduced motion: skip the scramble entirely, show the resolved text.
+    if (prefersReducedMotion()) {
+      displayText = text;
+      return;
+    }
+
     let rafId: number;
     const timeout = setTimeout(() => {
       isDecoding = true;
@@ -52,10 +59,16 @@
   });
 </script>
 
-<span
-  class="inline-block {className} {isDecoding
-    ? 'text-[var(--color-primary-container)]'
-    : ''}"
->
-  {displayText || text}
+<span class={className}>
+  <!-- Stable accessible name: assistive tech reads the resolved text once,
+       never the per-frame scramble. -->
+  <span class="sr-only">{text}</span>
+  <span
+    aria-hidden="true"
+    class="inline-block {isDecoding
+      ? 'text-[var(--color-primary-container)]'
+      : ''}"
+  >
+    {displayText || text}
+  </span>
 </span>
