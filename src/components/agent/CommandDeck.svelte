@@ -351,12 +351,18 @@
     const CHROME = 270;
     const measure = () => {
       listMaxPx = Math.min(288, Math.max(120, Math.round(vv.height - CHROME)));
+      if (deckRoot) {
+        const keyboardOffset = Math.max(
+          0,
+          window.innerHeight - vv.offsetTop - vv.height,
+        );
+        deckRoot.style.bottom =
+          keyboardOffset > 20 ? `${keyboardOffset + 16}px` : '';
+      }
     };
     measure();
     vv.addEventListener('resize', measure);
     vv.addEventListener('scroll', measure);
-    // window resize covers orientation changes (and browsers that don't fire a
-    // visualViewport resize for them).
     window.addEventListener('resize', measure);
     return () => {
       vv.removeEventListener('resize', measure);
@@ -594,7 +600,7 @@
         ? `deck-cmd-${selectedIndex}`
         : undefined}
       aria-autocomplete={commandMode ? 'list' : undefined}
-      class="min-w-0 flex-1 bg-transparent font-mono text-sm text-[var(--color-console-text)] placeholder:text-[var(--color-console-text-dim)] focus:outline-none"
+      class="min-w-0 flex-1 bg-transparent font-mono text-[16px] leading-tight text-[var(--color-console-text)] placeholder:text-[var(--color-console-text-dim)] focus:outline-none sm:text-sm"
       placeholder={pending
         ? 'queued — sends when the agent is free…'
         : 'type a command — or ask anything'}
