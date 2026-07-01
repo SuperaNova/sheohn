@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SectionReveal from '../../components/ui/SectionReveal.svelte';
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 
 const allProjects = await getCollection('projects');
 const sortedProjects = allProjects.sort((a, b) => b.data.order - a.data.order);
@@ -55,13 +56,13 @@ import { personalInfo } from '../../data/personalInfo';
                 class="group relative isolate mb-4 block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-[var(--color-surface-container)]"
               >
                 {project.data.image ? (
-                  <img
+                  <Image
                     src={project.data.image}
                     alt={project.data.title}
                     loading="lazy"
                     decoding="async"
-                    width="1200"
-                    height="900"
+                    width={1200}
+                    height={900}
                     class="absolute inset-0 z-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 ) : (

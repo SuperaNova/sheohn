@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, getEntry, render } from 'astro:content';
 import TableOfContents from '../../components/ui/TableOfContents.svelte';
 import Lightbox from '../../components/ui/Lightbox.svelte';
+import { Image } from 'astro:assets';
 
 // Required for SSG — tells Astro which dynamic pages to prerender
 export async function getStaticPaths() {
@@ -62,11 +63,11 @@ const { Content, headings } = await render(entry);
         {
           entry.data.image && (
             <div class="mb-16 aspect-video w-full overflow-hidden bg-[var(--color-surface-container)] md:aspect-[21/9]">
-              <img
+              <Image
                 src={entry.data.image}
                 alt={entry.data.title}
-                width="1200"
-                height="514"
+                width={1200}
+                height={514}
                 class="h-full w-full object-cover"
               />
             </div>
