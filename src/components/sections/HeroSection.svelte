@@ -8,7 +8,6 @@
     commandDeckOpen,
     dispatchAgentQuery,
   } from '../../store';
-  import DecoderText from '../ui/DecoderText.svelte';
   import { personalInfo } from '../../data/personalInfo';
   import { starters } from '../../data/starters';
 
@@ -65,7 +64,7 @@
         style:transition-delay="0ms"
         class="hero-item mb-5 text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
       >
-        <DecoderText text={personalInfo.title} delay={1800} />
+        {personalInfo.title}
       </p>
 
       <h1
@@ -79,7 +78,7 @@
         style:transition-delay="240ms"
         class="hero-item mt-6 font-mono text-lg tracking-tight text-[var(--color-on-surface)] md:text-xl"
       >
-        <DecoderText text={personalInfo.education} delay={2400} />
+        {personalInfo.education}
       </p>
 
       <div
