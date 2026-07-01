@@ -98,6 +98,34 @@ async function withRetry<T>(
   throw lastError;
 }
 
+// Caches query_jared_memory results per warm serverless instance, so repeated
+// common questions (e.g. "what's his stack") skip the embed + vector query
+// round-trip. Capped and TTL'd so a long-lived instance can't accumulate
+// unbounded entries from varied caller input.
+const RAG_CACHE_TTL_MS = 10 * 60 * 1000;
+const RAG_CACHE_MAX_ENTRIES = 200;
+const ragCache = new Map<string, { facts: string[]; expiresAt: number }>();
+
+function getCachedFacts(query: string): string[] | undefined {
+  const key = query.trim().toLowerCase();
+  const cached = ragCache.get(key);
+  if (!cached) return undefined;
+  if (cached.expiresAt < Date.now()) {
+    ragCache.delete(key);
+    return undefined;
+  }
+  return cached.facts;
+}
+
+function setCachedFacts(query: string, facts: string[]): void {
+  const key = query.trim().toLowerCase();
+  if (ragCache.size >= RAG_CACHE_MAX_ENTRIES) {
+    const oldestKey = ragCache.keys().next().value;
+    if (oldestKey !== undefined) ragCache.delete(oldestKey);
+  }
+  ragCache.set(key, { facts, expiresAt: Date.now() + RAG_CACHE_TTL_MS });
+}
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
@@ -251,6 +279,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             .describe("The search query to match against Jared's facts."),
         }),
         execute: async ({ query }) => {
+          const cached = getCachedFacts(query);
+          if (cached) return cached;
+
           try {
             const { embedding } = await withRetry(() =>
               embed({
@@ -272,7 +303,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
               }),
             );
 
-            return results.map((r) => r.metadata?.text || 'Unknown fact');
+            const facts = results.map((r) =>
+              String(r.metadata?.text ?? 'Unknown fact'),
+            );
+            setCachedFacts(query, facts);
+            return facts;
           } catch (err) {
             console.error('[RAG Pipeline] query_jared_memory failed:', err);
             return [];
