@@ -141,11 +141,10 @@
                 <div
                   class="mt-3 flex items-center gap-4 text-[11px] tracking-wide text-[var(--color-on-surface-muted)]"
                 >
-                  {#if project.role}<span>{project.role}</span>{/if}
-                  {#if project.role && project.timeline}<span class="opacity-40"
-                      >·</span
-                    >{/if}
-                  {#if project.timeline}<span>{project.timeline}</span>{/if}
+                  {#each [project.role, project.timeline].filter(Boolean) as meta, idx (meta)}
+                    {#if idx > 0}<span class="opacity-40">·</span>{/if}
+                    <span>{meta}</span>
+                  {/each}
                   <span class="opacity-40">·</span>
                   <span class="text-[var(--color-tertiary)]"
                     >read case study →</span

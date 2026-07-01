@@ -34,14 +34,22 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch] || ch);
 }
 
+function jsonResponse(
+  body: unknown,
+  status: number,
+  extraHeaders?: Record<string, string>,
+): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
+  });
+}
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
-    return new Response(JSON.stringify({ error: 'Unsupported Media Type' }), {
-      status: 415,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Unsupported Media Type' }, 415);
   }
 
   // Trust only the platform-derived client address; x-forwarded-for is
@@ -50,33 +58,23 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const { success, limit, reset, remaining } = await ratelimit.limit(ip);
 
   if (!success) {
-    return new Response(JSON.stringify({ error: 'Too many requests' }), {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-RateLimit-Limit': limit.toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': reset.toString(),
-      },
+    return jsonResponse({ error: 'Too many requests' }, 429, {
+      'X-RateLimit-Limit': limit.toString(),
+      'X-RateLimit-Remaining': remaining.toString(),
+      'X-RateLimit-Reset': reset.toString(),
     });
   }
 
   try {
     const raw = await request.text();
     if (raw.length > MAX_BODY_BYTES) {
-      return new Response(JSON.stringify({ error: 'Payload too large' }), {
-        status: 413,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Payload too large' }, 413);
     }
     const body = JSON.parse(raw);
     const result = ContactSchema.safeParse(body);
 
     if (!result.success) {
-      return new Response(JSON.stringify({ error: result.error.issues }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: result.error.issues }, 400);
     }
 
     const { name, email, message } = result.data;
@@ -101,21 +99,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
     if (error) {
       console.error('Resend send error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to send message' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Failed to send message' }, 500);
     }
 
-    return new Response(JSON.stringify({ success: true, data }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ success: true, data }, 200);
   } catch (error) {
     console.error('Contact API Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Internal Server Error' }, 500);
   }
 };
