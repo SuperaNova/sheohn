@@ -4,7 +4,9 @@
 
 **Goal:** Build a manual-run Playwright eval suite that exercises the live `/api/chat` CommandDeck agent against ~10 golden prompts, asserting on tool selection and (for a subset) RAG fact accuracy.
 
-**Architecture:** A dedicated Playwright config (`playwright.eval.config.ts`, port 4398, `workers: 1`, `retries: 1`) boots the same build+preview server pattern as the e2e suite, but points at `tests/eval/` instead of `tests/e2e/`. `tests/eval/agent.eval.ts` iterates a data-only fixture list (`tests/eval/cases.ts`), POSTs each prompt to `/api/chat` via Playwright's buffering `request` fixture, and hands the raw SSE text to `tests/eval/parseAgentResponse.ts` — which wraps the AI SDK's `parseJsonEventStream` + `readUIMessageStream` to reassemble a `UIMessage`, then exposes tiny grading helpers (`findToolPart`, `hasAnyToolCall`, `getRagFacts`) built on `ai`'s `isToolUIPart`/`getToolName`. A self-throttle between cases keeps the suite under `/api/chat`'s existing 10 req/min rate limiter.
+**Architecture:** A dedicated Playwright config (`playwright.eval.config.ts`, port 4398, `workers: 1`, `retries: 1`) boots an `astro dev` server (not `astro build && astro preview` — see "Server boot correction" below) and points at `tests/eval/` instead of `tests/e2e/`. `tests/eval/agent.eval.ts` iterates a data-only fixture list (`tests/eval/cases.ts`), POSTs each prompt to `/api/chat` via Playwright's buffering `request` fixture, and hands the raw SSE text to `tests/eval/parseAgentResponse.ts` — which wraps the AI SDK's `parseJsonEventStream` + `readUIMessageStream` to reassemble a `UIMessage`, then exposes tiny grading helpers (`findToolPart`, `hasAnyToolCall`, `getRagFacts`) built on `ai`'s `isToolUIPart`/`getToolName`. A self-throttle between cases keeps the suite under `/api/chat`'s existing 10 req/min rate limiter.
+
+**Server boot correction (discovered during Task 4 implementation, confirmed with the human before continuing):** the original plan copied `playwright.config.ts`'s `npm run build && npm run preview` webServer pattern, on the assumption it would work the same way for a live-call suite as it does for the e2e suite. It does not: this project's `astro.config.mjs` uses `adapter: vercel({ imageService: true })` with `output: 'static'`, and `astro build` under that adapter writes its SSR output to `.vercel/output/functions` in Vercel's proprietary format — not to `dist/server`. `astro preview` only knows how to serve `dist/`, so every route 404s under `npm run preview` when the Vercel adapter is active, including static assets. The e2e suite never surfaces this because `tests/e2e/command-deck.spec.ts` mocks `/api/chat` at the network layer (`page.route`) rather than calling it live — so it never actually depends on the API route being served. The eval harness _needs_ the live route, so Task 1 instead boots `astro dev` (`npm run dev -- --port 4398 --host`), which always executes SSR/API routes directly via Vite regardless of adapter — adapters only affect `astro build` packaging, not `astro dev`. `astro dev` supports the same `--port`/`--host` flags as `astro preview` (confirmed against `node_modules/astro/dist/cli/dev/index.js`'s flag help text). No build step; otherwise the same config shape as the e2e suite.
 
 **Tech Stack:** Playwright (`@playwright/test` ^1.60.0, already a devDependency), Vercel AI SDK (`ai` ^6.0.149 / resolved 6.0.191, already a dependency) — no new dependencies required.
 
@@ -36,9 +38,11 @@
 ## Task 1: Dedicated Playwright eval config
 
 **Files:**
+
 - Create: `playwright.eval.config.ts`
 
 **Interfaces:**
+
 - Produces: a Playwright config whose `testDir` is `./tests/eval`, `baseURL` is `http://localhost:4398`, `workers: 1`, `retries: 1`, `reporter: 'list'`. Later tasks' test files rely on this config being invoked via `--config=playwright.eval.config.ts` (never picked up by the default `playwright test` / `test:e2e` run, since that uses `playwright.config.ts` with `testDir: './tests/e2e'`).
 
 - [ ] **Step 1: Create `playwright.eval.config.ts`**
@@ -47,9 +51,17 @@
 import { defineConfig } from '@playwright/test';
 
 // Dedicated eval port, distinct from the e2e suite's 4399 — lets both
-// suites boot their own preview server without colliding if run back to
-// back. workers: 1 is required so the self-throttle in agent.eval.ts
-// (which relies on tests running sequentially) actually paces requests.
+// suites boot their own dev server without colliding if run back to back.
+// workers: 1 is required so the self-throttle in agent.eval.ts (which
+// relies on tests running sequentially) actually paces requests.
+//
+// Uses `astro dev`, not `astro build && astro preview` (unlike the e2e
+// suite's playwright.config.ts): this project's Vercel adapter writes SSR
+// output to `.vercel/output/functions` in a format `astro preview` cannot
+// serve, so /api/chat 404s under `astro preview`. `astro dev` always runs
+// SSR/API routes directly via Vite regardless of adapter, so it's the only
+// option that actually serves a live /api/chat locally. The e2e suite
+// never needed this because it mocks /api/chat instead of calling it.
 const PORT = 4398;
 const HOST = `http://localhost:${PORT}`;
 
@@ -64,7 +76,7 @@ export default defineConfig({
     baseURL: HOST,
   },
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --host`,
+    command: `npm run dev -- --port ${PORT} --host`,
     url: HOST,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
@@ -89,12 +101,15 @@ git commit -m "feat: add dedicated playwright config for agent eval suite"
 ## Task 2: Golden case fixtures
 
 **Files:**
+
 - Create: `tests/eval/cases.ts`
 
 **Interfaces:**
+
 - Produces: `EvalCase` type and `evalCases: EvalCase[]` array, imported by Task 4's `agent.eval.ts` as `import { evalCases, type EvalCase } from './cases';`.
 
 **Context:** Prompts are grounded in the real system prompt (`src/lib/prompts.ts`) and real content so the live agent has a fair shot at calling the right tool:
+
 - `focus_section` sections: `hero | about | stack | projects | contact` (`src/pages/api/chat.ts:233-246`).
 - `set_theme` modes: `light | dark` (`chat.ts:247-258`).
 - Real project slug for `open_case_study`: `crucible` (`src/content/projects/crucible.mdx`, title "Crucible — Autonomous Sprite Synthesis Pipeline").
@@ -183,9 +198,11 @@ git commit -m "feat: add golden case fixtures for agent eval suite"
 ## Task 3: SSE-to-UIMessage parsing and grading helpers
 
 **Files:**
+
 - Create: `tests/eval/parseAgentResponse.ts`
 
 **Interfaces:**
+
 - Consumes: nothing from earlier tasks (standalone AI SDK wrapper).
 - Produces, for Task 4:
   - `parseAgentResponse(sseText: string): Promise<UIMessage>`
@@ -288,10 +305,12 @@ git commit -m "feat: add SSE-to-UIMessage parsing and grading helpers for agent 
 ## Task 4: Eval test file, package.json wiring, and live verification run
 
 **Files:**
+
 - Create: `tests/eval/agent.eval.ts`
 - Modify: `package.json` (add `eval:agent` script)
 
 **Interfaces:**
+
 - Consumes: `evalCases`/`EvalCase` from `tests/eval/cases.ts` (Task 2); `parseAgentResponse`, `findToolPart`, `hasAnyToolCall`, `getRagFacts` from `tests/eval/parseAgentResponse.ts` (Task 3); `test`/`expect` from `@playwright/test`, run via `playwright.eval.config.ts` (Task 1).
 - Produces: `npm run eval:agent` — the fully wired command described in the spec.
 
@@ -345,7 +364,10 @@ for (const evalCase of evalCases) {
       expect(hasAnyToolCall(message)).toBe(false);
     } else {
       const part = findToolPart(message, evalCase.expectedTool);
-      expect(part, `expected a tool-${evalCase.expectedTool} call`).toBeTruthy();
+      expect(
+        part,
+        `expected a tool-${evalCase.expectedTool} call`,
+      ).toBeTruthy();
     }
 
     if (evalCase.expectedFactsContain) {
