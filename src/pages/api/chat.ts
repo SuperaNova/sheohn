@@ -76,6 +76,28 @@ const ChatBodySchema = z.object({
 // inflate the LLM context (and the bill) with a giant payload.
 const MAX_BODY_BYTES = 32_000;
 
+// Retries a transient failure (network blip, brief provider hiccup) with a
+// short backoff before giving up, so the RAG tool doesn't hard-fail on the
+// first blip.
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts = 2,
+  delayMs = 300,
+): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i <= attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (i < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
@@ -151,6 +173,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
     messages,
     stopWhen: stepCountIs(5),
+    // Bounds the whole multi-step tool loop so a hung Gemini call can't hang
+    // the request indefinitely.
+    timeout: { totalMs: 25_000 },
     tools: {
       open_case_study: tool({
         description:
@@ -226,30 +251,32 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             .describe("The search query to match against Jared's facts."),
         }),
         execute: async ({ query }) => {
-          console.log(`[RAG Pipeline] Embedding query: "${query}"`);
+          try {
+            const { embedding } = await withRetry(() =>
+              embed({
+                model: google.embeddingModel('gemini-embedding-001'),
+                value: query,
+                providerOptions: {
+                  google: {
+                    outputDimensionality: 1536,
+                  },
+                },
+              }),
+            );
 
-          const { embedding } = await embed({
-            model: google.embeddingModel('gemini-embedding-001'),
-            value: query,
-            providerOptions: {
-              google: {
-                outputDimensionality: 1536,
-              },
-            },
-          });
+            const results = await withRetry(() =>
+              index.query({
+                vector: embedding,
+                topK: 3,
+                includeMetadata: true,
+              }),
+            );
 
-          const results = await index.query({
-            vector: embedding,
-            topK: 3,
-            includeMetadata: true,
-          });
-
-          const facts = results.map((r) => r.metadata?.text || 'Unknown fact');
-          console.log(
-            `[RAG Pipeline] Found ${facts.length} facts from memory.`,
-          );
-
-          return facts;
+            return results.map((r) => r.metadata?.text || 'Unknown fact');
+          } catch (err) {
+            console.error('[RAG Pipeline] query_jared_memory failed:', err);
+            return [];
+          }
         },
       }),
     },
