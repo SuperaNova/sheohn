@@ -17,6 +17,9 @@
   } from '../../store';
   import { personalInfo } from '../../data/personalInfo';
   import { starters } from '../../data/starters';
+  import DeckCommandList from './DeckCommandList.svelte';
+  import DeckChatLog from './DeckChatLog.svelte';
+  import DeckStarterChips from './DeckStarterChips.svelte';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -36,64 +39,7 @@
     },
   ];
 
-  // ── Safe inline linkifier ───────────────────────────────────────────────────
-  // The agent streams plain text that may contain markdown links
-  // ([label](url)) or bare URLs (the resume fallback link). We render those as
-  // real anchors WITHOUT dangerouslySetInnerHTML: text is split into segments
-  // and each piece goes through Svelte's normal auto-escaping. URLs are
-  // protocol-validated (http/https/mailto only) so a prompt-injected
-  // javascript: link can never become clickable.
-  type Segment =
-    | { kind: 'text'; value: string }
-    | { kind: 'link'; label: string; href: string };
-
-  function safeHref(url: string): string | null {
-    try {
-      const u = new URL(url, 'https://sheohn.dev');
-      if (
-        u.protocol === 'http:' ||
-        u.protocol === 'https:' ||
-        u.protocol === 'mailto:'
-      ) {
-        return u.href;
-      }
-    } catch {
-      /* malformed URL — fall through */
-    }
-    return null;
-  }
-
-  function linkify(text: string): Segment[] {
-    const segments: Segment[] = [];
-    // markdown link  OR  bare http(s) url
-    const re = /\[([^\]]+)\]\(([^)\s]+)\)|((?:https?:\/\/)[^\s<>()]+)/g;
-    let last = 0;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      if (m.index > last)
-        segments.push({ kind: 'text', value: text.slice(last, m.index) });
-      if (m[1] !== undefined) {
-        const label = m[1];
-        const href = safeHref(m[2] ?? '');
-        segments.push(
-          href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
-        );
-      } else {
-        const label = m[3] ?? '';
-        const href = safeHref(label);
-        segments.push(
-          href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
-        );
-      }
-      last = re.lastIndex;
-    }
-    if (last < text.length)
-      segments.push({ kind: 'text', value: text.slice(last) });
-    return segments;
-  }
-
   let inputEl = $state<HTMLInputElement | null>(null);
-  let listEl = $state<HTMLDivElement | null>(null);
   let deckRoot = $state<HTMLElement | null>(null);
   let inputValue = $state('');
   let selectedIndex = $state(0);
@@ -126,6 +72,33 @@
   // It specifically hooks into `onToolCall` to intercept LLM function calls
   // (like `set_theme` or `focus_section`) and execute them locally using the Svelte stores
   // rather than letting the server handle them. This is how the AI physically "drives" the UI.
+  type ToolCallArgs = {
+    focus?: string;
+    section?: string;
+    slug?: string;
+    mode?: string;
+  };
+
+  // One handler per tool name — each validates its own args and no-ops on a
+  // mismatch, so an unrecognized/malformed call is simply ignored.
+  const toolCallHandlers: Record<string, (args: ToolCallArgs) => void> = {
+    trigger_ui_state: (args) => {
+      if (args.focus) setFocus(args.focus);
+    },
+    focus_section: (args) => {
+      if (args.section && SCENE_TARGETS.includes(args.section)) {
+        dispatchScene(args.section as SceneTarget);
+      }
+    },
+    open_case_study: (args) => {
+      if (args.slug) dispatchRoute(`/projects/${args.slug}`);
+    },
+    set_theme: (args) => {
+      if (args.mode === 'light' || args.mode === 'dark') setTheme(args.mode);
+    },
+    open_resume: () => window.open(personalInfo.resumeUrl, '_blank'),
+  };
+
   let chat = $state<Chat | null>(null);
   try {
     chat = new Chat({
@@ -137,28 +110,11 @@
           arguments?: unknown;
           input?: unknown;
         };
-        const args = (payload.args ?? payload.arguments ?? payload.input) as
-          | { focus?: string; section?: string; slug?: string; mode?: string }
-          | undefined;
-
-        if (payload.toolName === 'trigger_ui_state' && args?.focus) {
-          setFocus(args.focus);
-        } else if (
-          payload.toolName === 'focus_section' &&
-          args?.section &&
-          SCENE_TARGETS.includes(args.section)
-        ) {
-          dispatchScene(args.section as SceneTarget);
-        } else if (payload.toolName === 'open_case_study' && args?.slug) {
-          dispatchRoute(`/projects/${args.slug}`);
-        } else if (
-          payload.toolName === 'set_theme' &&
-          (args?.mode === 'light' || args?.mode === 'dark')
-        ) {
-          setTheme(args.mode);
-        } else if (payload.toolName === 'open_resume') {
-          window.open(personalInfo.resumeUrl, '_blank');
-        }
+        const args = (payload.args ??
+          payload.arguments ??
+          payload.input ??
+          {}) as ToolCallArgs;
+        toolCallHandlers[payload.toolName]?.(args);
       },
       onError: (err) => console.error('[CommandDeck] agent error:', err),
     });
@@ -189,30 +145,6 @@
 
   $effect(() => {
     if (inputValue.trim() !== '') starterIndex = -1;
-  });
-
-  // Grows as tokens stream in, so the autoscroll effect keeps firing.
-  const streamTick = $derived.by(() => {
-    if (!chat || !chat.messages.length) return 0;
-    return chat.messages.reduce((n, m) => {
-      if (!m.parts)
-        return n + ((m as { content?: string }).content?.length ?? 0);
-      return (
-        n +
-        m.parts.reduce(
-          (t, p) =>
-            t + (p.type === 'text' ? (p as { text: string }).text.length : 0),
-          0,
-        )
-      );
-    }, 0);
-  });
-
-  $effect(() => {
-    void streamTick;
-    void messages.length;
-    const el = listEl;
-    if (el) el.scrollTop = el.scrollHeight;
   });
 
   let wasLoading = false;
@@ -273,38 +205,44 @@
     ask(inputValue);
   }
 
+  function onCommandModeKeydown(e: KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % filteredCommands.length;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex =
+        (selectedIndex - 1 + filteredCommands.length) % filteredCommands.length;
+    }
+  }
+
+  // Suggestion nav while the input is empty. The chips sit in a horizontal
+  // row, so ←/→ are the primary axis; ↑/↓ are accepted too so it works
+  // however the visitor reaches for it. Enter fires the highlighted chip.
+  function onStarterKeydown(e: KeyboardEvent) {
+    if (!starters.length) return;
+    const next = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+    const prev = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
+    if (next) {
+      e.preventDefault();
+      starterIndex = (starterIndex + 1) % starters.length;
+    } else if (prev) {
+      e.preventDefault();
+      starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
+    } else if (e.key === 'Enter' && starterIndex >= 0) {
+      e.preventDefault();
+      const starter = starters[starterIndex];
+      if (starter) ask(starter.q);
+      starterIndex = -1;
+    }
+  }
+
   function onInputKeydown(e: KeyboardEvent) {
     if (commandMode) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % filteredCommands.length;
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex =
-          (selectedIndex - 1 + filteredCommands.length) %
-          filteredCommands.length;
-      }
+      onCommandModeKeydown(e);
       return;
     }
-    // Suggestion nav while the input is empty. The chips sit in a horizontal
-    // row, so ←/→ are the primary axis; ↑/↓ are accepted too so it works
-    // however the visitor reaches for it. Enter fires the highlighted chip.
-    if (inputValue.trim() === '' && starters.length) {
-      const next = e.key === 'ArrowRight' || e.key === 'ArrowDown';
-      const prev = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
-      if (next) {
-        e.preventDefault();
-        starterIndex = (starterIndex + 1) % starters.length;
-      } else if (prev) {
-        e.preventDefault();
-        starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
-      } else if (e.key === 'Enter' && starterIndex >= 0) {
-        e.preventDefault();
-        const starter = starters[starterIndex];
-        if (starter) ask(starter.q);
-        starterIndex = -1;
-      }
-    }
+    if (inputValue.trim() === '') onStarterKeydown(e);
   }
 
   function handleWindowKeydown(e: KeyboardEvent) {
@@ -383,44 +321,6 @@
   data-cursor-green="true"
   class="fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
 >
-  {#snippet richText(text: string)}
-    {#each linkify(text) as seg, si (si)}
-      {#if seg.kind === 'link'}
-        <a
-          href={seg.href}
-          target="_blank"
-          rel="noreferrer noopener"
-          class="text-[var(--color-console-signal)] underline underline-offset-2 transition-colors hover:text-[var(--color-console-signal-strong)]"
-          >{seg.label}</a
-        >
-      {:else}<span>{seg.value}</span>{/if}
-    {/each}
-  {/snippet}
-
-  {#snippet suggestionChips(showHint: boolean)}
-    <div class="flex flex-wrap items-center gap-2">
-      {#each starters as s, i (s.label)}
-        <button
-          type="button"
-          onclick={() => ask(s.q)}
-          aria-current={starterIndex === i ? 'true' : undefined}
-          class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs transition-colors pointer-coarse:min-h-[44px] {starterIndex ===
-          i
-            ? 'border-[var(--color-console-signal)] bg-[var(--color-console-signal)]/10 text-[var(--color-console-text)]'
-            : 'border-[var(--color-console-line)] text-[var(--color-console-text-dim)] hover:border-[var(--color-console-signal)]/50 hover:text-[var(--color-console-text)]'}"
-        >
-          {s.label}
-        </button>
-      {/each}
-      {#if showHint}
-        <span
-          class="ml-auto hidden font-mono text-[10px] text-[var(--color-console-text-dim)] sm:inline"
-          >←→ pick · ↵ run</span
-        >
-      {/if}
-    </div>
-  {/snippet}
-
   {#if expanded}
     <div
       transition:fly={{ y: 16, duration: 220 }}
@@ -449,43 +349,13 @@
       </div>
       {#if commandMode}
         <!-- Deterministic command palette -->
-        <ul
-          id="deck-command-list"
-          role="listbox"
-          aria-label="Commands"
-          style:max-height={listMaxPx ? `${listMaxPx}px` : undefined}
-          class="max-h-72 overflow-y-auto p-2 font-mono text-sm"
-        >
-          {#if filteredCommands.length === 0}
-            <li
-              class="px-3 py-4 text-center text-[var(--color-console-text-dim)]"
-            >
-              no command matches "{inputValue.trimStart().slice(1)}"
-            </li>
-          {:else}
-            {#each filteredCommands as cmd, i (cmd.name)}
-              <li>
-                <button
-                  type="button"
-                  role="option"
-                  id={`deck-cmd-${i}`}
-                  aria-selected={i === selectedIndex}
-                  onclick={cmd.run}
-                  onmouseenter={() => (selectedIndex = i)}
-                  class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors pointer-coarse:min-h-[44px] {i ===
-                  selectedIndex
-                    ? 'bg-[var(--color-console-signal)]/15 text-[var(--color-console-text)]'
-                    : 'text-[var(--color-console-text-dim)] hover:bg-white/5'}"
-                >
-                  <span class="text-[var(--color-console-signal)]"
-                    >/{cmd.name}</span
-                  >
-                  <span class="text-xs">{cmd.label}</span>
-                </button>
-              </li>
-            {/each}
-          {/if}
-        </ul>
+        <DeckCommandList
+          commands={filteredCommands}
+          {selectedIndex}
+          {inputValue}
+          maxHeightPx={listMaxPx}
+          onHover={(i) => (selectedIndex = i)}
+        />
       {:else if chatError}
         <div class="p-4 font-mono text-xs text-red-400">
           [ agent offline ] — slash-commands still work. Type
@@ -493,67 +363,15 @@
         </div>
       {:else if messages.length}
         <!-- Agent conversation -->
-        <div
-          bind:this={listEl}
-          role="log"
-          aria-live="polite"
-          aria-label="Agent conversation"
-          style:max-height={listMaxPx ? `${listMaxPx}px` : undefined}
-          class="deck-scroll flex max-h-72 flex-col gap-4 overflow-y-auto p-4 font-mono text-[13px] leading-relaxed"
-        >
-          {#each messages as m (m.id)}
-            <div class="flex flex-col gap-1">
-              <span
-                class="text-[10px] tracking-[0.18em] uppercase {m.role ===
-                'user'
-                  ? 'text-[var(--color-console-signal)]/70'
-                  : 'text-[var(--color-console-text-dim)]'}"
-              >
-                {m.role === 'user' ? 'guest' : 'system'}
-              </span>
-              <div class="break-words text-[var(--color-console-text)]">
-                {#if m.parts}
-                  {#each m.parts as p, i (i)}
-                    {#if p.type === 'text'}
-                      {@render richText(
-                        (p as { type: 'text'; text: string }).text,
-                      )}
-                    {:else if typeof p.type === 'string' && (p.type.startsWith('tool-') || p.type === 'dynamic-tool')}
-                      {@const part = p as {
-                        type: string;
-                        toolName?: string;
-                        input?: unknown;
-                      }}
-                      {@const toolName =
-                        part.toolName ?? part.type.replace(/^tool-/, '')}
-                      <span
-                        class="mt-1 block font-mono text-[11px] break-all text-[var(--color-console-signal)]/80"
-                      >
-                        › {toolName}({JSON.stringify(part.input)})
-                      </span>
-                    {/if}
-                  {/each}
-                {:else}
-                  {@render richText((m as { content?: string }).content || '')}
-                {/if}
-              </div>
-            </div>
-          {/each}
-          {#if showTyping}
-            <div class="flex flex-col gap-1">
-              <span
-                class="text-[10px] tracking-[0.18em] text-[var(--color-console-text-dim)] uppercase"
-                >system</span
-              >
-              <span
-                class="mt-1 inline-block h-3.5 w-1.5 animate-pulse bg-[var(--color-console-signal)]"
-              ></span>
-            </div>
-          {/if}
-        </div>
+        <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
         <!-- Persistent recommended commands — reachable after chatting too. -->
         <div class="border-t border-[var(--color-console-line)] p-3">
-          {@render suggestionChips(true)}
+          <DeckStarterChips
+            {starters}
+            {starterIndex}
+            showHint={true}
+            onAsk={ask}
+          />
         </div>
       {:else}
         <!-- Empty state: starter queries that each drive the page -->
@@ -564,7 +382,12 @@
             <span class="text-[var(--color-console-signal)]">/</span> for commands.
           </p>
           <div class="mt-3">
-            {@render suggestionChips(true)}
+            <DeckStarterChips
+              {starters}
+              {starterIndex}
+              showHint={true}
+              onAsk={ask}
+            />
           </div>
         </div>
       {/if}
@@ -617,20 +440,3 @@
     >
   </form>
 </aside>
-
-<style>
-  .deck-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(74, 222, 128, 0.35) transparent;
-  }
-  .deck-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-  .deck-scroll::-webkit-scrollbar-thumb {
-    background: rgba(74, 222, 128, 0.3);
-    border-radius: 9999px;
-  }
-  .deck-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(74, 222, 128, 0.5);
-  }
-</style>
