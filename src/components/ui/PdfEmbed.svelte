@@ -12,6 +12,9 @@
   }: { src: string; title: string; caption?: string } = $props();
 
   let loaded = $state(false);
+  // Mobile taps navigate straight to a new tab with no preview of the iframe
+  // first, so surface the filename up front instead of a blind "trust me" link.
+  const fileName = src.split('/').pop() || src;
 </script>
 
 <div
@@ -55,6 +58,10 @@
     >
       Open document ↗
     </a>
+    <span
+      class="font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)]/70"
+      >opens {fileName} in a new tab</span
+    >
   </div>
 
   <div
