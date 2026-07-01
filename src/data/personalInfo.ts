@@ -22,6 +22,41 @@ export const personalInfo = {
     currentFocusDescription:
       'Exploring the boundaries of local AI execution and building tools that optimize complex technical workflows. Currently focused on multi-agent pipelines, memory-bound model quantization, and robust backend architectures.',
   },
+  techStack: [
+    {
+      category: 'Languages',
+      items: [
+        'C++',
+        'Java',
+        'Python',
+        'Rust',
+        'TypeScript',
+        'JavaScript',
+        'Dart',
+        'SQL',
+        'NoSQL',
+      ],
+    },
+    {
+      category: 'Cloud & AI',
+      items: [
+        'GCP',
+        'Vertex AI',
+        'Gemini',
+        'Firebase',
+        'LangChain',
+        'n8n',
+        'Make',
+        'Docker',
+        'Git',
+        'GitHub',
+      ],
+    },
+    {
+      category: 'Data & Analysis',
+      items: ['Pandas', 'NumPy', 'Matplotlib', 'Jupyter', 'JSON/CSV'],
+    },
+  ],
   experience: [
     {
       id: 'exp-1',
