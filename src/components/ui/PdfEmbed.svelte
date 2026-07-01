@@ -14,7 +14,7 @@
   let loaded = $state(false);
   // Mobile taps navigate straight to a new tab with no preview of the iframe
   // first, so surface the filename up front instead of a blind "trust me" link.
-  const fileName = src.split('/').pop() || src;
+  const fileName = $derived(src.split('/').pop() || src);
 </script>
 
 <div
