@@ -67,6 +67,10 @@ const HOST = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: './tests/eval',
+  // Default testMatch (**/*.@(spec|test).?(c|m)[jt]s?(x)) requires ".spec."
+  // or ".test." in the filename — agent.eval.ts doesn't match, so tests
+  // would silently be discovered as "0 tests" without this override.
+  testMatch: '**/*.eval.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 1,
@@ -106,7 +110,7 @@ git commit -m "feat: add dedicated playwright config for agent eval suite"
 
 **Interfaces:**
 
-- Produces: `EvalCase` type and `evalCases: EvalCase[]` array, imported by Task 4's `agent.eval.ts` as `import { evalCases, type EvalCase } from './cases';`.
+- Produces: `EvalCase` type and `evalCases: EvalCase[]` array, imported by Task 4's `agent.eval.ts` as `import { evalCases } from './cases';` (the `EvalCase` type itself is inferred at the call site, not imported separately, since it isn't referenced by name in `agent.eval.ts`).
 
 **Context:** Prompts are grounded in the real system prompt (`src/lib/prompts.ts`) and real content so the live agent has a fair shot at calling the right tool:
 
@@ -396,12 +400,12 @@ Expected: lists all 10 test names from `tests/eval/cases.ts` (e.g. `agent.eval.t
 - [ ] **Step 4: Confirm required env vars are present**
 
 Run: `grep -c "GOOGLE_GENERATIVE_AI_API_KEY\|UPSTASH_VECTOR_REST_URL\|UPSTASH_VECTOR_REST_TOKEN\|UPSTASH_REDIS_REST_URL\|UPSTASH_REDIS_REST_TOKEN" .env`
-Expected: `5` (all five vars present in `.env` — required for `npm run preview`'s `/api/chat` to actually work; a missing var surfaces as every case failing per the spec's Error Handling section, so confirming this first avoids wasting a full throttled run on infra rather than agent behavior).
+Expected: `5` (all five vars present in `.env` — required for `npm run dev`'s `/api/chat` to actually work; a missing var surfaces as every case failing per the spec's Error Handling section, so confirming this first avoids wasting a full throttled run on infra rather than agent behavior).
 
 - [ ] **Step 5: Full live run — this is the harness's real verification, per spec ("Testing the harness itself")**
 
 Run: `npm run eval:agent`
-Expected: `10 passed` (or 10 passed after Playwright's built-in single retry on any case). This is a real Gemini + Upstash run — takes roughly a minute (`~10 cases × 6.5s` throttle plus model latency plus any retries). If a case fails after retry, inspect whether it's a genuine tool-selection/RAG regression (fix the case's prompt or expected value, don't loosen assertions to force a pass) versus an infra issue (env vars, rate limiting from another process hitting the same preview server).
+Expected: `10 passed` (or 10 passed after Playwright's built-in single retry on any case). This is a real Gemini + Upstash run — takes roughly a minute (`~10 cases × 6.5s` throttle plus model latency plus any retries). If a case fails after retry, inspect whether it's a genuine tool-selection/RAG regression (fix the case's prompt or expected value, don't loosen assertions to force a pass) versus an infra issue (env vars, rate limiting from another process hitting the same dev server).
 
 - [ ] **Step 6: Commit**
 
@@ -417,3 +421,11 @@ git commit -m "feat: wire up agent eval suite (npm run eval:agent)"
 - **Spec coverage:** Architecture (Task 1 config + file layout across Tasks 1-4), golden case format and seed set (Task 2), grading — primary tool selection and secondary RAG accuracy (Task 3 helpers, applied in Task 4), retry/rate-limiting (`retries: 1` in Task 1, self-throttle in Task 4), reporting (`reporter: 'list'` in Task 1), wiring (`eval:agent` script in Task 4), error handling (relies on Playwright's own `webServer` timeout and `retries` — no custom code, consistent with spec), testing the harness itself (no meta-tests; Task 4 Step 5 is the live-run verification the spec calls for).
 - **Corrected from the spec's loose wording:** the spec refers to "tool-call parts" and "tool-result facts" generically; this plan grades against AI SDK v6's actual `` `tool-${toolName}` ``-typed `ToolUIPart` shape (via `isToolUIPart`/`getToolName`) and reads `part.output` directly for `query_jared_memory`'s bare `string[]` return value, both confirmed against the installed `ai@6.0.191` type declarations and `src/pages/api/chat.ts`.
 - **Type consistency:** `EvalCase` (Task 2) fields (`name`, `prompt`, `expectedTool`, `expectedFactsContain`) are used identically in Task 4's loop. `parseAgentResponse`/`findToolPart`/`hasAnyToolCall`/`getRagFacts` (Task 3) signatures match their call sites in Task 4 exactly.
+
+## Outcome and Follow-Ups (post-implementation)
+
+- **Live run result:** genuine 10/10 pass. 9 cases passed cleanly on the first full `npm run eval:agent` run; `query_jared_memory — leadership facts` failed its `expectedFactsContain` assertion (its `expectedTool` assertion passed both attempts, confirming this was a fact-substring issue, not a tool-selection regression) and was narrowed from `['GDG', 'President']` to `['chapter operations']` under the authorized fact-substring exception, then re-verified passing in isolation. See the inline comment on that case in `tests/eval/cases.ts` for the full root-cause (a live Upstash Vector probe confirmed the GDG/President fact chunk exists at score 0.95 for a targeted query, but doesn't rank into the production `topK: 3` for this case's prompt wording).
+- **Known limitation:** the eval suite boots via `astro dev`, not the actual deployed Vercel build. Agent logic (Gemini calls, Upstash retrieval, tool selection) runs identically either way since adapters don't affect `astro dev`, but dev mode doesn't exercise edge-middleware, header handling, or bundling differences from the real deployed function. This suite validates agent _behavior_, not the deployed _infrastructure_ — acceptable for its stated purpose (catching prompt/tool/RAG regressions), but worth knowing if a future regression turns out to be deployment-specific rather than agent-specific.
+- **Product signal, not a harness defect:** the `leadership facts` narrowing surfaced a real, reproducible RAG ranking characteristic — the GDG/President leadership fact is in the index but consistently loses to three other facts for `topK: 3` on this prompt's phrasing. Worth the project owner's separate attention (e.g. reformulating how the tool constructs its embedding query, or accepting `topK: 3` as sometimes deprioritizing the most specific fact) — out of scope for this harness to fix.
+- **Considered and deferred:** minimal unit coverage of `parseAgentResponse.ts`'s SSE-parsing logic (e.g. one fixture-based test replaying a captured real SSE transcript) would exercise the harness's own parsing/grading code deterministically and for free, and would have caught the `testMatch` discovery bug faster than a live run did. The plan's explicit "no meta-tests, the live run IS the test" decision (Global Constraints) was deliberate and human-endorsed, so this is left as a note for whoever next touches `parseAgentResponse.ts`, not a retroactive requirement.
+- **Mid-implementation correction:** the original `npm run build && npm run preview` webServer approach (Task 1 as originally written) turned out not to work — `astro preview` can't serve routes correctly under this project's `@astrojs/vercel` adapter (SSR output goes to `.vercel/output/functions`, a format `astro preview` doesn't understand, so every route including `/api/chat` 404s; the e2e suite never hit this because it mocks `/api/chat` instead of calling it live). Fixed by switching to `astro dev` (commit `f3fc38a`), with a `testMatch: '**/*.eval.ts'` addition in the same commit (Playwright's default `testMatch` doesn't discover `agent.eval.ts`'s filename). Both fixes are reflected in this plan's Task 1 section above as the current, correct state.
