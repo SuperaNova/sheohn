@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import ContactField from './ContactField.svelte';
 
   type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -8,6 +9,29 @@
     email?: string;
     message?: string;
     general?: string;
+  }
+
+  // Maps the API's Zod issue array (400) onto our field-keyed error shape.
+  // Falls back to a general message when the response isn't the expected shape
+  // or names no known field.
+  function mapServerErrors(
+    body: {
+      error?: Array<{ path?: string[]; message: string }>;
+    } | null,
+  ): FieldErrors {
+    if (!body?.error || !Array.isArray(body.error)) {
+      return { general: 'Send failed. Please try again.' };
+    }
+    const next: FieldErrors = {};
+    for (const issue of body.error) {
+      const field = issue.path?.[0];
+      if (field === 'name' || field === 'email' || field === 'message') {
+        next[field] = issue.message;
+      }
+    }
+    return Object.keys(next).length > 0
+      ? next
+      : { general: 'Send failed. Please check the form and retry.' };
   }
 
   let name = $state('');
@@ -77,22 +101,7 @@
         const body = (await res.json().catch(() => null)) as {
           error?: Array<{ path?: string[]; message: string }>;
         } | null;
-
-        if (body?.error && Array.isArray(body.error)) {
-          const next: FieldErrors = {};
-          for (const issue of body.error) {
-            const field = issue.path?.[0];
-            if (field === 'name' || field === 'email' || field === 'message') {
-              next[field] = issue.message;
-            }
-          }
-          errors =
-            Object.keys(next).length > 0
-              ? next
-              : { general: 'Send failed. Please check the form and retry.' };
-        } else {
-          errors = { general: 'Send failed. Please try again.' };
-        }
+        errors = mapServerErrors(body);
         status = 'error';
         return;
       }
@@ -114,84 +123,38 @@
   aria-label="Contact form"
   class="grid gap-6"
 >
-  <div class="grid gap-2">
-    <label
-      for="contact-name"
-      class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface-muted)] uppercase"
-    >
-      Name
-    </label>
-    <input
-      id="contact-name"
-      name="name"
-      type="text"
-      autocomplete="name"
-      required
-      minlength="2"
-      maxlength="100"
-      bind:value={name}
-      aria-invalid={errors.name ? 'true' : undefined}
-      aria-describedby={errors.name ? 'contact-name-error' : undefined}
-      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
-    />
-    {#if errors.name}
-      <p id="contact-name-error" class="text-sm text-[var(--color-error)]">
-        {errors.name}
-      </p>
-    {/if}
-  </div>
+  <ContactField
+    id="contact-name"
+    name="name"
+    label="Name"
+    autocomplete="name"
+    minlength={2}
+    maxlength={100}
+    bind:value={name}
+    error={errors.name}
+  />
 
-  <div class="grid gap-2">
-    <label
-      for="contact-email"
-      class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface-muted)] uppercase"
-    >
-      Email
-    </label>
-    <input
-      id="contact-email"
-      name="email"
-      type="email"
-      autocomplete="email"
-      required
-      maxlength="254"
-      bind:value={email}
-      aria-invalid={errors.email ? 'true' : undefined}
-      aria-describedby={errors.email ? 'contact-email-error' : undefined}
-      class="rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
-    />
-    {#if errors.email}
-      <p id="contact-email-error" class="text-sm text-[var(--color-error)]">
-        {errors.email}
-      </p>
-    {/if}
-  </div>
+  <ContactField
+    id="contact-email"
+    name="email"
+    label="Email"
+    type="email"
+    autocomplete="email"
+    maxlength={254}
+    bind:value={email}
+    error={errors.email}
+  />
 
-  <div class="grid gap-2">
-    <label
-      for="contact-message"
-      class="text-xs font-semibold tracking-[0.16em] text-[var(--color-on-surface-muted)] uppercase"
-    >
-      Message
-    </label>
-    <textarea
-      id="contact-message"
-      name="message"
-      required
-      minlength="10"
-      maxlength="5000"
-      rows="6"
-      bind:value={message}
-      aria-invalid={errors.message ? 'true' : undefined}
-      aria-describedby={errors.message ? 'contact-message-error' : undefined}
-      class="resize-y rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] px-4 py-3 text-base text-[var(--color-on-surface)] outline-none transition focus:border-[var(--color-tertiary)] focus:ring-2 focus:ring-[var(--color-tertiary)]/30 aria-invalid:border-[var(--color-error)]"
-    ></textarea>
-    {#if errors.message}
-      <p id="contact-message-error" class="text-sm text-[var(--color-error)]">
-        {errors.message}
-      </p>
-    {/if}
-  </div>
+  <ContactField
+    id="contact-message"
+    name="message"
+    label="Message"
+    minlength={10}
+    maxlength={5000}
+    rows={6}
+    bind:value={message}
+    error={errors.message}
+  />
 
   <!-- Status / general error region — announced to screen readers -->
   <div aria-live="polite" aria-atomic="true" class="min-h-[1.5rem] text-sm">
