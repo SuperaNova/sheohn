@@ -77,40 +77,22 @@ const { Content, headings } = await render(entry);
           class="mb-24 flex flex-col flex-wrap gap-x-16 gap-y-10 border-y border-[var(--color-outline-variant)] py-8 md:flex-row"
         >
           {
-            entry.data.role && (
-              <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
-                  Role
-                </span>
-                <span class="text-sm font-medium text-[var(--color-on-surface)]">
-                  {entry.data.role}
-                </span>
-              </div>
-            )
-          }
-          {
-            entry.data.timeline && (
-              <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
-                  Timeline
-                </span>
-                <span class="text-sm font-medium text-[var(--color-on-surface)]">
-                  {entry.data.timeline}
-                </span>
-              </div>
-            )
-          }
-          {
-            entry.data.team && (
-              <div class="flex flex-col gap-2">
-                <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
-                  Team
-                </span>
-                <span class="text-sm font-medium text-[var(--color-on-surface)]">
-                  {entry.data.team}
-                </span>
-              </div>
-            )
+            [
+              { label: 'Role', value: entry.data.role },
+              { label: 'Timeline', value: entry.data.timeline },
+              { label: 'Team', value: entry.data.team },
+            ]
+              .filter((field) => field.value)
+              .map((field) => (
+                <div class="flex flex-col gap-2">
+                  <span class="text-xs font-bold tracking-[0.2em] text-[var(--color-tertiary)] uppercase">
+                    {field.label}
+                  </span>
+                  <span class="text-sm font-medium text-[var(--color-on-surface)]">
+                    {field.value}
+                  </span>
+                </div>
+              ))
           }
           {
             entry.data.stack && entry.data.stack.length > 0 && (
