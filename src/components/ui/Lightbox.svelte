@@ -15,6 +15,9 @@
   function handleClick(e: Event) {
     e.preventDefault();
     const img = e.currentTarget as HTMLImageElement;
+    // Same in-page overlay on touch devices too — the viewport meta tag never
+    // locks scale, so native pinch-zoom still works over the overlay without
+    // needing to navigate to a separate tab just to view the image.
     src = img.currentSrc || img.src;
     alt = img.alt || '';
     open = true;

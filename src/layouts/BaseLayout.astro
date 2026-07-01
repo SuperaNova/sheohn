@@ -130,6 +130,12 @@ const canonicalURL = new URL(
 
       // Run on every page navigation (Astro View Transitions)
       document.addEventListener('astro:after-swap', applyThemeAndLoader);
+
+      // Scroll to top before the DOM swap so the new page always starts at 0
+      // instead of jumping from whatever position the user was at mid-transition.
+      document.addEventListener('astro:before-swap', () =>
+        window.scrollTo(0, 0),
+      );
     </script>
   </head>
 
