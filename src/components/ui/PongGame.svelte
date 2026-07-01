@@ -30,65 +30,85 @@
     ballSpeedY = (Math.random() > 0.5 ? 1 : -1) * 5;
   }
 
-  function gameLoop() {
-    if (!ctx) return;
-
-    // AI Logic (imperfect tracking)
+  // Imperfect tracking: only nudges toward the ball, never snaps to it.
+  function updateAI() {
     const aiCenter = aiY + PADDLE_HEIGHT / 2;
     if (aiCenter < ballY - 10) {
       aiY += 4;
     } else if (aiCenter > ballY + 10) {
       aiY -= 4;
     }
-
-    // Keep AI in bounds
     aiY = Math.max(0, Math.min(height - PADDLE_HEIGHT, aiY));
+  }
 
+  function updateBallPosition() {
     if (playing) {
       ballX += ballSpeedX;
       ballY += ballSpeedY;
     }
+  }
 
+  function bounceOffWalls() {
     if (ballY <= 0 || ballY + BALL_SIZE >= height) {
       ballSpeedY = -ballSpeedY;
     }
+  }
 
+  // Shared by both paddles: reverse X, pin the ball to the paddle face
+  // (prevents sticking), and steer the return angle by where it was hit.
+  function bounceOffPaddle(paddleY: number, clampedBallX: number) {
+    ballSpeedX = -ballSpeedX;
+    ballX = clampedBallX;
+    const deltaY = ballY - (paddleY + PADDLE_HEIGHT / 2);
+    ballSpeedY = deltaY * 0.2;
+  }
+
+  function checkPlayerPaddleCollision() {
     if (
       ballX <= PADDLE_WIDTH * 2 &&
       ballY + BALL_SIZE >= playerY &&
       ballY <= playerY + PADDLE_HEIGHT
     ) {
-      ballSpeedX = -ballSpeedX;
-      ballX = PADDLE_WIDTH * 2; // prevent sticking
-      // Adjust angle based on where it hits paddle
-      const deltaY = ballY - (playerY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.2;
+      bounceOffPaddle(playerY, PADDLE_WIDTH * 2);
     }
+  }
 
+  function checkAiPaddleCollision() {
     if (
       ballX + BALL_SIZE >= width - PADDLE_WIDTH * 2 &&
       ballY + BALL_SIZE >= aiY &&
       ballY <= aiY + PADDLE_HEIGHT
     ) {
-      ballSpeedX = -ballSpeedX;
-      ballX = width - PADDLE_WIDTH * 2 - BALL_SIZE;
-      const deltaY = ballY - (aiY + PADDLE_HEIGHT / 2);
-      ballSpeedY = deltaY * 0.2;
+      bounceOffPaddle(aiY, width - PADDLE_WIDTH * 2 - BALL_SIZE);
     }
+  }
 
+  function pauseAfterScore() {
+    resetBall();
+    playing = false;
+    setTimeout(() => (playing = true), 1000);
+  }
+
+  function checkScoring() {
     if (ballX < 0) {
       aiScore++;
-      resetBall();
-      playing = false; // pause briefly
-      setTimeout(() => (playing = true), 1000);
+      pauseAfterScore();
     } else if (ballX > width) {
       playerScore++;
-      resetBall();
-      playing = false;
-      setTimeout(() => (playing = true), 1000);
+      pauseAfterScore();
     }
+  }
 
-    // Draw background (transparent so it shows the div background)
+  function drawPaddle(x: number, y: number, color: string) {
+    if (!ctx) return;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
+  }
+
+  function draw() {
+    if (!ctx) return;
+
+    // Transparent clear so the div background shows through.
     ctx.clearRect(0, 0, width, height);
 
     ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
@@ -98,13 +118,8 @@
     ctx.lineTo(width / 2, height);
     ctx.stroke();
 
-    // Draw player paddle (tertiary color / green)
-    ctx.fillStyle = '#10b981';
-    ctx.fillRect(PADDLE_WIDTH, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
-
-    // Draw AI paddle (error color / red)
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(width - PADDLE_WIDTH * 2, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
+    drawPaddle(PADDLE_WIDTH, playerY, '#10b981'); // player: tertiary/green
+    drawPaddle(width - PADDLE_WIDTH * 2, aiY, '#ef4444'); // AI: error/red
 
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
@@ -123,6 +138,18 @@
     ctx.fillText(playerScore.toString(), width / 2 - 40, 60);
     ctx.textAlign = 'left';
     ctx.fillText(aiScore.toString(), width / 2 + 40, 60);
+  }
+
+  function gameLoop() {
+    if (!ctx) return;
+
+    updateAI();
+    updateBallPosition();
+    bounceOffWalls();
+    checkPlayerPaddleCollision();
+    checkAiPaddleCollision();
+    checkScoring();
+    draw();
 
     animationFrameId = requestAnimationFrame(gameLoop);
   }

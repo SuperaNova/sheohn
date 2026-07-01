@@ -365,14 +365,9 @@
         <!-- Agent conversation -->
         <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
         <!-- Persistent recommended commands — reachable after chatting too. -->
-        <div class="border-t border-[var(--color-console-line)] p-3">
-          <DeckStarterChips
-            {starters}
-            {starterIndex}
-            showHint={true}
-            onAsk={ask}
-          />
-        </div>
+        {@render starterChips(
+          'border-t border-[var(--color-console-line)] p-3',
+        )}
       {:else}
         <!-- Empty state: starter queries that each drive the page -->
         <div class="p-4 font-mono text-[13px]">
@@ -381,18 +376,17 @@
             about Jared, or type
             <span class="text-[var(--color-console-signal)]">/</span> for commands.
           </p>
-          <div class="mt-3">
-            <DeckStarterChips
-              {starters}
-              {starterIndex}
-              showHint={true}
-              onAsk={ask}
-            />
-          </div>
+          {@render starterChips('mt-3')}
         </div>
       {/if}
     </div>
   {/if}
+
+  {#snippet starterChips(wrapperClass: string)}
+    <div class={wrapperClass}>
+      <DeckStarterChips {starters} {starterIndex} showHint={true} onAsk={ask} />
+    </div>
+  {/snippet}
 
   <!-- The persistent docked command bar -->
   <form
