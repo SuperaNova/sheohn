@@ -11,6 +11,10 @@
   let src = $state('');
   let alt = $state('');
   let bound: HTMLImageElement[] = [];
+  let closeBtn = $state<HTMLButtonElement | null>(null);
+  // The element focused right before the lightbox opened, so focus can
+  // return there once it closes instead of being lost to <body>.
+  let lastFocused: HTMLElement | null = null;
 
   function handleClick(e: Event) {
     e.preventDefault();
@@ -18,6 +22,8 @@
     // Same in-page overlay on touch devices too — the viewport meta tag never
     // locks scale, so native pinch-zoom still works over the overlay without
     // needing to navigate to a separate tab just to view the image.
+    const activeElement = document.activeElement as HTMLElement | null;
+    lastFocused = activeElement;
     src = img.currentSrc || img.src;
     alt = img.alt || '';
     open = true;
@@ -27,10 +33,29 @@
   function close() {
     open = false;
     document.body.style.overflow = '';
+    if (lastFocused) {
+      lastFocused.focus();
+      lastFocused = null;
+    }
   }
 
+  // Moves focus onto the close button the moment the dialog opens, so
+  // keyboard/AT users land inside the dialog rather than on the page behind it.
+  $effect(() => {
+    if (open) closeBtn?.focus();
+  });
+
   function onKey(e: KeyboardEvent) {
-    if (e.key === 'Escape' && open) close();
+    if (e.key === 'Escape' && open) {
+      close();
+      return;
+    }
+    // The close button is the dialog's only focusable element, so trapping
+    // Tab on it is a complete focus trap.
+    if (open && e.key === 'Tab') {
+      e.preventDefault();
+      closeBtn?.focus();
+    }
   }
 
   function bind() {
@@ -76,6 +101,7 @@
     transition:fade={{ duration: 180 }}
   >
     <button
+      bind:this={closeBtn}
       type="button"
       aria-label="Close image preview"
       class="sticky top-0 right-0 z-10 mb-3 ml-auto flex rounded-full border border-white/20 bg-black/40 px-3 py-1.5 font-mono text-xs tracking-wide text-white/80 transition hover:bg-black/70 hover:text-white md:absolute md:top-4 md:right-4 md:mb-0 md:ml-0"

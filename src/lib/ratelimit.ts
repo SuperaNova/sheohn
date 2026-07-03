@@ -27,3 +27,18 @@ export function createRateLimiter(
     prefix,
   });
 }
+
+// Run a limit check, failing OPEN on infrastructure errors: if Upstash Redis
+// is unreachable the request proceeds rather than 500ing the endpoint —
+// throttling is a guard, not a dependency.
+export async function safeLimit(
+  limiter: Ratelimit,
+  key: string,
+): Promise<Awaited<ReturnType<Ratelimit['limit']>> | null> {
+  try {
+    return await limiter.limit(key);
+  } catch (err) {
+    console.error('[ratelimit] limit check failed — failing open:', err);
+    return null;
+  }
+}

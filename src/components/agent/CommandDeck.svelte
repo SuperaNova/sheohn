@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { fly } from 'svelte/transition';
+  import { SvelteSet } from 'svelte/reactivity';
 
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
@@ -75,12 +76,14 @@
   type ToolCallArgs = {
     focus?: string;
     section?: string;
-    slug?: string;
     mode?: string;
   };
 
   // One handler per tool name — each validates its own args and no-ops on a
   // mismatch, so an unrecognized/malformed call is simply ignored.
+  // open_case_study is NOT handled here: the tool *call* can carry a
+  // hallucinated slug, so navigation waits for the server's validated result
+  // (see the messages effect below).
   const toolCallHandlers: Record<string, (args: ToolCallArgs) => void> = {
     trigger_ui_state: (args) => {
       if (args.focus) setFocus(args.focus);
@@ -89,9 +92,6 @@
       if (args.section && SCENE_TARGETS.includes(args.section)) {
         dispatchScene(args.section as SceneTarget);
       }
-    },
-    open_case_study: (args) => {
-      if (args.slug) dispatchRoute(`/projects/${args.slug}`);
     },
     set_theme: (args) => {
       if (args.mode === 'light' || args.mode === 'dark') setTheme(args.mode);
@@ -145,6 +145,30 @@
 
   $effect(() => {
     if (inputValue.trim() !== '') starterIndex = -1;
+  });
+
+  // Navigate to a case study only once the server tool has validated the slug
+  // (`status: 'opening'`) — navigating on the raw tool call would send the
+  // visitor to a 404 when the model hallucinates a slug, even though the
+  // server replies `not_found` so the model can correct itself in text.
+  const handledCaseStudyCalls = new SvelteSet<string>();
+  $effect(() => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type !== 'tool-open_case_study') continue;
+        const p = part as {
+          toolCallId: string;
+          state: string;
+          output?: { status?: string; slug?: string };
+        };
+        if (p.state !== 'output-available') continue;
+        if (handledCaseStudyCalls.has(p.toolCallId)) continue;
+        handledCaseStudyCalls.add(p.toolCallId);
+        if (p.output?.status === 'opening' && p.output.slug) {
+          dispatchRoute(`/projects/${p.output.slug}`);
+        }
+      }
+    }
   });
 
   let wasLoading = false;
@@ -246,7 +270,7 @@
   }
 
   function handleWindowKeydown(e: KeyboardEvent) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (expanded) close();
       else {

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import { createRateLimiter } from '../../lib/ratelimit';
+import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 
 export const prerender = false;
 
@@ -55,9 +55,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   // Trust only the platform-derived client address; x-forwarded-for is
   // client-spoofable and would let a caller bypass the rate limiter.
   const ip = clientAddress ?? '127.0.0.1';
-  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+  const limitResult = await safeLimit(ratelimit, ip);
 
-  if (!success) {
+  if (limitResult && !limitResult.success) {
+    const { limit, reset, remaining } = limitResult;
     return jsonResponse({ error: 'Too many requests' }, 429, {
       'X-RateLimit-Limit': limit.toString(),
       'X-RateLimit-Remaining': remaining.toString(),
@@ -67,7 +68,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   try {
     const raw = await request.text();
-    if (raw.length > MAX_BODY_BYTES) {
+    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
       return jsonResponse({ error: 'Payload too large' }, 413);
     }
     const body = JSON.parse(raw);

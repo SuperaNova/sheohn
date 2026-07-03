@@ -62,7 +62,7 @@ export function dispatchRoute(path: string) {
   routeCommand.set({ path, ts: ++routeSeq });
 }
 
-export const theme = writable<'light' | 'dark'>('dark');
+export const theme = writable<'light' | 'dark'>('light');
 
 let themeInitialized = false;
 
@@ -70,13 +70,12 @@ export function initTheme() {
   if (themeInitialized || typeof window === 'undefined') return;
   themeInitialized = true;
 
+  // First visit defaults to light — the same policy as the pre-paint inline
+  // script in BaseLayout.astro (OS preference is intentionally ignored so the
+  // canonical design lands the same way every time). Keep the two in sync:
+  // diverging here flips the theme after hydration and persists the flip.
   const saved = window.localStorage.getItem('theme');
-  const initialTheme =
-    saved === 'light' || saved === 'dark'
-      ? saved
-      : window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+  const initialTheme = saved === 'light' || saved === 'dark' ? saved : 'light';
   theme.set(initialTheme);
   document.documentElement.classList.toggle('dark', initialTheme === 'dark');
 

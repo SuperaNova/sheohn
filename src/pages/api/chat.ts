@@ -11,7 +11,7 @@ import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { Index } from '@upstash/vector';
-import { createRateLimiter } from '../../lib/ratelimit';
+import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
 
@@ -137,11 +137,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   // client-spoofable and would let a caller rotate identities to slip the
   // rate limiter.
   const ip = clientAddress ?? '127.0.0.1';
-  const { success, limit, reset, remaining } = await ratelimit.limit(
-    `ratelimit_chat_${ip}`,
-  );
+  const limitResult = await safeLimit(ratelimit, `ratelimit_chat_${ip}`);
 
-  if (!success) {
+  if (limitResult && !limitResult.success) {
+    const { limit, reset, remaining } = limitResult;
     return new Response('Too Many Requests', {
       status: 429,
       headers: {
@@ -155,7 +154,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   let payload: unknown;
   try {
     const raw = await request.text();
-    if (raw.length > MAX_BODY_BYTES) {
+    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
       return new Response('Payload Too Large', { status: 413 });
     }
     payload = JSON.parse(raw);
@@ -204,6 +203,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     // Bounds the whole multi-step tool loop so a hung Gemini call can't hang
     // the request indefinitely.
     timeout: { totalMs: 25_000 },
+    // Cancels the Gemini stream and tool loop the moment the client
+    // disconnects, instead of letting the request keep running unattended.
+    abortSignal: request.signal,
     tools: {
       open_case_study: tool({
         description:
