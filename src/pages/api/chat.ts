@@ -14,6 +14,11 @@ import { Index } from '@upstash/vector';
 import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
+import {
+  RAG_MIN_SCORE,
+  type RagFact,
+  type RagQueryResult,
+} from '../../lib/rag';
 
 /**
  * AI Chatbot API Endpoint (/api/chat)
@@ -104,9 +109,12 @@ async function withRetry<T>(
 // unbounded entries from varied caller input.
 const RAG_CACHE_TTL_MS = 10 * 60 * 1000;
 const RAG_CACHE_MAX_ENTRIES = 200;
-const ragCache = new Map<string, { facts: string[]; expiresAt: number }>();
+const ragCache = new Map<
+  string,
+  { result: RagQueryResult; expiresAt: number }
+>();
 
-function getCachedFacts(query: string): string[] | undefined {
+function getCachedFacts(query: string): RagQueryResult | undefined {
   const key = query.trim().toLowerCase();
   const cached = ragCache.get(key);
   if (!cached) return undefined;
@@ -114,16 +122,16 @@ function getCachedFacts(query: string): string[] | undefined {
     ragCache.delete(key);
     return undefined;
   }
-  return cached.facts;
+  return cached.result;
 }
 
-function setCachedFacts(query: string, facts: string[]): void {
+function setCachedFacts(query: string, result: RagQueryResult): void {
   const key = query.trim().toLowerCase();
   if (ragCache.size >= RAG_CACHE_MAX_ENTRIES) {
     const oldestKey = ragCache.keys().next().value;
     if (oldestKey !== undefined) ragCache.delete(oldestKey);
   }
-  ragCache.set(key, { facts, expiresAt: Date.now() + RAG_CACHE_TTL_MS });
+  ragCache.set(key, { result, expiresAt: Date.now() + RAG_CACHE_TTL_MS });
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
@@ -274,13 +282,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       }),
       query_jared_memory: tool({
         description:
-          "Search Jared's long-term memory vector database for localized facts about his work, skills, and background.",
+          "Search Jared's long-term memory vector database for localized facts about his work, skills, and background. Returned facts carry a relevance score — ground your answer in the fact text, don't repeat the raw score to the visitor.",
         inputSchema: z.object({
           query: z
             .string()
             .describe("The search query to match against Jared's facts."),
         }),
-        execute: async ({ query }) => {
+        execute: async ({ query }): Promise<RagQueryResult> => {
           const cached = getCachedFacts(query);
           if (cached) return cached;
 
@@ -297,22 +305,33 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
               }),
             );
 
+            // Query wider than the old topK:3 so the relevance filter below
+            // has real candidates to work with — a chunk that's actually
+            // relevant but ranked #4-6 now has a chance to clear the bar
+            // instead of never being retrieved at all.
             const results = await withRetry(() =>
               index.query({
                 vector: embedding,
-                topK: 3,
+                topK: 6,
                 includeMetadata: true,
               }),
             );
 
-            const facts = results.map((r) =>
-              String(r.metadata?.text ?? 'Unknown fact'),
-            );
-            setCachedFacts(query, facts);
-            return facts;
+            const hits: RagFact[] = results.map((r) => ({
+              id: String(r.id),
+              text: String(r.metadata?.text ?? 'Unknown fact'),
+              score: r.score,
+            }));
+
+            const facts = hits.filter((h) => h.score >= RAG_MIN_SCORE);
+            const filteredOut = hits.filter((h) => h.score < RAG_MIN_SCORE);
+
+            const result: RagQueryResult = { query, facts, filteredOut };
+            setCachedFacts(query, result);
+            return result;
           } catch (err) {
             console.error('[RAG Pipeline] query_jared_memory failed:', err);
-            return [];
+            return { query, facts: [], filteredOut: [] };
           }
         },
       }),

@@ -2,6 +2,7 @@
 // themselves into, plus the shared types every builtin/executor speaks.
 
 import type { VfsDirNode } from './vfs';
+import type { RagQueryResult } from '../rag';
 
 /** Output of running a single command (or a full pipeline). */
 export interface ShellOutput {
@@ -40,6 +41,10 @@ export interface ShellCtx {
   closeDeck: () => void;
   /** Clear the shell output log (used by `clear`). */
   clearOutput: () => void;
+  /** Most recent query_jared_memory retrieval trace (used by `trace`).
+   * Optional so existing ShellCtx literals elsewhere don't need updating —
+   * builtins that use it should fall back to `null` when absent. */
+  getLastRagTrace?: () => RagQueryResult | null;
 }
 
 type CommandRun = (

@@ -7,6 +7,7 @@ import {
   type UIMessage,
   type UIMessageChunk,
 } from 'ai';
+import type { RagQueryResult } from '../../src/lib/rag';
 
 /**
  * Playwright's `request` fixture buffers the full response body as text
@@ -61,11 +62,37 @@ export function hasAnyToolCall(message: UIMessage): boolean {
   return message.parts.some((part) => isToolUIPart(part));
 }
 
+/**
+ * `query_jared_memory` used to return a bare `string[]`; it now returns the
+ * structured `{ query, facts, filteredOut }` shape (see src/lib/rag.ts).
+ * `getRagFacts` still returns fact *text* as `string[]` so existing
+ * `.join(' ').toLowerCase()` / `expectedFactsContain` assertions in
+ * tests/eval/agent.eval.ts keep working unchanged.
+ */
 export function getRagFacts(message: UIMessage): string[] {
+  const trace = getRagTrace(message);
+  return trace ? trace.facts.map((f) => f.text) : [];
+}
+
+/**
+ * Full retrieval trace (query + kept facts + filtered-out candidates) for a
+ * `query_jared_memory` call in this message, for richer assertions than the
+ * plain-text `getRagFacts` check (e.g. asserting on scores or on what got
+ * filtered out).
+ */
+export function getRagTrace(message: UIMessage): RagQueryResult | null {
   const part = findToolPart(message, 'query_jared_memory');
   if (!part || !('output' in part)) {
-    return [];
+    return null;
   }
   const output = (part as { output?: unknown }).output;
-  return Array.isArray(output) ? output.map(String) : [];
+  if (
+    !output ||
+    typeof output !== 'object' ||
+    !('facts' in output) ||
+    !Array.isArray((output as { facts: unknown }).facts)
+  ) {
+    return null;
+  }
+  return output as RagQueryResult;
 }

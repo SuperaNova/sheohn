@@ -7,6 +7,7 @@ import { echo, grep } from './text';
 import { help, man, clear, history } from './misc';
 import { home, projects, about, contact, theme, resume } from './aliases';
 import { search } from './search';
+import { trace } from './trace';
 
 const allBuiltins: Command[] = [
   pwd,
@@ -26,6 +27,7 @@ const allBuiltins: Command[] = [
   contact,
   theme,
   resume,
+  trace,
 ];
 
 for (const cmd of allBuiltins) registerCommand(cmd);

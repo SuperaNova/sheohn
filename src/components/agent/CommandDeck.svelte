@@ -2,6 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import { fly } from 'svelte/transition';
   import { SvelteSet } from 'svelte/reactivity';
+  import { get } from 'svelte/store';
 
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
@@ -14,6 +15,7 @@
     setTheme,
     commandDeckOpen,
     agentQuery,
+    lastRagTrace,
     type SceneTarget,
   } from '../../store';
   import { personalInfo } from '../../data/personalInfo';
@@ -29,6 +31,7 @@
   import { vfsRoot } from '../../lib/shell/vfs';
   import type { ShellCtx, ShellLogEntry } from '../../lib/shell/registry';
   import type { BootInfo } from '../../lib/boot-info';
+  import { formatRagTrace, type RagQueryResult } from '../../lib/rag';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -57,6 +60,11 @@
       name: 'resume',
       label: 'Open résumé (pdf)',
       run: () => window.open(personalInfo.resumeUrl, '_blank'),
+    },
+    {
+      name: 'trace',
+      label: 'Replay last RAG retrieval trace',
+      run: () => runTrace(),
     },
   ];
 
@@ -233,6 +241,27 @@
     }
   });
 
+  // Mirrors the tool-open_case_study effect above: capture the most recent
+  // query_jared_memory result as it lands so `/trace` can replay it (spec
+  // #03's `lastRagTrace` store, src/store.ts).
+  const handledRagCalls = new SvelteSet<string>();
+  $effect(() => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type !== 'tool-query_jared_memory') continue;
+        const p = part as {
+          toolCallId: string;
+          state: string;
+          output?: RagQueryResult;
+        };
+        if (p.state !== 'output-available') continue;
+        if (handledRagCalls.has(p.toolCallId)) continue;
+        handledRagCalls.add(p.toolCallId);
+        if (p.output) lastRagTrace.set(p.output);
+      }
+    }
+  });
+
   let wasLoading = false;
   $effect(() => {
     const loading = isLoading;
@@ -286,7 +315,24 @@
       clearOutput: () => {
         shellLog = [];
       },
+      getLastRagTrace: () => get(lastRagTrace),
     };
+  }
+
+  // `/trace` command-palette fallback (pre-shell / `/`-prefixed dispatch —
+  // the bare `trace` shell builtin, src/lib/shell/builtins/trace.ts, covers
+  // the un-prefixed form). Shares formatRagTrace with that builtin so both
+  // entry points render identical output.
+  function runTrace() {
+    shellLog = [
+      ...shellLog,
+      {
+        command: '/trace',
+        lines: formatRagTrace(get(lastRagTrace)),
+        error: false,
+      },
+    ];
+    inputValue = '';
   }
 
   function ask(text: string) {

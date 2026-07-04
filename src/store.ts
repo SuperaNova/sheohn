@@ -1,4 +1,5 @@
 import { writable, derived } from 'svelte/store';
+import type { RagQueryResult } from './lib/rag';
 
 export const activeFocus = writable<string | null>(null);
 export const overlayActive = derived(activeFocus, ($f) => !!$f);
@@ -93,3 +94,9 @@ export function toggleTheme() {
 export function setTheme(mode: 'light' | 'dark') {
   theme.set(mode);
 }
+
+// Most recent query_jared_memory retrieval trace (query + kept facts +
+// filtered-out candidates), captured by CommandDeck's tool-output effect and
+// replayed by the `/trace` command/shell builtin. null until the visitor
+// asks something that triggers a RAG lookup this session.
+export const lastRagTrace = writable<RagQueryResult | null>(null);
