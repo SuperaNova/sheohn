@@ -6,6 +6,7 @@ import { pwd, ls, cd, cat } from './fs';
 import { echo, grep } from './text';
 import { help, man, clear, history } from './misc';
 import { home, projects, about, contact, theme, resume } from './aliases';
+import { search } from './search';
 
 const allBuiltins: Command[] = [
   pwd,
@@ -14,6 +15,7 @@ const allBuiltins: Command[] = [
   cat,
   echo,
   grep,
+  search,
   help,
   man,
   clear,
