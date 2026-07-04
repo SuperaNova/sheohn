@@ -21,6 +21,12 @@
   import DeckCommandList from './DeckCommandList.svelte';
   import DeckChatLog from './DeckChatLog.svelte';
   import DeckStarterChips from './DeckStarterChips.svelte';
+  import DeckShellOutput from './DeckShellOutput.svelte';
+  import { execute } from '../../lib/shell/executor';
+  import { complete } from '../../lib/shell/completion';
+  import { getHistory, pushHistory } from '../../lib/shell/history';
+  import { vfsRoot } from '../../lib/shell/vfs';
+  import type { ShellCtx, ShellLogEntry } from '../../lib/shell/registry';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -58,6 +64,24 @@
   // ride up over the fixed site header. 0 until measured (SSR-safe → the
   // Tailwind max-h-72 fallback applies on the server / before hydration).
   let listMaxPx = $state(0);
+
+  // ── Shell state (pseudo-shell input router, src/lib/shell/) ─────────────
+  let cwd = $state('/');
+  let shellLog = $state<ShellLogEntry[]>([]);
+  let shellHistory = $state<string[]>(getHistory());
+  // What the visitor was typing before ArrowUp started browsing history —
+  // restored once they arrow back past the most recent entry.
+  let historyDraft = $state('');
+  let historyCursor = $state<number | null>(null);
+  let completionCandidates = $state<string[]>([]);
+
+  // Clears the completion hint the moment the visitor types past a shown
+  // suggestion (Tab-driven single-match completion sets inputValue itself
+  // and clears candidates inline, so this only fires for manual typing).
+  $effect(() => {
+    void inputValue;
+    completionCandidates = [];
+  });
 
   // Keep local `expanded` in sync with the shared store (hero CTA, Cmd+K).
   $effect(() => {
@@ -206,6 +230,27 @@
     navigate(path);
   }
 
+  // Injected into every shell command run — mirrors the store.ts calls the
+  // original DeckCommand.run bodies made directly, so `home`/`theme`/`resume`
+  // etc. behave identically whether typed bare or (still) via `/`.
+  function buildShellCtx(): ShellCtx {
+    return {
+      cwd,
+      vfs: vfsRoot,
+      history: shellHistory,
+      setCwd: (path) => {
+        cwd = path;
+      },
+      navigate: goto,
+      toggleTheme: () => toggleTheme(),
+      openResume: () => window.open(personalInfo.resumeUrl, '_blank'),
+      closeDeck: close,
+      clearOutput: () => {
+        shellLog = [];
+      },
+    };
+  }
+
   function ask(text: string) {
     const trimmed = text.trim();
     if (!trimmed || !chat) return;
@@ -220,10 +265,37 @@
     inputValue = '';
   }
 
-  function handleSubmit(e: SubmitEvent) {
+  async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     if (commandMode) {
       filteredCommands[selectedIndex]?.run();
+      return;
+    }
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    completionCandidates = [];
+    historyCursor = null;
+
+    // Try the client-side shell first — deterministic commands resolve
+    // instantly, offline. Anything the parser doesn't recognize as a known
+    // command falls through to the LLM agent exactly as free text does today.
+    const result = await execute(trimmed, buildShellCtx());
+    if (result.recognized) {
+      shellHistory = pushHistory(trimmed);
+      // `clear` already emptied shellLog via ctx.clearOutput — don't
+      // immediately re-append an entry for it.
+      if (trimmed.split(/\s+/)[0] !== 'clear') {
+        shellLog = [
+          ...shellLog,
+          {
+            command: trimmed,
+            lines: result.output.lines,
+            error: !!result.output.error,
+          },
+        ];
+      }
+      inputValue = '';
       return;
     }
     ask(inputValue);
@@ -261,12 +333,64 @@
     }
   }
 
+  // Tab-completion (command names / vfs paths) and ArrowUp/ArrowDown history
+  // recall for the shell — only reachable once there's non-'/', non-empty
+  // input (starter-chip nav owns ArrowUp/Down while the input is empty).
+  function onShellKeydown(e: KeyboardEvent) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const cursor = inputEl?.selectionStart ?? inputValue.length;
+      const result = complete(inputValue, cursor, vfsRoot, cwd);
+      if (result.candidates.length === 1) {
+        const candidate = result.candidates[0] ?? '';
+        const before = inputValue.slice(0, result.replaceStart);
+        const after = inputValue.slice(cursor);
+        inputValue = before + candidate + after;
+        const pos = before.length + candidate.length;
+        queueMicrotask(() => inputEl?.setSelectionRange(pos, pos));
+        completionCandidates = [];
+      } else {
+        completionCandidates = result.candidates;
+      }
+      return;
+    }
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    navigateHistory(e.key === 'ArrowUp' ? -1 : 1);
+  }
+
+  // -1 = older (ArrowUp), 1 = newer (ArrowDown). Mirrors a normal terminal:
+  // walking past the newest entry restores whatever the visitor was typing.
+  function navigateHistory(direction: -1 | 1) {
+    if (!shellHistory.length) return;
+    if (historyCursor === null) {
+      if (direction !== -1) return;
+      historyDraft = inputValue;
+      historyCursor = shellHistory.length - 1;
+      inputValue = shellHistory[historyCursor] ?? '';
+      return;
+    }
+    const next = historyCursor + direction;
+    if (next < 0) return;
+    if (next >= shellHistory.length) {
+      historyCursor = null;
+      inputValue = historyDraft;
+      return;
+    }
+    historyCursor = next;
+    inputValue = shellHistory[next] ?? '';
+  }
+
   function onInputKeydown(e: KeyboardEvent) {
     if (commandMode) {
       onCommandModeKeydown(e);
       return;
     }
-    if (inputValue.trim() === '') onStarterKeydown(e);
+    if (inputValue.trim() === '') {
+      onStarterKeydown(e);
+      return;
+    }
+    onShellKeydown(e);
   }
 
   function handleWindowKeydown(e: KeyboardEvent) {
@@ -371,6 +495,14 @@
           >esc</button
         >
       </div>
+      {#if shellLog.length}
+        <!-- Shell command output — rendered alongside, not instead of, the
+             LLM transcript below, so a mixed shell + chat session stays legible. -->
+        <DeckShellOutput
+          log={shellLog}
+          maxHeightPx={listMaxPx ? Math.round(listMaxPx * 0.6) : undefined}
+        />
+      {/if}
       {#if commandMode}
         <!-- Deterministic command palette -->
         <DeckCommandList
@@ -457,4 +589,13 @@
       >{shortcut}</kbd
     >
   </form>
+
+  {#if completionCandidates.length > 1}
+    <!-- Ambiguous Tab-completion — multiple matches, nothing auto-filled. -->
+    <div
+      class="mt-1.5 truncate rounded-lg border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-3 py-1 font-mono text-[11px] text-[var(--color-console-text-dim)] backdrop-blur-xl"
+    >
+      {completionCandidates.join('  ')}
+    </div>
+  {/if}
 </aside>
