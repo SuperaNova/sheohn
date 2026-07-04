@@ -22,13 +22,27 @@
   import DeckChatLog from './DeckChatLog.svelte';
   import DeckStarterChips from './DeckStarterChips.svelte';
   import DeckShellOutput from './DeckShellOutput.svelte';
+  import DeckBootLog from './DeckBootLog.svelte';
   import { execute } from '../../lib/shell/executor';
   import { complete } from '../../lib/shell/completion';
   import { getHistory, pushHistory } from '../../lib/shell/history';
   import { vfsRoot } from '../../lib/shell/vfs';
   import type { ShellCtx, ShellLogEntry } from '../../lib/shell/registry';
+  import type { BootInfo } from '../../lib/boot-info';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
+
+  // Boot info is computed at build time (src/lib/boot-data.ts, Astro
+  // frontmatter only — see that file's doc comment) and handed down as a
+  // plain serializable prop. Defaulted defensively so the component never
+  // breaks if ever rendered without it (e.g. a future test harness).
+  let {
+    bootInfo = {
+      commitSha: 'dev',
+      buildTimestamp: new Date().toISOString(),
+      dependencyCount: 0,
+    },
+  }: { bootInfo?: BootInfo } = $props();
 
   // ── Deterministic commands (the `/` namespace) ─────────────────────────────
   // Lifted from the former CommandPalette so navigation stays instant + offline.
@@ -65,6 +79,17 @@
   // Tailwind max-h-72 fallback applies on the server / before hydration).
   let listMaxPx = $state(0);
 
+  // ── Boot log (fake BIOS boot sequence, spec 02) ─────────────────────────
+  // Plays once per browser session, the first time the deck expands. Gated
+  // by a sessionStorage key distinct from Loader.svelte's 'loader-played' so
+  // the two once-per-session animations don't collide.
+  const BOOT_PLAYED_KEY = 'deck-boot-played';
+  let showBootLog = $state(false);
+
+  function completeBoot() {
+    showBootLog = false;
+  }
+
   // ── Shell state (pseudo-shell input router, src/lib/shell/) ─────────────
   let cwd = $state('/');
   let shellLog = $state<ShellLogEntry[]>([]);
@@ -88,7 +113,20 @@
     const open = $commandDeckOpen;
     untrack(() => {
       expanded = open;
-      if (open) queueMicrotask(() => inputEl?.focus());
+      if (open) {
+        queueMicrotask(() => inputEl?.focus());
+        // First expand of the browser session: play the boot log instead of
+        // the normal panel content. Subsequent opens (this tab, this
+        // session) skip straight past it.
+        if (
+          !showBootLog &&
+          typeof sessionStorage !== 'undefined' &&
+          !sessionStorage.getItem(BOOT_PLAYED_KEY)
+        ) {
+          sessionStorage.setItem(BOOT_PLAYED_KEY, 'true');
+          showBootLog = true;
+        }
+      }
     });
   });
 
@@ -495,45 +533,51 @@
           >esc</button
         >
       </div>
-      {#if shellLog.length}
-        <!-- Shell command output — rendered alongside, not instead of, the
-             LLM transcript below, so a mixed shell + chat session stays legible. -->
-        <DeckShellOutput
-          log={shellLog}
-          maxHeightPx={listMaxPx ? Math.round(listMaxPx * 0.6) : undefined}
-        />
-      {/if}
-      {#if commandMode}
-        <!-- Deterministic command palette -->
-        <DeckCommandList
-          commands={filteredCommands}
-          {selectedIndex}
-          {inputValue}
-          maxHeightPx={listMaxPx}
-          onHover={(i) => (selectedIndex = i)}
-        />
-      {:else if chatError}
-        <div class="p-4 font-mono text-xs text-red-400">
-          [ agent offline ] — slash-commands still work. Type
-          <span class="text-[var(--color-console-signal)]">/</span> to list them.
-        </div>
-      {:else if messages.length}
-        <!-- Agent conversation -->
-        <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
-        <!-- Persistent recommended commands — reachable after chatting too. -->
-        {@render starterChips(
-          'border-t border-[var(--color-console-line)] p-3',
-        )}
+      {#if showBootLog}
+        <!-- Fake BIOS boot log (spec 02) — plays once per session, above the
+             normal shell/chat surface, before falling through to it. -->
+        <DeckBootLog {bootInfo} onComplete={completeBoot} />
       {:else}
-        <!-- Empty state: starter queries that each drive the page -->
-        <div class="p-4 font-mono text-[13px]">
-          <p class="text-[var(--color-console-text-dim)]">
-            <span class="text-[var(--color-console-signal)]">system:</span> ask
-            about Jared, or type
-            <span class="text-[var(--color-console-signal)]">/</span> for commands.
-          </p>
-          {@render starterChips('mt-3')}
-        </div>
+        {#if shellLog.length}
+          <!-- Shell command output — rendered alongside, not instead of, the
+               LLM transcript below, so a mixed shell + chat session stays legible. -->
+          <DeckShellOutput
+            log={shellLog}
+            maxHeightPx={listMaxPx ? Math.round(listMaxPx * 0.6) : undefined}
+          />
+        {/if}
+        {#if commandMode}
+          <!-- Deterministic command palette -->
+          <DeckCommandList
+            commands={filteredCommands}
+            {selectedIndex}
+            {inputValue}
+            maxHeightPx={listMaxPx}
+            onHover={(i) => (selectedIndex = i)}
+          />
+        {:else if chatError}
+          <div class="p-4 font-mono text-xs text-red-400">
+            [ agent offline ] — slash-commands still work. Type
+            <span class="text-[var(--color-console-signal)]">/</span> to list them.
+          </div>
+        {:else if messages.length}
+          <!-- Agent conversation -->
+          <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
+          <!-- Persistent recommended commands — reachable after chatting too. -->
+          {@render starterChips(
+            'border-t border-[var(--color-console-line)] p-3',
+          )}
+        {:else}
+          <!-- Empty state: starter queries that each drive the page -->
+          <div class="p-4 font-mono text-[13px]">
+            <p class="text-[var(--color-console-text-dim)]">
+              <span class="text-[var(--color-console-signal)]">system:</span>
+              ask about Jared, or type
+              <span class="text-[var(--color-console-signal)]">/</span> for commands.
+            </p>
+            {@render starterChips('mt-3')}
+          </div>
+        {/if}
       {/if}
     </div>
   {/if}
