@@ -1,0 +1,123 @@
+name: Weekly Eval Scoreboard
+
+# Weekly, not nightly, to keep Gemini/Upstash free-tier usage and Actions
+# minutes low (see sonnet-specs/05-weekly-eval-scoreboard.md's locked
+# decision). Monday 06:00 UTC — early in the week, well clear of any
+# deploy-time traffic.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# This job commits data/eval-history/** back to main and can open/comment on
+# issues, so the default GITHUB_TOKEN permissions (which may be read-only
+# depending on repo/org settings) aren't enough — declare explicitly.
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  eval:
+    name: Run eval:agent, record history, flag regressions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers (Chromium only)
+        # playwright.eval.config.ts doesn't define `projects`, so it uses
+        # Playwright's default project, which is Chromium-only.
+        run: npx playwright install --with-deps chromium
+
+      - name: Run eval:agent
+        id: eval
+        # Runs the EXISTING playwright.eval.config.ts unmodified: its
+        # webServer boots `astro dev` (not build+preview, see the config's
+        # comment — the Vercel adapter's SSR output isn't servable by
+        # `astro preview`), so real secrets are injected here as env vars
+        # and /api/chat makes real Gemini/Upstash calls against production
+        # backends from that locally-booted dev server.
+        #
+        # continue-on-error: a failing/regressed eval run must NOT skip the
+        # history-recording, commit-back, and regression-issue steps below —
+        # those are the whole point of this workflow. The final step in this
+        # job re-fails the workflow run if this step failed, so failures are
+        # still visible.
+        continue-on-error: true
+        run: npm run eval:agent -- --reporter=json
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+
+      - name: Upload raw Playwright JSON report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Transform results into eval-history
+        run: npx tsx scripts/transform-eval-results.ts playwright-report/results.json
+
+      - name: Check for regressions
+        id: regression
+        run: npx tsx scripts/check-eval-regression.ts | tee "$RUNNER_TEMP/regression-body.md"
+
+      - name: Ensure the eval-regression label exists
+        if: steps.regression.outputs.has_regression == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create eval-regression \
+            --color d73a4a \
+            --description "Weekly eval:agent run detected a pass-to-fail regression" \
+            --force
+
+      - name: Open or update the regression issue
+        if: steps.regression.outputs.has_regression == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing=$(gh issue list --label eval-regression --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Commenting on existing eval-regression issue #$existing"
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/regression-body.md"
+          else
+            echo "Opening a new eval-regression issue"
+            gh issue create \
+              --title "Eval regression: ${{ steps.regression.outputs.regressed_count }} case(s) failed ($(date -u +%Y-%m-%d))" \
+              --label eval-regression \
+              --body-file "$RUNNER_TEMP/regression-body.md"
+          fi
+
+      - name: Commit eval history back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/eval-history
+          if git diff --cached --quiet; then
+            echo "No eval-history changes to commit."
+          else
+            git commit -m "chore(eval): weekly eval run $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Fail the job if the eval suite itself failed
+        if: steps.eval.outcome == 'failure'
+        run: |
+          echo "eval:agent reported failures — see the eval-history commit and/or eval-regression issue for details."
+          exit 1

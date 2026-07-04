@@ -4,6 +4,15 @@ Personal portfolio of **Jared Sheohn L. Acebes** — Software Developer & System
 
 Live at [sheohn.dev](https://sheohn.dev).
 
+[![Eval pass rate](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FSuperaNova%2Fsheohn%2Fmain%2Fdata%2Feval-history%2Findex.json&query=%24.latest.passRate&suffix=%25&label=eval%20pass%20rate&color=informational)](https://github.com/SuperaNova/sheohn/actions/workflows/eval.yml)
+
+> The badge reads `latest.passRate` from [`data/eval-history/index.json`](data/eval-history/index.json)
+> (see `.github/workflows/eval.yml`, weekly + `workflow_dispatch`). Before the
+> first scheduled run populates `latest`, shields.io's dynamic-JSON badge has
+> no documented default-value/fallback param for a `null` JSONPath match, so
+> the badge shows its standard "invalid" state until the first run lands —
+> this is expected and self-resolves the first Monday the workflow executes.
+
 ## Stack
 
 - **Astro 6** (static output, Vercel adapter) with MDX content collections
