@@ -1,0 +1,110 @@
+name: Visual Regression
+
+# Playwright screenshot diffing (playwright.visual.config.ts / tests/visual/),
+# generated and compared ONLY on ubuntu (this workflow's runner) to avoid
+# cross-OS anti-aliasing/font-rendering drift — see
+# sonnet-specs/13-visual-regression.md's locked decision. Do not run this
+# suite's --update-snapshots locally on a non-ubuntu machine and commit the
+# result; those baselines will not match what this workflow produces.
+#
+# Baseline-update choice (locked decision allows either): the
+# `update-snapshots` job below UPLOADS the freshly-generated screenshots as a
+# downloadable build artifact rather than committing them directly to a
+# branch. This is the lower-risk default — a human downloads the artifact,
+# reviews the images, and commits `tests/visual/**-snapshots/` themselves
+# (mirroring how the repo already treats Lighthouse output as reviewed-then-
+# committed, not silently auto-committed). If a fully automated commit-back
+# is ever preferred instead, `emergency-revert.yml` has the git-commit
+# pattern to copy.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN default permissions may be read-only depending on repo/org
+# settings; this workflow only needs to read the repo and upload artifacts,
+# so the default (no explicit `permissions:` block) is sufficient — declared
+# here anyway for clarity/least-privilege.
+permissions:
+  contents: read
+
+# Stub secrets so `npm run build` (invoked by playwright.visual.config.ts's
+# webServer) doesn't fail importing API routes. No external calls happen
+# during the static build — see sonnet-specs/README.md's CI constraint.
+env:
+  GOOGLE_GENERATIVE_AI_API_KEY: stub
+  UPSTASH_VECTOR_REST_URL: https://stub.upstash.io
+  UPSTASH_VECTOR_REST_TOKEN: stub
+  UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+  UPSTASH_REDIS_REST_TOKEN: stub
+  RESEND_API_KEY: stub
+
+jobs:
+  compare:
+    name: Compare against committed baselines
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers (Chromium only)
+        # The visual suite is intentionally single-engine (Chromium desktop +
+        # Chromium mobile emulation) — cross-browser rendering differences
+        # would defeat the "CI ubuntu only" determinism goal even further.
+        run: npx playwright install --with-deps chromium
+
+      - name: Run visual regression suite
+        run: npx playwright test --config=playwright.visual.config.ts
+
+      - name: Upload HTML report + diff images
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report
+          # playwright-report/ holds the HTML report; test-results/ holds the
+          # actual/expected/diff PNGs Playwright writes per failed assertion.
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  update-snapshots:
+    name: Regenerate baseline snapshots
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Regenerate snapshots
+        run: npx playwright test --config=playwright.visual.config.ts --update-snapshots
+
+      - name: Upload regenerated snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baseline-snapshots
+          path: tests/visual/**/*-snapshots/**
+          retention-days: 14
