@@ -10,6 +10,7 @@
   } from '../../store';
   import { personalInfo } from '../../data/personalInfo';
   import { starters } from '../../data/starters';
+  import HeroScene from './HeroScene.svelte';
 
   const parallaxY = new Spring(0, {
     stiffness: 0.11,
@@ -48,12 +49,14 @@
 
 <section
   id="home"
-  class="content-wrap relative flex min-h-[100svh] scroll-mt-24 items-center py-20 hero-section"
+  class="content-wrap relative isolate flex min-h-[100svh] scroll-mt-24 items-center py-20 hero-section"
   use:inview={{ once: true, amount: 0.2 }}
 >
   <div
     class="site-grid pointer-events-none absolute inset-0 z-0 opacity-10"
   ></div>
+
+  <HeroScene />
 
   <div
     style:transform="translateY({parallaxY.current}px)"

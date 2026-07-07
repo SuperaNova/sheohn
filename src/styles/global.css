@@ -48,6 +48,30 @@
   --color-console-signal-strong: #22c55e;
   --color-console-text: #e6ece6;
   --color-console-text-dim: #9aa69a;
+
+  /* Dark-hero pastel-phosphor scene (spec 18). Source of truth for these
+     values is src/pages/prototype-dark-hero.astro — sage/seafoam/cream only,
+     no new hue. Hardcoded hex/rgba lives ONLY inside this token block;
+     everything that paints the scene references var(--color-scene-*). */
+  --color-scene-sky-0: #05080a;
+  --color-scene-sky-1: #0a1410;
+  --color-scene-sky-2: #142a1e;
+  --color-scene-grid-line: rgba(169, 216, 187, 0.55);
+  --color-scene-grid-shadow: rgba(169, 216, 187, 0.3);
+  --color-scene-horizon-line: #a9d8bb;
+  --color-scene-glow: rgba(191, 230, 207, 0.55);
+  --color-scene-glow-soft: rgba(191, 230, 207, 0.12);
+  --color-scene-glow-shadow: rgba(191, 230, 207, 0.35);
+  --color-scene-sun-top: #f3efe8;
+  --color-scene-sun-mid: #dceade;
+  --color-scene-sun-bottom: #b9d9c6;
+  --color-scene-star-cream-1: rgba(243, 239, 232, 0.9);
+  --color-scene-star-cream-2: rgba(243, 239, 232, 0.7);
+  --color-scene-star-cream-3: rgba(243, 239, 232, 0.55);
+  --color-scene-star-seafoam-1: rgba(191, 230, 207, 0.8);
+  --color-scene-star-seafoam-2: rgba(191, 230, 207, 0.6);
+  --color-scene-scanline: rgba(0, 0, 0, 0.14);
+  --color-scene-vignette: rgba(3, 6, 5, 0.55);
 }
 
 :root {
@@ -83,6 +107,31 @@ html.dark {
   /* The dark-theme CTA gradient is lighter forest, so lift the › marker to keep
      it crisp on it. on-cta (light label) reads in both themes — no override. */
   --color-on-cta-accent: #8ed6a4;
+}
+
+/* hero scene composition — hand-tune freely
+   Dimensional/positional knobs for the dark hero scene (spec 18). Colors are
+   NOT here — see --color-scene-* under @theme above. Every knob is exposed
+   now even though the console-perch ones aren't wired until T4 — Jared plans
+   to hand-tune these once the full composition (T2's plate frame, T4's
+   perch) is in place. */
+html.dark {
+  /* height of the grid floor / where the horizon line sits, from the bottom
+     of the hero */
+  --scene-horizon-y: 32vh;
+  /* sun's horizontal center; variant D offsets it right-of-centre so the
+     text column (left) and the sun/console cluster (right) balance */
+  --scene-sun-x: 62%;
+  --scene-sun-size: clamp(180px, 22vw, 320px);
+  /* how far below the horizon the sun's center sits (bigger = more of the
+     disc peeks above the horizon) */
+  --scene-sun-drop: clamp(90px, 11vw, 160px);
+  /* T2: specimen-plate frame inset (top right bottom left) */
+  --scene-frame-inset: 4.6rem 1.4rem 1.4rem;
+  /* T4: CommandDeck perch geometry, ground position on the horizon */
+  --scene-perch-right: max(3rem, 7vw);
+  --scene-perch-bottom: calc(var(--scene-horizon-y) - 4vh);
+  --scene-perch-width: 21rem;
 }
 
 /* Always reserve the scrollbar gutter so the centered header (and content)
