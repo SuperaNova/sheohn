@@ -1,0 +1,88 @@
+name: Brain sync
+
+# Brain-as-code CI (sonnet-specs/04): scripts/my_facts.json is the source of
+# truth for the Upstash Vector "brain" query_jared_memory retrieves from.
+# Path-filtered to that file so this workflow only runs when facts actually
+# change, keeping Gemini/Upstash free-tier usage low.
+on:
+  push:
+    branches: [main]
+    paths: ['scripts/my_facts.json']
+  pull_request:
+    paths: ['scripts/my_facts.json']
+
+# The push job commits scripts/brain-manifest.json back to main.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Sync facts into Upstash Vector, commit manifest
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run brain sync (embed new/changed facts, delete stale vectors)
+        run: npx tsx scripts/update-brain.ts
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+
+      - name: Commit updated manifest back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/brain-manifest.json
+          if git diff --cached --quiet; then
+            echo "No manifest changes to commit."
+          else
+            git commit -m "chore(brain): sync manifest $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+  dry-run:
+    name: Dry-run diff, comment on PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run brain sync dry-run (no Upstash/Gemini calls)
+        run: npx tsx scripts/update-brain.ts --dry-run | tee "$RUNNER_TEMP/brain-dry-run.json"
+
+      - name: Comment the added/removed fact diff on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Brain sync dry-run"
+            echo ""
+            echo '```json'
+            cat "$RUNNER_TEMP/brain-dry-run.json"
+            echo '```'
+          } > "$RUNNER_TEMP/brain-dry-run-comment.md"
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body-file "$RUNNER_TEMP/brain-dry-run-comment.md"
