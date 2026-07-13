@@ -32,7 +32,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --host`,
+    // `astro preview` 404s every route under the @astrojs/vercel adapter;
+    // serve the adapter's static output directly instead (same workaround
+    // as playwright.visual.config.ts and Lighthouse's staticDistDir).
+    // /api/chat is stubbed in-page by the tests, so no SSR is needed.
+    command: `npm run build && node scripts/serve-static.mjs .vercel/output/static ${PORT}`,
     url: HOST,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
