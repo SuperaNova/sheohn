@@ -15,7 +15,8 @@ test.describe('Dark hero', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       'Jared Sheohn L. Acebes',
     );
-    await expect(page.locator('.hero-currently')).toBeVisible();
+    // Light shares the poster layout: split name with the italic accent.
+    await expect(page.locator('h1 em')).toBeVisible();
   });
 
   test('toggle enters dark: scene visible, deck perches, docks on scroll, re-perches', async ({
@@ -26,7 +27,6 @@ test.describe('Dark hero', () => {
     await expect(page.locator('html')).toHaveClass(/dark/);
     await expect(scene(page)).toBeVisible();
     await expect(page.locator('.hero-frame')).toBeVisible();
-    await expect(page.locator('.hero-currently')).toBeHidden();
 
     // Perched: right of centre, standing on the horizon above the fold.
     await expect(deck(page)).toHaveClass(/deck-perched/);

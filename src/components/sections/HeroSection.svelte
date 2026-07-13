@@ -170,8 +170,8 @@
   });
 </script>
 
-<!-- content-wrap lives on .hero-content (not the section) so the dark plate
-     frame can span the viewport; light-mode geometry is unchanged. -->
+<!-- Both themes share the poster layout (copy column hugging the left
+     inset); the scene, plate frame, and rails remain dark-only. -->
 <section
   id="home"
   bind:this={sectionEl}
@@ -198,16 +198,16 @@
     </span>
   </div>
 
-  <div class="hero-content content-wrap flex w-full items-center">
+  <div class="hero-content flex w-full self-stretch">
     <div
       style:transform="translateY({parallaxY.current}px)"
-      class="hero-grid grid w-full items-center gap-12 lg:grid-cols-[1.2fr_0.8fr]"
+      class="flex w-full"
     >
-      <div class="hero-copy">
+      <div class="flex w-full flex-col">
         <p
           style:transition-delay="0ms"
           style:animation-delay="350ms"
-          class="hero-item hero-kicker mb-5 text-xs tracking-[0.24em] text-[var(--color-on-surface-muted)] uppercase"
+          class="hero-item mb-5 font-mono text-xs tracking-[0.22em] text-[var(--color-tertiary)] uppercase"
         >
           › {personalInfo.title}{kickerSuffix}
         </p>
@@ -219,7 +219,7 @@
         <h1
           style:transition-delay="120ms"
           style:animation-delay="470ms"
-          class="hero-item hero-name relative cursor-pointer font-display text-6xl leading-[0.95] text-balance text-[var(--color-on-surface)] sm:text-7xl lg:text-[5rem]"
+          class="hero-item hero-name relative cursor-pointer font-display leading-[0.95] text-balance text-[var(--color-on-surface)]"
           tabindex="0"
           aria-describedby="hero-name-copy-hint"
           onclick={copyName}
@@ -228,18 +228,13 @@
           <span class="hero-name-hint" class:visible={copied} aria-hidden="true"
             >copied</span
           >
-          <!-- Same string rendered twice, toggled per theme via display:none
-             — only one is ever in the accessibility tree. -->
-          <span class="hero-name-light">{personalInfo.name}</span>
-          <span class="hero-name-dark">
-            {#if nameParts}
-              {nameParts.before}<br />
-              <em>{nameParts.accent}</em>
-              {nameParts.after}
-            {:else}
-              {personalInfo.name}
-            {/if}
-          </span>
+          {#if nameParts}
+            {nameParts.before}<br />
+            <em>{nameParts.accent}</em>
+            {nameParts.after}
+          {:else}
+            {personalInfo.name}
+          {/if}
         </h1>
         <span id="hero-name-copy-hint" class="sr-only"
           >Copy name to clipboard</span
@@ -248,7 +243,7 @@
         <p
           style:transition-delay="240ms"
           style:animation-delay="590ms"
-          class="hero-item hero-edu mt-6 font-mono text-lg tracking-tight text-[var(--color-on-surface)] md:text-xl"
+          class="hero-item hero-edu mt-6 font-mono"
         >
           {personalInfo.heroMeta}
         </p>
@@ -256,7 +251,7 @@
         <p
           style:transition-delay="360ms"
           style:animation-delay="710ms"
-          class="hero-item hero-bio mt-4 max-w-2xl text-base leading-relaxed text-pretty text-[var(--color-on-surface-muted)] md:text-lg"
+          class="hero-item hero-bio mt-4 text-pretty text-[var(--color-on-surface-muted)]"
         >
           {personalInfo.bio}
         </p>
@@ -264,7 +259,7 @@
         <div
           style:transition-delay="480ms"
           style:animation-delay="830ms"
-          class="hero-item hero-cta-row mt-10 flex flex-wrap items-center gap-4"
+          class="hero-item mt-auto flex flex-wrap items-center gap-4 pt-10"
         >
           <button
             type="button"
@@ -314,19 +309,6 @@
           {/each}
         </ul>
       </div>
-
-      <!-- Hidden in dark: the perched deck takes over its role. -->
-      <aside
-        style:transition-delay="600ms"
-        class="hero-item hero-currently group relative rounded-2xl border border-[var(--color-surface-container-highest)] bg-[color-mix(in_srgb,var(--color-surface-container-high)_50%,transparent)] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-outline-variant)] hover:shadow-[4px_4px_0_0_var(--color-surface-container-highest)] dark:hover:shadow-[4px_4px_0_0_var(--color-primary-container)]"
-      >
-        <p class="readout">Currently</p>
-        <p
-          class="mt-4 text-sm leading-relaxed text-[var(--color-on-surface-muted)]"
-        >
-          {personalInfo.strategicNote}
-        </p>
-      </aside>
     </div>
   </div>
 </section>
@@ -394,58 +376,28 @@
     }
   }
 
-  /* Dark poster layout. Every rule below is scoped under
-     :global(html.dark) — light mode is untouched. */
-  :global(html.dark) .hero-currently {
-    display: none;
-  }
+  /* Poster layout — shared by both themes. Only the scene, plate frame,
+     and rails below stay dark-only. */
 
   /* the light grid overlay fights the scene's perspective grid */
   :global(html.dark) .hero-bg-grid {
     display: none;
   }
 
-  /* Single column stretched full-height so the CTA row anchors toward the
-     frame's bottom edge. */
-  /* Poster column hugs the frame's left edge instead of the centered
-     content column, like the prototype. */
-  :global(html.dark) .hero-content {
-    align-self: stretch;
-    align-items: stretch;
-    max-width: none;
+  /* Copy column hugs the plate's left edge instead of a centered content
+     column; the stretched column anchors the CTA row toward the bottom. */
+  .hero-content {
     padding-inline: var(--scene-copy-inset-x);
     padding-top: var(--scene-copy-inset-top);
   }
 
-  :global(html.dark) .hero-grid {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  :global(html.dark) .hero-copy {
-    display: flex;
-    flex-direction: column;
-  }
-
-  :global(html.dark) .hero-cta-row {
-    margin-top: auto;
-    padding-top: 2.5rem;
-  }
-
-  .hero-name-dark {
-    display: none;
-  }
-
-  :global(html.dark) .hero-name-light {
-    display: none;
-  }
-
-  :global(html.dark) .hero-name-dark {
-    display: inline;
-  }
-
-  :global(html.dark) .hero-name-dark em {
+  .hero-name em {
     font-style: italic;
+    color: var(--color-tertiary);
+  }
+
+  /* the pale phosphor accent needs the dark scene behind it */
+  :global(html.dark) .hero-name em {
     color: var(--color-on-cta-accent);
   }
 
@@ -475,26 +427,24 @@
   }
 
   /* poster typography */
-  :global(html.dark) .hero-name {
+  .hero-name {
     font-size: clamp(3.4rem, 8vw, 5.6rem);
+  }
+
+  /* the glow only reads against the dark scene */
+  :global(html.dark) .hero-name {
     text-shadow: 0 0 44px
       color-mix(in srgb, var(--color-scene-glow) 50%, transparent);
   }
 
-  :global(html.dark) .hero-kicker {
-    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
-    letter-spacing: 0.22em;
-    color: var(--color-tertiary);
-  }
-
-  :global(html.dark) .hero-edu {
+  .hero-edu {
     max-width: 40rem;
     font-size: 0.8rem;
     letter-spacing: 0.06em;
     color: var(--color-on-surface-muted);
   }
 
-  :global(html.dark) .hero-bio {
+  .hero-bio {
     max-width: 34rem;
     font-size: 1rem;
     line-height: 1.65;

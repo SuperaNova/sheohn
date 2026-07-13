@@ -124,14 +124,19 @@ html.dark {
   --scene-sun-drop: clamp(90px, 11vw, 160px);
   /* specimen-plate frame inset (top right bottom left) */
   --scene-frame-inset: 4.6rem 1.4rem 1.4rem;
-  /* horizontal inset of the poster text column from the viewport edge */
-  --scene-copy-inset-x: clamp(2.9rem, 4vw + 1.4rem, 4.9rem);
-  /* breathing room between the plate frame's top edge and the kicker */
-  --scene-copy-inset-top: clamp(1.5rem, 4vw, 3.5rem);
   /* CommandDeck perch geometry, ground position on the horizon */
   --scene-perch-right: max(3rem, 12vw);
   --scene-perch-bottom: calc(var(--scene-horizon-y) - 4vh);
   --scene-perch-width: 21rem;
+}
+
+/* Poster copy insets are theme-shared: the light hero uses the same column
+   geometry as the dark poster. */
+html {
+  /* horizontal inset of the poster text column from the viewport edge */
+  --scene-copy-inset-x: clamp(2.9rem, 4vw + 1.4rem, 4.9rem);
+  /* breathing room between the plate frame's top edge and the kicker */
+  --scene-copy-inset-top: clamp(1.5rem, 4vw, 3.5rem);
 }
 
 /* Always reserve the scrollbar gutter so the centered header (and content)
