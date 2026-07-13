@@ -1,13 +1,10 @@
 // Build-time-only module: computes real build/deploy facts for the command
-// deck's fake boot log (spec 02 — sonnet-specs/02-boot-sequence.md).
+// deck's boot log.
 //
-// CRITICAL: this module imports `node:child_process` (for the git-SHA
-// fallback) and MUST NEVER be imported by any client-shipped code — no
-// `.svelte` file, and nothing those files import, may reference it (not
-// even a type-only import; see src/lib/boot-info.ts for the shared, Node-free
-// type). The only supported call site is Astro frontmatter (BaseLayout.astro),
-// which runs in a build-time Node context — the resulting BootInfo is then
-// passed down to the CommandDeck island as a plain, serializable prop.
+// CRITICAL: imports `node:child_process`, so it must never be reachable
+// from client-shipped code — no .svelte file, not even type-only (use
+// src/lib/boot-info.ts for the shared type). Call it from Astro frontmatter
+// and pass the result down as a plain prop.
 import { execSync } from 'node:child_process';
 import pkg from '../../package.json' with { type: 'json' };
 import type { BootInfo } from './boot-info';

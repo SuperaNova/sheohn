@@ -1,9 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Dedicated visual-regression port, distinct from the e2e suite's 4399 and
-// the eval suite's 4398, so all three suites could in theory run
-// concurrently without a port collision (see sonnet-specs/13-visual-
-// regression.md's locked decision).
+// Dedicated port, distinct from e2e (4399) and eval (4398), so the suites
+// can run concurrently.
 const PORT = 4397;
 const HOST = `http://localhost:${PORT}`;
 

@@ -1,9 +1,7 @@
 name: Weekly Eval Scoreboard
 
 # Weekly, not nightly, to keep Gemini/Upstash free-tier usage and Actions
-# minutes low (see sonnet-specs/05-weekly-eval-scoreboard.md's locked
-# decision). Monday 06:00 UTC — early in the week, well clear of any
-# deploy-time traffic.
+# minutes low. Monday 06:00 UTC.
 on:
   schedule:
     - cron: '0 6 * * 1'

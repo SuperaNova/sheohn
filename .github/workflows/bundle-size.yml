@@ -1,15 +1,11 @@
 name: Bundle Size
 
-# size-limit per-chunk byte budgets over the built client output — see
-# sonnet-specs/15-bundle-budget.md and .size-limit.js's top comment for the
-# locked design decision and how budgets were derived.
+# size-limit per-chunk byte budgets over the built client output (see
+# .size-limit.js).
 #
-# Action choice (locked decision leaves this open, spec instructs verifying
-# maintenance before adding a third-party action): andresz1/size-limit-action
-# is the community-standard action for this, but its most recent release
-# (v1.8.0) is from April 2024 — over two years stale as of this writing — so
-# rather than add an unmaintained action as a dependency, this workflow runs
-# `size-limit` directly and posts the PR comment by hand with the `gh` CLI,
+# andresz1/size-limit-action is unmaintained (last release Apr 2024), so
+# this workflow runs `size-limit` directly and posts the PR comment with
+# the `gh` CLI,
 # matching this repo's existing convention (see `eval.yml`'s regression-issue
 # steps) instead of introducing `actions/github-script`.
 

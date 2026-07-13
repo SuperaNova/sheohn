@@ -1,8 +1,6 @@
-// Brain-as-code sync (sonnet-specs/04): pushes scripts/my_facts.json into
-// the Upstash Vector index, keyed by content-hash IDs so the sync only
-// embeds new/changed facts and deletes vectors for removed ones (fixes
-// audit bug B4 — the old index-based `fact_${i}` IDs never deleted stale
-// vectors when facts were edited/reordered/removed).
+// Brain-as-code sync: pushes scripts/my_facts.json into the Upstash Vector
+// index, keyed by content-hash IDs so only new/changed facts are embedded
+// and removed facts' vectors get deleted.
 //
 // Diff logic (hashing + manifest set-diff) lives in src/lib/brain-diff.ts so
 // it's unit-tested and reusable; this script is the thin I/O wrapper: reads

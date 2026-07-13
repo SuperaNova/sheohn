@@ -1,8 +1,6 @@
 import { test, expect, seedTheme } from './fixtures';
 
-// Route list per spec 13's locked decision. `animo` is confirmed as a real
-// project slug (src/content/projects/animo.mdx exists alongside lexicon.mdx
-// and crucible.mdx).
+// `animo` is a real project slug (src/content/projects/animo.mdx).
 const ROUTES: { path: string; name: string }[] = [
   { path: '/', name: 'home' },
   { path: '/about', name: 'about' },

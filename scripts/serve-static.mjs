@@ -86,6 +86,5 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-   
   console.log(`[serve-static] serving ${root} on http://localhost:${port}`);
 });

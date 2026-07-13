@@ -1,17 +1,9 @@
-// Pure, unit-testable logic for the brain-as-code CI pipeline
-// (sonnet-specs/04). `scripts/update-brain.ts` is a thin wrapper around the
-// functions in this file — Upstash/Gemini calls and file I/O live in the
-// script, everything else (hashing, manifest diffing) lives here so it's
-// covered by the `src/**` vitest include glob (see
-// sonnet-specs/04-brain-as-code-ci.md's "Repo context" note on why this
-// can't live under scripts/ and still be picked up by `npm run test:unit`).
+// Pure logic for the brain-as-code CI pipeline; `scripts/update-brain.ts`
+// wraps it. Lives under src/ so vitest's `src/**` include glob covers it.
 //
-// This fixes audit bug B4: the old `scripts/update-brain.ts` used
-// index-based IDs (`fact_${i}`) and never deleted stale vectors when facts
-// were removed or reordered. Content-hash IDs (`fact_<sha256-prefix>`) make
-// the ID deterministic and stable across reorders, and change automatically
-// when a fact's text changes — which is exactly the desired invalidation
-// behavior, and lets a simple set-diff by ID drive add/remove sync.
+// Content-hash IDs (`fact_<sha256-prefix>`) are stable across reorders and
+// change with a fact's text, so a set-diff by ID drives add/remove sync
+// (index-based IDs left stale vectors behind).
 import { createHash } from 'node:crypto';
 
 /** One entry of a brain manifest: a fact's content-hash ID. */

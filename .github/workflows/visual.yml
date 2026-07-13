@@ -1,11 +1,9 @@
 name: Visual Regression
 
 # Playwright screenshot diffing (playwright.visual.config.ts / tests/visual/),
-# generated and compared ONLY on ubuntu (this workflow's runner) to avoid
-# cross-OS anti-aliasing/font-rendering drift — see
-# sonnet-specs/13-visual-regression.md's locked decision. Do not run this
-# suite's --update-snapshots locally on a non-ubuntu machine and commit the
-# result; those baselines will not match what this workflow produces.
+# generated and compared ONLY on ubuntu to avoid cross-OS anti-aliasing and
+# font-rendering drift. Do not commit baselines generated on another OS;
+# they will not match what this workflow produces.
 #
 # Baseline-update choice (locked decision allows either): the
 # `update-snapshots` job below UPLOADS the freshly-generated screenshots as a
@@ -31,7 +29,7 @@ permissions:
 
 # Stub secrets so `npm run build` (invoked by playwright.visual.config.ts's
 # webServer) doesn't fail importing API routes. No external calls happen
-# during the static build — see sonnet-specs/README.md's CI constraint.
+# during the static build.
 env:
   GOOGLE_GENERATIVE_AI_API_KEY: stub
   UPSTASH_VECTOR_REST_URL: https://stub.upstash.io

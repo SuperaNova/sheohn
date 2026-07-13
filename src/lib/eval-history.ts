@@ -1,9 +1,5 @@
-// Pure, unit-testable logic for the weekly eval scoreboard (sonnet-specs/05).
-//
-// `scripts/transform-eval-results.ts` and `scripts/check-eval-regression.ts`
-// are thin CLI wrappers around the functions in this file — file I/O and
-// process.env/argv parsing live in the scripts, everything else lives here
-// so it's covered by the `src/**` vitest include glob.
+// Pure logic for the weekly eval scoreboard; the scripts/ CLIs wrap it.
+// Lives under src/ so vitest's `src/**` include glob covers it.
 
 /** A single test-case outcome, normalized from Playwright's JSON reporter. */
 type EvalCaseStatus = 'passed' | 'failed' | 'skipped';

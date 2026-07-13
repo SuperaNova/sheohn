@@ -1,7 +1,7 @@
 name: Brain sync
 
-# Brain-as-code CI (sonnet-specs/04): scripts/my_facts.json is the source of
-# truth for the Upstash Vector "brain" query_jared_memory retrieves from.
+# Brain-as-code CI: scripts/my_facts.json is the source of truth for the
+# Upstash Vector "brain" query_jared_memory retrieves from.
 # Path-filtered to that file so this workflow only runs when facts actually
 # change, keeping Gemini/Upstash free-tier usage low.
 on:

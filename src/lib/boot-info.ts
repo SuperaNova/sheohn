@@ -4,7 +4,7 @@
 // (DeckBootLog.svelte / CommandDeck.svelte). This file has zero runtime code
 // and zero Node-only imports, so it's safe to import from anywhere.
 
-/** Real build/deploy facts streamed as the deck's boot log (spec 02). */
+/** Real build/deploy facts streamed as the deck's boot log. */
 export interface BootInfo {
   /** Short commit SHA — Vercel env var, `git rev-parse --short HEAD`, or 'dev'. */
   commitSha: string;
