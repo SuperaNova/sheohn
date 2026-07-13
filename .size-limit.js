@@ -1,25 +1,6 @@
-// size-limit config — see sonnet-specs/15-bundle-budget.md for the full spec.
-//
-// Budgets below were derived from ACTUAL measured gzip sizes of
-// `dist/client/_astro/*.js` (produced by `astro build` + the @astrojs/vercel
-// adapter's static-asset copy step — NOT a top-level `dist/_astro/`; that
-// directory does not exist for this adapter/version, see the spec's report
-// for the discrepancy against the originally assumed path), plus ~10%
-// headroom, rounded up to a sensible unit. Measured against commit 0eace19
-// on 2026-07-07. Chunk file names are content-hashed by Rollup, so each
-// entry below globs on the stable name prefix Astro/Vite assigns before the
-// hash (e.g. `CommandDeck.*.js` matches `CommandDeck.CiMVPOUp.js` today and
-// will keep matching after the hash changes on a future build).
-//
-// Increasing a limit here should be a deliberate, reviewed decision (a real
-// feature added weight) — not silent drift because CI got noisy. If a chunk
-// genuinely needs to grow, remeasure and re-derive from real numbers again,
-// don't just bump the number to make the failure go away.
-//
-// `gzip: true` is set explicitly on every entry: size-limit v12's `file`
-// preset defaults to brotli-encoded size, not gzip, despite gzip having been
-// the historical default — set explicitly here so budgets stay comparable
-// build to build regardless of that default.
+// Gzip budgets for dist/client/_astro/*.js: measured size + ~10% headroom.
+// To grow a limit, remeasure — don't bump to silence CI. `gzip: true` is
+// explicit because size-limit v12 defaults to brotli.
 export default [
   // Svelte islands (client:load / client:idle / client:visible components)
   {
@@ -38,7 +19,7 @@ export default [
     name: 'HeroSection',
     path: 'dist/client/_astro/HeroSection.*.js',
     gzip: true,
-    limit: '2.9 KB',
+    limit: '4.3 KB',
   },
   {
     name: 'ContactForm',
@@ -122,12 +103,8 @@ export default [
     limit: '1.9 KB',
   },
 
-  // Astro/Svelte framework internals split into their own chunks by Rollup.
-  // `index.*.js` is a grouped budget: three distinct, unrelated internal
-  // chunks all happen to share the generic `index` prefix (Rollup names an
-  // anonymous/default-export chunk `index`) — see this spec's report for why
-  // they're tracked as one combined bucket rather than three separate
-  // (unnameable) entries.
+  // Framework internals. `index.*.js` groups several unrelated chunks that
+  // share Rollup's generic `index` prefix.
   {
     name: 'svelte-runtime',
     path: 'dist/client/_astro/runtime.*.js',
@@ -165,13 +142,8 @@ export default [
     limit: '1.2 KB',
   },
 
-  // Aggregate safety net: every client JS chunk combined (including the many
-  // small framework-internal chunks not individually budgeted above, e.g.
-  // `each`, `branches`, `attributes`, `class`, `if`, `this`, `loop`, `page`,
-  // `style`, `template`, `snippet`, `legacy`, `input`, `events`, `props`,
-  // `store`, `client`, `client.svelte`, `index-client`, `disclose-version`,
-  // `starters`). Catches death-by-a-thousand-cuts growth that no single
-  // per-chunk budget would flag.
+  // Aggregate safety net: all client JS combined, including chunks not
+  // individually budgeted above.
   {
     name: 'total-client-js',
     path: 'dist/client/_astro/*.js',

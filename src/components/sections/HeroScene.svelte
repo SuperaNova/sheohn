@@ -1,18 +1,19 @@
 <script lang="ts">
-  // Dark-hero pastel-phosphor scene (spec 18, task T1). Purely decorative —
-  // skybox, stars, a slatted paper sun, horizon glow, a rolling perspective
-  // grid, scanlines, and a vignette. Rendered always but hidden in light via
-  // `html.dark`-gated CSS (display:none is cheap, no hydration cost — see
-  // the .site-noise comment in global.css for why this repo avoids paying
-  // for permanent full-viewport compositing). Colors/positions come from the
-  // `--color-scene-*` tokens and the `/* hero scene composition */` tunables
-  // block in src/styles/global.css; values were copied from
-  // src/pages/prototype-dark-hero.astro (the visual source of truth).
-  //
-  // The grid-roll/twinkle animations pause via IntersectionObserver whenever
-  // this scene scrolls offscreen, and never run at all in light mode or
-  // under reduced motion (see the component's style block below).
+  // Dark-hero pastel-phosphor scene: decorative skybox, stars, slatted
+  // paper sun, horizon glow, rolling grid, scanlines, vignette. Dark-only
+  // (display:none in light); colors/geometry come from the --color-scene-*
+  // tokens and tunables block in global.css. Confined to the hero section —
+  // animations pause when it scrolls offscreen and never run under reduced
+  // motion.
   import { prefersReducedMotion } from '../../lib/motion';
+
+  // Both flags are driven by HeroSection (which watches the theme store) —
+  // powering = full power-on choreography on toggling into dark, entrance =
+  // the quieter once-per-session grid/glow-only dark-landing entrance.
+  let {
+    powering = false,
+    entrance = false,
+  }: { powering?: boolean; entrance?: boolean } = $props();
 
   let root: HTMLDivElement | undefined = $state();
   let paused = $state(false);
@@ -36,6 +37,8 @@
   bind:this={root}
   class="scene"
   class:scene-paused={paused}
+  class:scene-powering={powering}
+  class:scene-entrance={entrance}
   aria-hidden="true"
 >
   <div class="scene-skybox">
@@ -46,13 +49,14 @@
   <div class="scene-glow"></div>
   <div class="scene-horizon"></div>
   <div class="scene-grid-wrap"><div class="scene-grid"></div></div>
+  <div class="scene-sweep"></div>
   <div class="scene-scanlines"></div>
   <div class="scene-vignette"></div>
 </div>
 
 <style>
-  /* Dark-only, decorative, inert. Kept display:none in light mode so it
-     never costs a hydration/paint cycle there. */
+  /* Confined to the hero: z-index:-1 inside the section's `isolate`
+     context paints behind the hero content only. */
   .scene {
     position: absolute;
     inset: 0;
@@ -115,9 +119,8 @@
     opacity: 0.7;
   }
 
-  /* Static frame first (opacity: 1 base case below covers reduced motion +
-     light mode, where the rule below never applies): the twinkle/roll
-     animations only exist at all when motion is allowed. */
+  /* Animations exist only when motion is allowed; the base styles are a
+     correct static frame. */
   @media (prefers-reduced-motion: no-preference) {
     .scene-stars {
       animation: scene-twinkle 5.5s ease-in-out infinite alternate;
@@ -146,15 +149,67 @@
     }
   }
 
-  /* Offscreen pause: `paused` is toggled by the IntersectionObserver above
-     and applied via `class:scene-paused` so the class appears statically in
-     the template — Svelte's unused-CSS-selector pruning only sees classes
-     added purely at runtime via classList and would otherwise strip this
-     rule (see spec 18 landmine #2). Also wrapped in :global() defensively
-     for the same reason. */
+  /* `class:scene-paused` keeps the class in the template so Svelte's
+     unused-CSS pruning can't strip this rule. */
   :global(.scene-paused) .scene-stars,
   :global(.scene-paused) .scene-grid {
     animation-play-state: paused;
+  }
+
+  /* Power-on choreography (toggling into dark) and the quieter dark-landing
+     entrance (already dark on load) — both toggled by HeroSection reacting
+     to the theme store, both classes kept in the template via `class:` so
+     Svelte can't prune these rules. Grid draw-in + glow bloom play for
+     both; sun-rise and the scanline sweep are power-on only. */
+  @media (prefers-reduced-motion: no-preference) {
+    .scene-powering .scene-grid-wrap,
+    .scene-entrance .scene-grid-wrap {
+      animation: scene-grid-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .scene-powering .scene-glow,
+    .scene-entrance .scene-glow,
+    .scene-powering .scene-horizon,
+    .scene-entrance .scene-horizon {
+      animation: scene-bloom 1.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .scene-powering .scene-sun {
+      animation: scene-sunrise 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .scene-powering .scene-sweep {
+      animation: scene-sweep-down 1.1s ease-out 0.25s both;
+    }
+  }
+
+  @keyframes scene-grid-in {
+    from {
+      opacity: 0;
+      transform: translateY(7vh);
+    }
+  }
+
+  @keyframes scene-bloom {
+    from {
+      opacity: 0;
+      transform: scaleX(0.55);
+    }
+  }
+
+  @keyframes scene-sunrise {
+    from {
+      transform: translateY(9vh);
+      opacity: 0;
+    }
+  }
+
+  @keyframes scene-sweep-down {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(130vh);
+      opacity: 0;
+    }
   }
 
   /* paper sun — pale disc with slats, half-set behind the horizon */
@@ -250,6 +305,23 @@
       );
     background-size: 64px 64px;
     filter: drop-shadow(0 0 6px var(--color-scene-grid-shadow));
+  }
+
+  /* One-shot scanline sweep, played only during the power-on choreography
+     (see .scene-powering below) — invisible at rest. */
+  .scene-sweep {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -22vh;
+    height: 20vh;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-scene-glow) 15%, transparent) 60%,
+      color-mix(in srgb, var(--color-scene-glow) 29%, transparent)
+    );
+    opacity: 0;
   }
 
   .scene-scanlines {

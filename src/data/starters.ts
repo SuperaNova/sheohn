@@ -3,6 +3,8 @@ export interface Starter {
   label: string;
   /** The actual query sent to the agent (drives the page). */
   q: string;
+  /** Hide the chip while the site is already in dark mode. */
+  hideWhenDark?: boolean;
 }
 
 // Starter prompts shown in the hero and the command deck's empty state.
@@ -20,4 +22,9 @@ export const starters: Starter[] = [
   },
   { label: "what's his stack?", q: 'What is his tech stack?' },
   { label: 'is he available?', q: 'Is Jared available for opportunities?' },
+  {
+    label: 'power on the instrument',
+    q: 'Power on the instrument — switch the site to dark mode.',
+    hideWhenDark: true,
+  },
 ];

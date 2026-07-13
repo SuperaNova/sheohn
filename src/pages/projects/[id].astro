@@ -33,12 +33,19 @@ const { Content, headings } = await render(entry);
   description={entry.data.summary}
   image={entry.data.image}
 >
-  <main class="min-h-screen bg-[var(--color-surface)] pt-20 pb-24 md:pt-32">
+  <main
+    class="relative isolate min-h-screen bg-[var(--color-surface)] pt-20 pb-24 md:pt-32"
+  >
+    <!-- dark-mode scene echo; `isolate` on <main> scopes its z-index -->
+    <div class="subpage-scene-echo" aria-hidden="true"></div>
     <div
       class="relative mx-auto flex w-full max-w-[110rem] justify-center px-6 lg:px-12"
     >
+      <!-- top-32 must match main's md:pt-32 so this never shifts once stuck;
+           max-h/overflow bounds it to the viewport so a long TOC scrolls
+           internally instead of running past the fold. -->
       <aside
-        class="sticky top-32 mr-8 hidden w-64 shrink-0 self-start xl:block 2xl:mr-16"
+        class="sticky top-32 mr-8 hidden max-h-[calc(100dvh_-_10rem)] w-64 shrink-0 self-start overflow-y-auto overscroll-contain xl:block 2xl:mr-16"
       >
         <TableOfContents client:visible headings={headings} />
       </aside>

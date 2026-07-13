@@ -45,6 +45,10 @@ const canonicalURL = new URL(
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <!-- Mobile browser-chrome color; kept in sync with the theme by the
+         inline script below (first paint + client-router nav) and by
+         store.ts's theme.subscribe (toggle, set_theme, whooshes). -->
+    <meta name="theme-color" content="#f3efe8" />
 
     <script
       type="application/ld+json"
@@ -90,10 +94,10 @@ const canonicalURL = new URL(
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
       rel="stylesheet"
     />
     <ClientRouter />
@@ -122,6 +126,15 @@ const canonicalURL = new URL(
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
+        }
+        const themeColorMeta = document.querySelector(
+          'meta[name="theme-color"]',
+        );
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute(
+            'content',
+            theme === 'dark' ? '#050505' : '#f3efe8',
+          );
         }
 
         // 2. Prevent Loader from playing multiple times per session

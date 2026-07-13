@@ -9,6 +9,8 @@ const fakeInfo = {
   location: 'Nowhere',
   timezone: 'UTC',
   education: 'Testing U',
+  heroMeta: 'Testing U · fixture · shell tests',
+  availableForOpportunities: true,
   bio: 'bio text',
   strategicNote: 'note',
   socials: { github: 'https://github.com/t', linkedin: 'https://li/t' },

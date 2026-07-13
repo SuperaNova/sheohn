@@ -15,6 +15,8 @@ const fakePersonalInfo = {
   location: 'Nowhere',
   timezone: 'UTC',
   education: 'Testing U',
+  heroMeta: 'Testing U · fixture · shell tests',
+  availableForOpportunities: true,
   bio: 'A person who tests things, including GDG-flavored fixtures.',
   strategicNote: 'Ships tests.',
   socials: { github: 'https://github.com/test', linkedin: 'https://li/test' },

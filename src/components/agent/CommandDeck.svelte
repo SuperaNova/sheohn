@@ -16,6 +16,8 @@
     commandDeckOpen,
     agentQuery,
     lastRagTrace,
+    theme,
+    heroInView,
     type SceneTarget,
   } from '../../store';
   import { personalInfo } from '../../data/personalInfo';
@@ -32,6 +34,7 @@
   import type { ShellCtx, ShellLogEntry } from '../../lib/shell/registry';
   import type { BootInfo } from '../../lib/boot-info';
   import { formatRagTrace, type RagQueryResult } from '../../lib/rag';
+  import { prefersReducedMotion } from '../../lib/motion';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -70,11 +73,38 @@
 
   let inputEl = $state<HTMLInputElement | null>(null);
   let deckRoot = $state<HTMLElement | null>(null);
+
+  // Perched "field unit" posture: collapsed deck stands on the dark hero's
+  // horizon and glides down to the normal bottom-centre dock on scroll.
+  // Desktop-only (the frame/rails hide below lg too).
+  let isLg = $state(false);
+  $effect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => (isLg = mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  });
   let inputValue = $state('');
   let selectedIndex = $state(0);
   // Highlighted recommended chip for keyboard (↑/↓) navigation; -1 = none.
   let starterIndex = $state(-1);
   let expanded = $state(false);
+  // Opening from the perch delays the panel's fly-in until the bar has
+  // glided into dock; closing lags re-perching until the panel has flown
+  // out. Both avoid the panel and the gliding bar overlapping mid-transition.
+  const PANEL_GLIDE_DELAY_MS = 600;
+  const REPERCH_DELAY_MS = 250;
+  let openedFromPerch = $state(false);
+  let reperchHold = $state(false);
+  let reperchTimer: ReturnType<typeof setTimeout> | undefined;
+  const perched = $derived(
+    $theme === 'dark' && $heroInView && !expanded && isLg && !reperchHold,
+  );
+  // The "power on" chip is pointless once the site is already dark.
+  const visibleStarters = $derived(
+    starters.filter((s) => !s.hideWhenDark || $theme !== 'dark'),
+  );
   let chatError = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
   let pending = $state<string | null>(null);
@@ -87,7 +117,7 @@
   // Tailwind max-h-72 fallback applies on the server / before hydration).
   let listMaxPx = $state(0);
 
-  // ── Boot log (fake BIOS boot sequence, spec 02) ─────────────────────────
+  // ── Boot log (fake BIOS boot sequence) ──────────────────────────────────
   // Plays once per browser session, the first time the deck expands. Gated
   // by a sessionStorage key distinct from Loader.svelte's 'loader-played' so
   // the two once-per-session animations don't collide.
@@ -120,8 +150,17 @@
   $effect(() => {
     const open = $commandDeckOpen;
     untrack(() => {
+      const wasExpanded = expanded;
       expanded = open;
+      clearTimeout(reperchTimer);
+
       if (open) {
+        // Only delay the panel's fly-in when it was actually perched a
+        // moment ago — docked opens (light, subpages, mobile, scrolled)
+        // stay snappy.
+        openedFromPerch =
+          !prefersReducedMotion() && $theme === 'dark' && $heroInView && isLg;
+        reperchHold = false;
         queueMicrotask(() => inputEl?.focus());
         // First expand of the browser session: play the boot log instead of
         // the normal panel content. Subsequent opens (this tab, this
@@ -134,6 +173,22 @@
           sessionStorage.setItem(BOOT_PLAYED_KEY, 'true');
           showBootLog = true;
         }
+        return;
+      }
+
+      // Closing: if this would re-perch, hold it back until the panel's
+      // fly-out has cleared the dock.
+      if (
+        wasExpanded &&
+        !prefersReducedMotion() &&
+        $theme === 'dark' &&
+        $heroInView &&
+        isLg
+      ) {
+        reperchHold = true;
+        reperchTimer = setTimeout(() => {
+          reperchHold = false;
+        }, REPERCH_DELAY_MS);
       }
     });
   });
@@ -400,18 +455,19 @@
   // row, so ←/→ are the primary axis; ↑/↓ are accepted too so it works
   // however the visitor reaches for it. Enter fires the highlighted chip.
   function onStarterKeydown(e: KeyboardEvent) {
-    if (!starters.length) return;
+    const chips = visibleStarters;
+    if (!chips.length) return;
     const next = e.key === 'ArrowRight' || e.key === 'ArrowDown';
     const prev = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
     if (next) {
       e.preventDefault();
-      starterIndex = (starterIndex + 1) % starters.length;
+      starterIndex = (starterIndex + 1) % chips.length;
     } else if (prev) {
       e.preventDefault();
-      starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
+      starterIndex = (starterIndex <= 0 ? chips.length : starterIndex) - 1;
     } else if (e.key === 'Enter' && starterIndex >= 0) {
       e.preventDefault();
-      const starter = starters[starterIndex];
+      const starter = chips[starterIndex];
       if (starter) ask(starter.q);
       starterIndex = -1;
     }
@@ -551,11 +607,17 @@
   bind:this={deckRoot}
   aria-label="Command Deck"
   data-cursor-green="true"
-  class="fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
+  class="deck-root fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
+  class:deck-perched={perched}
 >
   {#if expanded}
     <div
-      transition:fly={{ y: 16, duration: 220 }}
+      in:fly={{
+        y: 16,
+        duration: 220,
+        delay: openedFromPerch ? PANEL_GLIDE_DELAY_MS : 0,
+      }}
+      out:fly={{ y: 16, duration: 220 }}
       class="mb-2 overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 shadow-2xl backdrop-blur-xl"
     >
       <div
@@ -580,7 +642,7 @@
         >
       </div>
       {#if showBootLog}
-        <!-- Fake BIOS boot log (spec 02) — plays once per session, above the
+        <!-- Fake BIOS boot log — plays once per session, above the
              normal shell/chat surface, before falling through to it. -->
         <DeckBootLog {bootInfo} onComplete={completeBoot} />
       {:else}
@@ -630,14 +692,34 @@
 
   {#snippet starterChips(wrapperClass: string)}
     <div class={wrapperClass}>
-      <DeckStarterChips {starters} {starterIndex} showHint={true} onAsk={ask} />
+      <DeckStarterChips
+        starters={visibleStarters}
+        {starterIndex}
+        showHint={true}
+        onAsk={ask}
+      />
     </div>
   {/snippet}
+
+  <!-- Perched "field unit" readout — collapses away when the deck docks.
+       Decorative flavor text (real build data), not unique page content. -->
+  <div class="deck-readout" aria-hidden="true">
+    <p class="deck-readout-head">
+      <span class="deck-readout-pulse"></span>
+      sheohn·os — field unit
+    </p>
+    <p><span class="deck-ok">[ok]</span> build {bootInfo.commitSha} · vercel</p>
+    <p>
+      <span class="deck-ok">[ok]</span>
+      {bootInfo.dependencyCount} deps · rag online
+    </p>
+    <p class="deck-dim">agent: idle<span class="deck-cursor">▌</span></p>
+  </div>
 
   <!-- The persistent docked command bar -->
   <form
     onsubmit={handleSubmit}
-    class="flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_0_40px_rgba(74,222,128,0.15)] backdrop-blur-xl transition-all duration-500 focus-within:border-[var(--color-console-signal)]/50 focus-within:shadow-[0_0_50px_rgba(74,222,128,0.25)]"
+    class="deck-bar flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_0_40px_rgba(74,222,128,0.15)] backdrop-blur-xl transition-all duration-500 focus-within:border-[var(--color-console-signal)]/50 focus-within:shadow-[0_0_50px_rgba(74,222,128,0.25)]"
   >
     <span
       class="font-mono text-sm text-[var(--color-console-signal)]"
@@ -689,3 +771,149 @@
     </div>
   {/if}
 </aside>
+
+<style>
+  /* Readout lines hidden while docked; the perch rules below reveal them.
+     Perch geometry comes from the --scene-perch-* tunables in global.css. */
+  .deck-readout {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 1.1rem;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    font-size: 0.72rem;
+    line-height: 1.9;
+    color: var(--color-console-text);
+    transition:
+      max-height 0.45s ease,
+      opacity 0.3s ease,
+      padding 0.45s ease;
+  }
+
+  .deck-readout-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    color: var(--color-console-signal);
+    margin-bottom: 0.35rem;
+  }
+
+  .deck-readout-pulse {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--color-console-signal);
+  }
+
+  .deck-ok {
+    color: var(--color-console-signal);
+  }
+
+  .deck-dim {
+    color: var(--color-console-text-dim);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .deck-readout-pulse {
+      animation: deck-pulse 2.2s ease-in-out infinite;
+    }
+    .deck-cursor {
+      animation: deck-blink 1.1s steps(2, start) infinite;
+    }
+  }
+
+  @keyframes deck-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @keyframes deck-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Perch/dock glide — desktop dark-hero only. The transition lives on the
+     lg+ rule so the mobile keyboard-offset bottom tweak never animates. */
+  @media (min-width: 1024px) {
+    :global(html.dark) .deck-root {
+      transition:
+        left 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        bottom 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        translate 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Tailwind's -translate-x-1/2 centers the docked bar via the `translate`
+       property (not `transform`) — cancel that same property when perched. */
+    :global(html.dark) .deck-root.deck-perched {
+      left: calc(100vw - var(--scene-perch-width) - var(--scene-perch-right));
+      bottom: var(--scene-perch-bottom);
+      width: var(--scene-perch-width);
+      translate: 0;
+    }
+
+    :global(html.dark) .deck-perched .deck-readout {
+      max-height: 10rem;
+      opacity: 1;
+      padding: 0.8rem 1.1rem 0.4rem;
+    }
+
+    /* Perched, the pill reads as the console's input line inside one panel:
+       the aside carries the panel chrome, the form drops its own. */
+    :global(html.dark) .deck-perched {
+      border: 1px solid var(--color-console-line);
+      border-radius: 12px;
+      background: color-mix(
+        in srgb,
+        var(--color-console-surface) 95%,
+        transparent
+      );
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 40px rgba(74, 222, 128, 0.12);
+    }
+
+    :global(html.dark) .deck-perched .deck-bar {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      padding-top: 0.35rem;
+      padding-bottom: 0.7rem;
+    }
+
+    /* Console-line type size while perched, so the full placeholder fits
+       the narrow panel. */
+    :global(html.dark) .deck-perched .deck-bar input,
+    :global(html.dark) .deck-perched .deck-bar span {
+      font-size: 0.72rem;
+    }
+
+    /* Landing shadow: the console stands on the grid, not in the air. */
+    .deck-root::after {
+      content: '';
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: -16px;
+      height: 24px;
+      background: radial-gradient(
+        ellipse 50% 50% at 50% 50%,
+        rgba(3, 8, 5, 0.85),
+        transparent 70%
+      );
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    :global(html.dark) .deck-perched::after {
+      opacity: 1;
+    }
+  }
+</style>
