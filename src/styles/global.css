@@ -46,6 +46,7 @@
   --color-console-line: rgba(74, 222, 128, 0.22);
   --color-console-signal: #4ade80;
   --color-console-signal-strong: #22c55e;
+  --color-console-warn: #eab308;
   --color-console-text: #e6ece6;
   --color-console-text-dim: #9aa69a;
 

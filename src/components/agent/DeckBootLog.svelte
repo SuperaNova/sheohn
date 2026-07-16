@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { BootInfo } from '../../lib/boot-info';
+  import { buildDeckBootLines } from '../../lib/dmesg';
 
   // Plays once per browser session, the first time the command deck opens
   // (gated by CommandDeck.svelte via sessionStorage['deck-boot-played']).
@@ -10,22 +11,16 @@
   let { bootInfo, onComplete }: { bootInfo: BootInfo; onComplete: () => void } =
     $props();
 
-  const lines = $derived.by(() => {
-    const l = [
-      '[ OK ] sheohn.os deck boot',
-      `[ OK ] commit ${bootInfo.commitSha}`,
-      `[ OK ] build ${bootInfo.buildTimestamp}`,
-      `[ OK ] ${bootInfo.dependencyCount} dependencies loaded`,
-    ];
-    if (bootInfo.vectorCount !== undefined) {
-      l.push(`[ OK ] ${bootInfo.vectorCount} vectors indexed`);
-    }
-    l.push('[ OK ] shell ready');
-    return l;
-  });
+  const lines = $derived.by(() => buildDeckBootLines(bootInfo));
 
   let lineCount = $state(0);
+  let logEl = $state<HTMLElement | null>(null);
   let finished = false;
+
+  $effect(() => {
+    void lineCount;
+    if (logEl) logEl.scrollTop = logEl.scrollHeight;
+  });
 
   function finish() {
     if (finished) return;
@@ -85,11 +80,20 @@
   role="log"
   aria-label="Boot sequence"
   aria-live="polite"
+  bind:this={logEl}
   onclick={skip}
-  class="deck-scroll flex max-h-40 flex-col gap-1 overflow-y-auto border-b border-[var(--color-console-line)] p-4 font-mono text-[13px] leading-relaxed"
+  class="deck-scroll flex max-h-40 flex-col gap-1 overflow-y-auto border-b border-[var(--color-console-line)] p-4 font-mono text-[13px] leading-relaxed text-[var(--color-console-text)]"
 >
-  {#each lines.slice(0, lineCount) as line (line)}
-    <p class="text-[var(--color-console-signal)]">{line}</p>
+  {#each lines.slice(0, lineCount) as line (line.ts)}
+    <p>
+      <span class="whitespace-pre text-[var(--color-console-signal)]"
+        >{line.ts}</span
+      >
+      {#if line.tag}
+        <span class="text-[var(--color-console-warn)]">{line.tag}:</span>
+      {/if}
+      {line.text}
+    </p>
   {/each}
 </div>
 
