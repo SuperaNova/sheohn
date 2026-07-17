@@ -24,6 +24,7 @@ const bootCommitSha = getBootInfo().commitSha;
 <BaseLayout
   title={`${personalInfo.name} - Portfolio`}
   description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
+  image="/og/home.png"
 >
   <main class="bg-[var(--color-surface)]">
     <HeroSection client:load {bootCommitSha} />
