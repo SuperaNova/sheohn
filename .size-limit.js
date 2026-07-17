@@ -45,6 +45,14 @@ export default [
     gzip: true,
     limit: '1.6 KB',
   },
+  // Boot-log line data + builders, code-split because Loader and
+  // CommandDeck (DeckBootLog) both import it.
+  {
+    name: 'dmesg-boot-lines',
+    path: 'dist/client/_astro/dmesg.*.js',
+    gzip: true,
+    limit: '1.7 KB',
+  },
   {
     name: 'Lightbox',
     path: 'dist/client/_astro/Lightbox.*.js',

@@ -19,12 +19,15 @@
 
   const lines = $derived.by(() => buildLoaderLines(bootInfo));
 
-  // Non-linear reveal cadence: quick bursts (~30-70ms) with a couple of
-  // longer beats, deterministic (no Math.random) so this stays screenshot-
-  // and e2e-stable. Distinct from each line's displayed dmesg timestamp,
-  // which is a separate fake kernel clock (see dmesg.ts).
+  // Non-linear reveal cadence: fast bursts (~15-50ms) with a few longer
+  // beats at cluster boundaries, deterministic (no Math.random) so this
+  // stays screenshot- and e2e-stable. Total ≈1.5s + hold. Distinct from
+  // each line's displayed dmesg timestamp — a separate fake kernel clock
+  // (see dmesg.ts).
   const LINE_DELAYS_MS = [
-    40, 35, 45, 130, 40, 50, 160, 45, 35, 50, 120, 40, 45, 100, 40, 180, 60,
+    30, 20, 15, 20, 25, 60, 15, 20, 15, 50, 20, 40, 15, 40, 15, 110, 20, 15, 45,
+    15, 120, 15, 15, 20, 15, 90, 15, 15, 15, 15, 15, 15, 15, 60, 15, 70, 15, 15,
+    80, 20, 90, 20, 100, 60,
   ];
   const HOLD_MS = 200;
 

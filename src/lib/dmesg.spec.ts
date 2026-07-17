@@ -32,6 +32,14 @@ test('loader lines have strictly monotonic, format-exact timestamps', () => {
   }
 });
 
+test('loader sequence fills a viewport (35-45 lines) with no repeated lines', () => {
+  const lines = buildLoaderLines(bootInfo);
+  expect(lines.length).toBeGreaterThanOrEqual(35);
+  expect(lines.length).toBeLessThanOrEqual(45);
+  const rendered = lines.map((l) => `${l.tag ?? ''}|${l.text}`);
+  expect(new Set(rendered).size).toBe(rendered.length);
+});
+
 test('deck boot lines have strictly monotonic, format-exact timestamps', () => {
   const lines = buildDeckBootLines(bootInfo);
   let prev = -Infinity;
