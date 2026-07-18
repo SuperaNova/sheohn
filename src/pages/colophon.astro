@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionReveal from '../components/ui/SectionReveal.svelte';
+import ArchitectureDiagram from '../components/colophon/ArchitectureDiagram.svelte';
+import { getColophonData } from '../lib/colophon-data';
+import pkg from '../../package.json' with { type: 'json' };
+
+const data = getColophonData();
+
+const buildTimestampDisplay = `${new Intl.DateTimeFormat('en-GB', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'UTC',
+}).format(new Date(data.buildTimestamp))} UTC`;
+
+const stats: { label: string; value: string }[] = [
+  { label: 'Dependencies', value: `${data.dependencyCount}` },
+  { label: 'Lines of code', value: data.loc.toLocaleString('en-US') },
+  { label: 'Commit', value: data.commitSha },
+  { label: 'Build timestamp', value: buildTimestampDisplay },
+  {
+    label: 'Test coverage',
+    value:
+      data.coveragePercent !== undefined
+        ? `${data.coveragePercent.toFixed(1)}%`
+        : 'n/a',
+  },
+  {
+    label: 'Eval pass rate',
+    value:
+      data.evalPassRate !== undefined
+        ? `${data.evalPassRate.toFixed(1)}%`
+        : 'n/a',
+  },
+  { label: 'Node', value: pkg.engines?.node ?? 'n/a' },
+];
+---
+
+<BaseLayout
+  title="Colophon"
+  description="Real build-time stats and a live architecture diagram — how sheohn.dev is built."
+>
+  <main class="relative isolate min-h-screen bg-[var(--color-surface)] pt-32">
+    <!-- dark-mode scene echo; `isolate` on <main> scopes its z-index -->
+    <div class="subpage-scene-echo" aria-hidden="true"></div>
+
+    <SectionReveal
+      client:visible
+      id="colophon-stats"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-24"
+    >
+      <h2
+        class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl"
+      >
+        Colophon
+      </h2>
+      <p
+        class="mt-6 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface)]"
+      >
+        This site reports on itself. Every number below is computed fresh at
+        build time from the real repository — no mock data, no rounding for
+        effect.
+      </p>
+
+      <div
+        class="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-line)] sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {
+          stats.map((stat, i) => (
+            <div
+              class={`bg-[var(--color-console-surface)] p-6 ${i === stats.length - 1 ? 'sm:col-span-2' : ''}`}
+            >
+              <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                {stat.label}
+              </p>
+              <p class="mt-2 font-mono text-xl break-words text-[var(--color-console-signal)]">
+                {stat.value}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </SectionReveal>
+
+    <SectionReveal
+      client:visible
+      id="colophon-architecture"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-24"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-4xl text-[var(--color-on-surface)] sm:text-5xl"
+        >
+          Architecture
+        </h2>
+        <span class="readout">System Map</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        A live map of the moving parts behind the AI agent above — click a node,
+        or focus it and press Enter/Space, for the real mechanics.
+      </p>
+
+      <div class="mt-10">
+        <ArchitectureDiagram client:visible />
+      </div>
+    </SectionReveal>
+  </main>
+</BaseLayout>
