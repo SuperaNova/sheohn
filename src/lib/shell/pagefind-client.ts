@@ -7,16 +7,8 @@
 // throwing when the asset is missing, so callers can render a
 // "not available in dev" message instead of an unhandled error.
 //
-// TODO(#12): spec #12 (CSP tightening) had NOT landed in the working tree
-// as of this writing — `vercel.json`'s `script-src` still contains
-// `'unsafe-eval'`. Pagefind's runtime compiles a WebAssembly module to
-// actually run the search index; if/when #12 removes `'unsafe-eval'`, it
-// must add `'wasm-unsafe-eval'` to `script-src` (the narrower, WASM-specific
-// CSP source modern Chromium/Firefox support) as part of that spec's own
-// change, and re-run #12's CSP Playwright assertion against a page that
-// exercises this module, to confirm no CSP violation. Left unresolved here
-// per spec #17's instructions — do not silently reintroduce
-// `'unsafe-eval'` to work around this later without reading this note.
+// Pagefind compiles a WebAssembly module to run the search index — that
+// requires 'wasm-unsafe-eval' in vercel.json's script-src CSP directive.
 
 /** One raw hit from `PagefindApi.search()`, before its full data is fetched. */
 interface PagefindSearchResultRef {

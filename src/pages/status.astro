@@ -1,8 +1,9 @@
 ---
-// SSR: uptime is a live Redis read per-request. Eval/Lighthouse history are
-// build-time JSON imports (runtime fs reads of repo files are unreliable
-// under the Vercel adapter), so those sections are as fresh as the last
-// deploy — fine, since their weekly commit-back triggers a deploy anyway.
+// SSR: uptime and CSP violations are both live Redis reads per-request.
+// Eval/Lighthouse history are build-time JSON imports (runtime fs reads of
+// repo files are unreliable under the Vercel adapter), so those sections
+// are as fresh as the last deploy — fine, since their weekly commit-back
+// triggers a deploy anyway.
 export const prerender = false;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -14,6 +15,7 @@ import {
   PING_TARGETS,
   type PingEntry,
 } from '../lib/uptime-ping';
+import { getRecentViolations } from '../lib/csp-redis';
 import type { EvalHistoryIndex } from '../lib/eval-history';
 import type { LighthouseHistoryIndex } from '../lib/lighthouse-history';
 
@@ -24,6 +26,7 @@ const evalHistory = evalHistoryRaw as EvalHistoryIndex;
 const lighthouseHistory = lighthouseHistoryRaw as LighthouseHistoryIndex;
 
 const pings = await getRecentPings(150);
+const cspViolations = await getRecentViolations(20);
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -236,6 +239,59 @@ const latestLighthouse = lighthouseHistory.latest;
                 />
               </div>
             </>
+          )
+        }
+      </div>
+    </SectionReveal>
+
+    <SectionReveal
+      client:visible
+      id="status-csp"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-16"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+        >
+          CSP Violations
+        </h2>
+        <span class="readout">Reporting API</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        Browser-reported Content-Security-Policy violations, deduped by
+        directive and blocked URI with a running count. An empty list is the
+        goal.
+      </p>
+
+      <div
+        class="mt-10 overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-surface)]"
+      >
+        {
+          cspViolations.length === 0 ? (
+            <p class="p-6 font-mono text-sm text-[var(--color-console-text-dim)]">
+              No violations reported — the tightened policy hasn't been tripped.
+            </p>
+          ) : (
+            <div class="divide-y divide-[var(--color-console-line)]">
+              {cspViolations.map((v) => (
+                <div class="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <div class="min-w-0">
+                    <p class="truncate font-mono text-sm text-[var(--color-console-text)]">
+                      {v.directive}
+                    </p>
+                    <p class="mt-0.5 truncate font-mono text-xs text-[var(--color-console-text-dim)]">
+                      {v.blockedUri}
+                    </p>
+                  </div>
+                  <div class="shrink-0 font-mono text-xs text-[var(--color-console-text-dim)] sm:text-right">
+                    <span class="text-[var(--color-console-signal)]">
+                      {v.count}×
+                    </span>{' '}
+                    last {new Date(v.lastSeen).toISOString()}
+                  </div>
+                </div>
+              ))}
+            </div>
           )
         }
       </div>
