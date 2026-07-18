@@ -1,0 +1,55 @@
+name: Weekly Mutation Score
+
+# Weekly, same day as the eval scoreboard (Monday) but a different hour so
+# the two jobs don't contend for runner capacity. Not a PR gate — informational only.
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+# This job commits data/mutation-score.json back to main.
+permissions:
+  contents: write
+
+jobs:
+  mutation:
+    name: Run Stryker, record mutation score history
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run Stryker mutation testing
+        run: npm run mutation
+
+      - name: Upload Stryker HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 14
+
+      - name: Record mutation score history
+        run: npx tsx scripts/mutation-summary.ts
+
+      - name: Commit mutation score history back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/mutation-score.json
+          if git diff --cached --quiet; then
+            echo "No mutation-score changes to commit."
+          else
+            git commit -m "chore(mutation): weekly mutation score run $(date -u +%Y-%m-%d)"
+            git push
+          fi
