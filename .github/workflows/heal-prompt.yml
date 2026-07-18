@@ -1,0 +1,155 @@
+name: Self-Healing Prompt Bot
+
+# Triggers when the weekly eval workflow concludes — filtered below to only
+# act on 'failure'. eval.yml commits data/eval-history/** back to main
+# BEFORE it ever fails its own job (see that workflow's final step), so by
+# the time this 'completed' event fires, main already has the failing run's
+# detail file — no artifact download needed, just checkout main.
+on:
+  workflow_run:
+    workflows: ['Weekly Eval Scoreboard']
+    types: [completed]
+
+jobs:
+  guardrail:
+    name: Check for an existing open prompt-heal PR
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      already_open: ${{ steps.check.outputs.already_open }}
+    steps:
+      - name: Check for an existing open prompt-heal PR
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh pr list --repo "${{ github.repository }}" --label prompt-heal --state open --json number --jq 'length')
+          if [ "$count" -gt 0 ]; then
+            echo "already_open=true" >> "$GITHUB_OUTPUT"
+            echo "An open prompt-heal PR already exists ($count) — skipping this run."
+          else
+            echo "already_open=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  heal:
+    name: Generate candidate patch, re-eval, open PR if improved
+    needs: guardrail
+    if: needs.guardrail.outputs.already_open == 'false'
+    runs-on: ubuntu-latest
+    # contents:write to push the healing branch, pull-requests:write to open the PR.
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Locate the triggering run's failing eval detail
+        id: before
+        run: |
+          detail_date=$(jq -r '.latest.date // empty' data/eval-history/index.json)
+          if [ -z "$detail_date" ]; then
+            echo "No eval-history runs recorded on main — nothing to heal." >&2
+            exit 1
+          fi
+          echo "detail_path=data/eval-history/${detail_date}.json" >> "$GITHUB_OUTPUT"
+
+      - name: Create healing branch
+        id: branch
+        run: |
+          name="prompt-heal/${{ github.event.workflow_run.id }}-$(date -u +%Y%m%d%H%M%S)"
+          git checkout -b "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Generate a candidate patch
+        run: npx tsx scripts/heal-prompt.ts "${{ steps.before.outputs.detail_path }}"
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+
+      - name: Re-run eval:agent against the candidate patch
+        id: eval
+        # A still-failing (or partially-failing) re-run must not skip the
+        # comparison step below — that's what decides whether to discard.
+        continue-on-error: true
+        run: npm run eval:agent -- --reporter=json
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+
+      - name: Transform candidate results into a scratch dir
+        # EVAL_HISTORY_DIR redirects output away from data/eval-history so
+        # this candidate/test run never overwrites the real committed
+        # history that eval.yml just wrote.
+        env:
+          EVAL_HISTORY_DIR: .heal-scratch/eval-history
+          EVAL_DATE: candidate
+        run: npx tsx scripts/transform-eval-results.ts playwright-report/results.json
+
+      - name: Compare before/after pass rate
+        id: compare
+        run: |
+          npx tsx scripts/compare-eval-runs.ts \
+            "${{ steps.before.outputs.detail_path }}" \
+            .heal-scratch/eval-history/candidate.json \
+            | tee "$RUNNER_TEMP/pr-body.md"
+
+      - name: Discard branch if the candidate did not improve
+        if: steps.compare.outputs.improved != 'true'
+        run: |
+          echo "Candidate did not strictly improve on the triggering failure (before=${{ steps.compare.outputs.before_pass_rate }}%, after=${{ steps.compare.outputs.after_pass_rate }}%) — discarding, no PR."
+
+      - name: Commit the healed prompt
+        if: steps.compare.outputs.improved == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/lib/prompts.ts
+          git commit -m "prompt-heal: recover ${{ steps.compare.outputs.recovered_count }} failing eval case(s)"
+
+      - name: Push the healing branch
+        if: steps.compare.outputs.improved == 'true'
+        run: git push origin "${{ steps.branch.outputs.name }}"
+
+      - name: Ensure the prompt-heal label exists
+        if: steps.compare.outputs.improved == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create prompt-heal \
+            --repo "${{ github.repository }}" \
+            --color 0e8a16 \
+            --description "Candidate src/lib/prompts.ts patch from the self-healing prompt bot" \
+            --force
+
+      - name: Open the PR
+        if: steps.compare.outputs.improved == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head "${{ steps.branch.outputs.name }}" \
+            --label prompt-heal \
+            --title "prompt-heal: recover ${{ steps.compare.outputs.recovered_count }} failing eval case(s)" \
+            --body-file "$RUNNER_TEMP/pr-body.md"
