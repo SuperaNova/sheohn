@@ -9,7 +9,6 @@
 //   - Date defaults to today (UTC, YYYY-MM-DD); override with $MUTATION_DATE.
 //   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then
 //     the literal string "unknown".
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -19,6 +18,12 @@ import {
   type MutationScoreIndex,
   type StrykerMutationReport,
 } from '../src/lib/mutation-summary';
+import {
+  readJsonWithFallback,
+  resolveCommitSha,
+  resolveDate,
+  writeJson,
+} from './lib/run-metadata';
 
 const INDEX_PATH = path.join('data', 'mutation-score.json');
 
@@ -26,33 +31,8 @@ function resolveReportPath(): string {
   return process.argv[2] ?? path.join('reports', 'mutation', 'mutation.json');
 }
 
-function resolveDate(): string {
-  return process.env.MUTATION_DATE ?? new Date().toISOString().slice(0, 10);
-}
-
-function resolveCommitSha(): string {
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
-  try {
-    return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    return 'unknown';
-  }
-}
-
 function readIndex(): MutationScoreIndex {
-  if (!fs.existsSync(INDEX_PATH)) return createEmptyMutationIndex();
-  try {
-    return JSON.parse(
-      fs.readFileSync(INDEX_PATH, 'utf8'),
-    ) as MutationScoreIndex;
-  } catch {
-    return createEmptyMutationIndex();
-  }
-}
-
-function writeJson(filePath: string, data: unknown): void {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
+  return readJsonWithFallback(INDEX_PATH, createEmptyMutationIndex);
 }
 
 function main(): void {
@@ -67,7 +47,7 @@ function main(): void {
   ) as StrykerMutationReport;
 
   const entry = buildMutationSummaryEntry(report, {
-    date: resolveDate(),
+    date: resolveDate('MUTATION_DATE'),
     commitSha: resolveCommitSha(),
   });
   const nextIndex = appendMutationSummary(readIndex(), entry);

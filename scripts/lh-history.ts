@@ -8,7 +8,6 @@
 //   - Date defaults to today (UTC, YYYY-MM-DD); override with $LH_DATE.
 //   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then
 //     the literal string "unknown".
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -19,6 +18,12 @@ import {
   type LighthouseManifestRun,
   type LighthouseReport,
 } from '../src/lib/lighthouse-history';
+import {
+  readJsonWithFallback,
+  resolveCommitSha,
+  resolveDate,
+  writeJson,
+} from './lib/run-metadata';
 
 const HISTORY_DIR = path.join('data', 'lighthouse-history');
 const INDEX_PATH = path.join(HISTORY_DIR, 'index.json');
@@ -30,33 +35,8 @@ function resolveOutputDir(): string {
     : '.lighthouseci-live';
 }
 
-function resolveDate(): string {
-  return process.env.LH_DATE ?? new Date().toISOString().slice(0, 10);
-}
-
-function resolveCommitSha(): string {
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
-  try {
-    return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    return 'unknown';
-  }
-}
-
 function readIndex(): LighthouseHistoryIndex {
-  if (!fs.existsSync(INDEX_PATH)) return createEmptyLighthouseIndex();
-  try {
-    return JSON.parse(
-      fs.readFileSync(INDEX_PATH, 'utf8'),
-    ) as LighthouseHistoryIndex;
-  } catch {
-    return createEmptyLighthouseIndex();
-  }
-}
-
-function writeJson(filePath: string, data: unknown): void {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
+  return readJsonWithFallback(INDEX_PATH, createEmptyLighthouseIndex);
 }
 
 function readRepresentativeReports(outputDir: string): LighthouseReport[] {
@@ -96,7 +76,7 @@ function main(): void {
   }
 
   const entry = summarizeLighthouseReports(reports, {
-    date: resolveDate(),
+    date: resolveDate('LH_DATE'),
     commitSha: resolveCommitSha(),
   });
   const nextIndex = appendLighthouseSummary(readIndex(), entry);

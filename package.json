@@ -9,7 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "postbuild": "pagefind --site .vercel/output/static",
-    "preview": "astro preview",
+    "preview": "node scripts/serve-static.mjs",
     "astro": "astro",
     "lint": "eslint src",
     "format": "prettier --write .",

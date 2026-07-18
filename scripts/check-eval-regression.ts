@@ -20,23 +20,11 @@ import {
   type EvalHistoryIndex,
   type EvalRunDetail,
 } from '../src/lib/eval-history';
+import { readJson, writeGithubOutput } from './lib/run-metadata';
 
 const HISTORY_DIR =
   process.env.EVAL_HISTORY_DIR ?? path.join('data', 'eval-history');
 const INDEX_PATH = path.join(HISTORY_DIR, 'index.json');
-
-function readJson<T>(filePath: string): T {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
-}
-
-function writeGithubOutput(entries: Record<string, string>): void {
-  const outputPath = process.env.GITHUB_OUTPUT;
-  if (!outputPath) return; // not running in a workflow (e.g. local/manual invocation)
-  const lines = Object.entries(entries)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-  fs.appendFileSync(outputPath, lines + '\n', 'utf8');
-}
 
 function formatRegressionBody(
   regressed: string[],
