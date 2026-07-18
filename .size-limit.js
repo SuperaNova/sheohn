@@ -83,6 +83,12 @@ export default [
     gzip: true,
     limit: '1.2 KB',
   },
+  {
+    name: 'RumCollector',
+    path: 'dist/client/_astro/RumCollector.*.js',
+    gzip: true,
+    limit: '0.8 KB',
+  },
 
   // Case-study content chunks (per-project MDX-derived data, code-split by
   // Astro/Vite because each project page dynamically imports its own).
