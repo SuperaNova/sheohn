@@ -1,0 +1,47 @@
+---
+import { buildSparklinePoints } from '../../lib/sparkline';
+
+interface Props {
+  values: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+  ariaLabel: string;
+}
+
+const {
+  values,
+  width = 240,
+  height = 48,
+  color = 'var(--color-console-signal)',
+  ariaLabel,
+} = Astro.props;
+
+const points = buildSparklinePoints(values, { width, height });
+---
+
+{
+  values.length > 0 ? (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+      role="img"
+      aria-label={ariaLabel}
+      class="overflow-visible"
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  ) : (
+    <p class="font-mono text-xs text-[var(--color-console-text-dim)]">
+      no data yet
+    </p>
+  )
+}

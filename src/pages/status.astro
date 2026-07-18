@@ -1,0 +1,244 @@
+---
+// SSR: uptime is a live Redis read per-request. Eval/Lighthouse history are
+// build-time JSON imports (runtime fs reads of repo files are unreliable
+// under the Vercel adapter), so those sections are as fresh as the last
+// deploy — fine, since their weekly commit-back triggers a deploy anyway.
+export const prerender = false;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SectionReveal from '../components/ui/SectionReveal.svelte';
+import Sparkline from '../components/status/Sparkline.astro';
+import { getRecentPings } from '../lib/uptime-redis';
+import {
+  isHealthyPing,
+  PING_TARGETS,
+  type PingEntry,
+} from '../lib/uptime-ping';
+import type { EvalHistoryIndex } from '../lib/eval-history';
+import type { LighthouseHistoryIndex } from '../lib/lighthouse-history';
+
+import evalHistoryRaw from '../../data/eval-history/index.json' with { type: 'json' };
+import lighthouseHistoryRaw from '../../data/lighthouse-history/index.json' with { type: 'json' };
+
+const evalHistory = evalHistoryRaw as EvalHistoryIndex;
+const lighthouseHistory = lighthouseHistoryRaw as LighthouseHistoryIndex;
+
+const pings = await getRecentPings(150);
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+// getRecentPings returns newest-first (LPUSH + LRANGE); reverse per endpoint
+// so the sparkline reads chronologically left-to-right.
+const endpointSections = PING_TARGETS.map((target) => {
+  const entries: PingEntry[] = pings
+    .filter((p) => p.endpoint === target.endpoint)
+    .slice()
+    .reverse();
+  const latest = entries[entries.length - 1];
+  const healthyCount = entries.filter((e) => isHealthyPing(e)).length;
+  const uptimePercent =
+    entries.length > 0
+      ? round1((healthyCount / entries.length) * 100)
+      : undefined;
+
+  return {
+    target,
+    entries,
+    latest,
+    uptimePercent,
+    latencyValues: entries.map((e) => e.ms),
+  };
+});
+
+const evalRuns = evalHistory.runs.slice(-30);
+const evalPassRateValues = evalRuns.map((r) => r.passRate);
+const latestEval = evalHistory.latest;
+
+const lighthouseRuns = lighthouseHistory.runs.slice(-30);
+const lighthousePerfValues = lighthouseRuns.map((r) => r.scores.performance);
+const latestLighthouse = lighthouseHistory.latest;
+---
+
+<BaseLayout
+  title="Status"
+  description="Live uptime, agent eval, and Lighthouse score history for sheohn.dev."
+>
+  <main class="relative isolate min-h-screen bg-[var(--color-surface)] pt-32">
+    <!-- dark-mode scene echo; `isolate` on <main> scopes its z-index -->
+    <div class="subpage-scene-echo" aria-hidden="true"></div>
+
+    <SectionReveal
+      client:visible
+      id="status-intro"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col bg-transparent pb-12"
+    >
+      <span class="readout">System Status</span>
+      <h2
+        class="font-display mt-4 text-4xl text-[var(--color-on-surface)] sm:text-5xl"
+      >
+        Status
+      </h2>
+      <p
+        class="mt-6 max-w-2xl text-lg leading-[1.6] text-[var(--color-on-surface)]"
+      >
+        The operational side of this portfolio — an hourly synthetic ping
+        against production, the weekly agent eval scoreboard, and Lighthouse
+        score history, all read straight from their own data sources.
+      </p>
+    </SectionReveal>
+
+    <SectionReveal
+      client:visible
+      id="status-uptime"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-16"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+        >
+          Uptime
+        </h2>
+        <span class="readout">Hourly Synthetic Checks</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        A GitHub Actions cron pings production every hour and writes latency and
+        status to Redis — no third-party monitoring vendor.
+      </p>
+
+      <div
+        class="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-line)] md:grid-cols-3"
+      >
+        {
+          endpointSections.map((section) => (
+            <div class="bg-[var(--color-console-surface)] p-6">
+              <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                {section.target.path}
+              </p>
+              {section.entries.length === 0 ? (
+                <p class="mt-4 font-mono text-sm text-[var(--color-console-text-dim)]">
+                  No pings recorded yet — the hourly workflow hasn't reported
+                  in.
+                </p>
+              ) : (
+                <>
+                  <p class="mt-2 font-mono text-xl text-[var(--color-console-signal)]">
+                    {section.uptimePercent}%{' '}
+                    <span class="text-sm text-[var(--color-console-text-dim)]">
+                      uptime
+                    </span>
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-[var(--color-console-text-dim)]">
+                    last: {section.latest?.status} in {section.latest?.ms}ms
+                  </p>
+                  <div class="mt-4">
+                    <Sparkline
+                      values={section.latencyValues}
+                      ariaLabel={`Latency trend for ${section.target.path}`}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </SectionReveal>
+
+    <SectionReveal
+      client:visible
+      id="status-eval"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-16"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+        >
+          Agent Eval History
+        </h2>
+        <span class="readout">Weekly Scoreboard</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        Every week the AI agent runs its full golden-case suite; the pass rate
+        over time is plotted below.
+      </p>
+
+      <div
+        class="mt-10 rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-surface)] p-6"
+      >
+        {
+          latestEval === null ? (
+            <p class="font-mono text-sm text-[var(--color-console-text-dim)]">
+              No eval runs recorded yet — the weekly scoreboard hasn't reported
+              in.
+            </p>
+          ) : (
+            <>
+              <p class="font-mono text-xl text-[var(--color-console-signal)]">
+                {latestEval.passRate}%{' '}
+                <span class="text-sm text-[var(--color-console-text-dim)]">
+                  pass rate ({latestEval.passedCases}/{latestEval.totalCases}{' '}
+                  cases, {latestEval.date})
+                </span>
+              </p>
+              <div class="mt-4">
+                <Sparkline
+                  values={evalPassRateValues}
+                  ariaLabel="Eval pass rate trend"
+                />
+              </div>
+            </>
+          )
+        }
+      </div>
+    </SectionReveal>
+
+    <SectionReveal
+      client:visible
+      id="status-lighthouse"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-16"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+        >
+          Lighthouse Score History
+        </h2>
+        <span class="readout">Production Audits</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        The weekly workflow also runs Lighthouse against the live site;
+        performance score over time is plotted below.
+      </p>
+
+      <div
+        class="mt-10 rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-surface)] p-6"
+      >
+        {
+          latestLighthouse === null ? (
+            <p class="font-mono text-sm text-[var(--color-console-text-dim)]">
+              No Lighthouse history recorded yet — the weekly workflow hasn't
+              reported in.
+            </p>
+          ) : (
+            <>
+              <p class="font-mono text-xl text-[var(--color-console-signal)]">
+                {latestLighthouse.scores.performance}{' '}
+                <span class="text-sm text-[var(--color-console-text-dim)]">
+                  performance ({latestLighthouse.date})
+                </span>
+              </p>
+              <div class="mt-4">
+                <Sparkline
+                  values={lighthousePerfValues}
+                  ariaLabel="Lighthouse performance score trend"
+                />
+              </div>
+            </>
+          )
+        }
+      </div>
+    </SectionReveal>
+  </main>
+</BaseLayout>
