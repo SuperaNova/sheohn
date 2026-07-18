@@ -38,7 +38,7 @@ export type EvalSummaryEntry = {
  * `latest` mirrors the newest entry of `runs` (or `null` before the first
  * run has ever completed — the seed file ships with `{ latest: null, runs:
  * [] }`). It exists so the README's shields.io dynamic-JSON badge (and
- * spec #10's future status page) can point a stable JSONPath
+ * the /status page) can point a stable JSONPath
  * (`$.latest.passRate`) at "the current number" instead of "the last
  * element of a growing array", which shields' dynamic/json badge query
  * language (JSONPath-Plus) can't express robustly as the array grows.

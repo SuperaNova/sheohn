@@ -1,6 +1,6 @@
 // `search`: full-text search over the real, deployed Pagefind index (see
 // the `postbuild` script in package.json). A SIBLING to `grep`, not an
-// extension of it (spec #17's locked choice): `grep` (spec #01, `./text.ts`)
+// extension of it: `grep` (`./text.ts`)
 // does synchronous substring matching over the in-memory virtual FS, and
 // always succeeds/fails on the same simple pass/fail contract. `search` is
 // a separate, async query against a real, WebAssembly-backed site index
@@ -14,7 +14,7 @@
 import type { Command, ShellOutput } from '../registry';
 import { search as pagefindSearch } from '../pagefind-client';
 
-/** Exact message spec #17 locks in for the "index unavailable" case (dev
+/** Message for the "index unavailable" case (dev
  * mode, or a build that shipped without the postbuild indexing step) —
  * exported so the colocated test can assert on it without duplicating the
  * string. */

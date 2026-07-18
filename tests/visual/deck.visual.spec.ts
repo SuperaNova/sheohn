@@ -29,7 +29,7 @@ for (const theme of THEMES) {
     // Seed the boot log's once-per-session flag (src/components/agent/
     // CommandDeck.svelte's BOOT_PLAYED_KEY) via addInitScript BEFORE
     // navigation, so this snapshot captures the steady-state deck panel
-    // (shell/chat surface), not the fake BIOS boot animation from spec #02.
+    // (shell/chat surface), not the fake BIOS boot animation.
     await page.addInitScript(() => {
       try {
         sessionStorage.setItem('deck-boot-played', 'true');

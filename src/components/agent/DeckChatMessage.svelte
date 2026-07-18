@@ -8,7 +8,7 @@
   // Correlate this message's query_jared_memory tool output with footnote
   // markers on its final text part. Positional (sentence-level) citation
   // would require guessing which chunk backs which sentence in freeform LLM
-  // text, so — per spec #03's locked design — all kept facts are attached
+  // text, so all kept facts are attached
   // to the LAST text part instead, rendered as an appended footnote list.
   const ragFacts: RagFact[] = $derived.by(() => {
     if (!message.parts) return [];
