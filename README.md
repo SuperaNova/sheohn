@@ -31,24 +31,29 @@ Live at [sheohn.dev](https://sheohn.dev).
 
 ## Scripts
 
-| Command                      | What it does                                                               |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| `npm run dev`                | Start dev server at `http://localhost:4321`                                |
-| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)          |
-| `npm run preview`            | Preview the production build locally                                       |
-| `npm run lint`               | ESLint over `src/`                                                         |
-| `npm run format`             | Prettier write across the repo                                             |
-| `npm run format:check`       | Prettier check (no writes) — what CI runs                                  |
-| `npm run check`              | `astro check` (TS strict + Astro)                                          |
-| `npm run check:svelte`       | `svelte-check` over components (deeper `.svelte` types than `astro check`) |
-| `npm run knip`               | Unused files / exports / dependencies                                      |
-| `npm run secretlint`         | Scan the repo for committed secrets                                        |
-| `npm run test:unit`          | Vitest in watch mode                                                       |
-| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                                  |
-| `npm run test:e2e`           | Playwright end-to-end                                                      |
-| `npm run lighthouse:local`   | Build + Lighthouse audit locally (desktop)                                 |
-| `npm run lighthouse:mobile`  | Lighthouse audit with mobile emulation                                     |
-| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e       |
+| Command                      | What it does                                                                      |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`                | Start dev server at `http://localhost:4321`                                       |
+| `npm run build`              | Production build (writes to `.vercel/output/static/` via adapter)                 |
+| `npm run preview`            | Preview the production build locally                                              |
+| `npm run lint`               | ESLint over `src/`                                                                |
+| `npm run format`             | Prettier write across the repo                                                    |
+| `npm run format:check`       | Prettier check (no writes) — what CI runs                                         |
+| `npm run check`              | `astro check` (TS strict + Astro)                                                 |
+| `npm run check:svelte`       | `svelte-check` over components (deeper `.svelte` types than `astro check`)        |
+| `npm run knip`               | Unused files / exports / dependencies                                             |
+| `npm run secretlint`         | Scan the repo for committed secrets                                               |
+| `npm run test:unit`          | Vitest in watch mode                                                              |
+| `npm run test:unit:coverage` | Vitest single-run with v8 coverage report                                         |
+| `npm run test:e2e`           | Playwright end-to-end                                                             |
+| `npm run test:e2e:ui`        | Playwright end-to-end in UI mode (step-through debugging)                         |
+| `npm run eval:agent`         | Playwright eval suite vs. a live Gemini — needs real creds; manual/weekly-CI only |
+| `npm run mutation`           | Stryker mutation testing over `src/lib` + `src/data`                              |
+| `npm run size`               | Build + size-limit per-chunk bundle byte budgets                                  |
+| `npm run lighthouse:local`   | Build + Lighthouse audit locally (desktop)                                        |
+| `npm run lighthouse:mobile`  | Lighthouse audit with mobile emulation                                            |
+| `npm run lighthouse:live`    | Lighthouse audit against production                                               |
+| `npm run preflight`          | Full local CI chain: format / lint / check / unit / build / lh / e2e              |
 
 ### Hooks (managed by Husky)
 
@@ -86,8 +91,6 @@ UPSTASH_REDIS_REST_TOKEN=
 RESEND_API_KEY=
 ```
 
-```
-
 ## AI Chatbot Architecture
 
 The integrated AI assistant allows visitors to query your portfolio and triggers UI changes on the fly. If you want to repurpose this for yourself, here is how the core pieces fit together:
@@ -106,29 +109,27 @@ The integrated AI assistant allows visitors to query your portfolio and triggers
 ## Project layout
 
 ```
-
 src/
-├── components/ Svelte 5 islands (AgentChat, HeaderNav, HeroSection, ...)
+├── components/ Svelte 5 islands, grouped by role (agent/, chrome/, sections/, ui/, status/, colophon/)
+│   └── agent/CommandDeck.svelte  Command palette + pseudo-shell + AI chat, all in one
 ├── content/projects/ MDX case studies (filename = URL slug)
 ├── content.config.ts Astro Content Collection schema (Zod)
 ├── data/ Centralized personal info (bio, experience, socials)
 ├── layouts/ Astro layouts (BaseLayout with SEO + ClientRouter)
-├── lib/ Server helpers (system prompt, inview action)
-├── pages/ Routes; api/\* are SSR endpoints
+├── lib/ Server helpers (prompts, RAG, shell/, actions) + unit-tested pure logic
+├── pages/ Routes; api/* are SSR endpoints; colophon.astro, status.astro, stats.astro are observability pages
 └── styles/global.css Tailwind v4 entry + design tokens
-scripts/
-├── update-brain.ts Push facts into Upstash Vector (RAG sync)
-└── test-chat.ts Local smoke test for /api/chat
-.config/CLAUDE.md Agent rules — read before making changes
-
+scripts/ ~14 scripts — see the Scripts table below; notably update-brain.ts (RAG sync),
+         transform-eval-results.ts, heal-prompt.ts, ping-uptime.ts, mutation-summary.ts
+data/ Committed history JSON (eval-history/, lighthouse-history/, mutation-score.json)
+tests/ e2e/, eval/, visual/ — separate Playwright configs, see docs/TESTING.md
 ```
 
-## Agent rules (for AI assistants)
+The site also ships a few build/runtime observability pages: [`/colophon`](https://sheohn.dev/colophon) (build-time stats + architecture diagram), [`/status`](https://sheohn.dev/status) (uptime, eval, and Lighthouse history), and [`/stats`](https://sheohn.dev/stats) (self-collected RUM percentiles).
 
-See [`.config/CLAUDE.md`](./.config/CLAUDE.md) for the full set. The short version:
+## Agent rules (for AI assistants)
 
 - Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) for new components
 - Use `var(--color-*)` design tokens from `global.css`; no hardcoded hex
 - Native Svelte stores for global state — not Zustand
 - No React / Vue / Framer Motion
-```

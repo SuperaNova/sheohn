@@ -14,7 +14,7 @@ We use **Vitest** along with the **Svelte Testing Library** to test individual c
 
 ## 2. End-to-End (E2E) Testing (Playwright)
 
-We use **Playwright** to test full user flows in the browser exactly as a real user would experience them. Our Playwright setup also includes accessibility and visual regression testing.
+We use **Playwright** to test full user flows in the browser exactly as a real user would experience them. This suite also runs accessibility scans inline (below); visual regression is a separate suite (§3).
 
 - **Run E2E tests:**
   ```bash
@@ -39,18 +39,30 @@ const results = await new AxeBuilder({ page }).analyze();
 expect(results.violations).toEqual([]);
 ```
 
-### Visual Regression Testing
+## 3. Visual Regression Testing
 
-Playwright takes screenshots of components or pages and compares them against "baseline" images saved in the repository to ensure CSS changes don't accidentally break the layout.
+Visual regression is a **separate suite**, not part of `npm run test:e2e`. It lives in `tests/visual/` with its own config (`playwright.visual.config.ts`) and its own workflow (`.github/workflows/visual.yml`).
 
-- **Update baselines:** If you intentionally change the UI and a visual test fails, you need to update the baseline screenshots by running:
+- **Run it locally (compare only, no writes):**
   ```bash
-  npm run test:e2e -- --update-snapshots
+  npx playwright test --config=playwright.visual.config.ts
   ```
+- **Baselines are generated ONLY on ubuntu CI.** Font rendering and anti-aliasing differ across OSes, so a baseline generated on Windows or macOS will not match what CI produces and must never be committed. To refresh baselines:
+  1. Run the `visual.yml` workflow manually (`workflow_dispatch`) on GitHub.
+  2. Its `update-snapshots` job regenerates screenshots on ubuntu and uploads them as a build artifact (`visual-baseline-snapshots`) — it does not commit anything itself.
+  3. Download the artifact, review the images by hand, and commit `tests/visual/**/*-snapshots/**` yourself.
+- Do **not** run `--update-snapshots` locally — it silently writes win32/macOS-suffixed baseline files that CI will reject as mismatches.
+- Baseline images live alongside their spec, e.g. `tests/visual/deck.visual.spec.ts-snapshots/` and `tests/visual/pages.visual.spec.ts-snapshots/`, and are committed to version control. `playwright-report/` and `test-results/` are gitignored.
 
-_(Note: Baseline images are stored in `tests/e2e/_-snapshots/`and should be committed to version control. The`playwright-report`and`test-results` folders are ignored by git).\_
+## 4. The Eval Harness (Playwright vs. a live Gemini)
 
-## 3. Performance & SEO Testing (Lighthouse CI)
+`npm run eval:agent` runs `tests/eval/agent.eval.ts` against `playwright.eval.config.ts`, which boots `astro dev` (not build+preview — the SSR `/api/chat` route needs a real dev server) and drives the Command Deck against a **live** Gemini + Upstash Vector backend. It needs real credentials (`GOOGLE_GENERATIVE_AI_API_KEY`, `UPSTASH_VECTOR_REST_*`), so it's manual-only locally and runs weekly in CI (`.github/workflows/eval.yml`, Monday 06:00 UTC, plus `workflow_dispatch`). Each case in `tests/eval/cases.ts` checks the agent's tool-calling and RAG grounding — e.g. that a background question triggers `query_jared_memory` and the reply cites a retrieved fact. Results feed `data/eval-history/` (see the eval pass-rate badge in the README) and a regression flags an open GitHub issue via `scripts/check-eval-regression.ts`.
+
+## 5. Mutation Testing (Stryker)
+
+`npm run mutation` runs Stryker over `src/lib` + `src/data` (see `stryker.config.json`), mutating logic and re-running the unit suite to check it actually catches the mutation. It's slow, so it isn't a PR gate — it runs weekly (`.github/workflows/mutation.yml`, Monday 08:00 UTC, plus `workflow_dispatch`) and the score feeds `data/mutation-score.json` (the mutation-score badge in the README) via `scripts/mutation-summary.ts`.
+
+## 6. Performance & SEO Testing (Lighthouse CI)
 
 We run **Lighthouse** automatically against the production build to ensure performance, accessibility, best practices, and SEO scores stay high.
 

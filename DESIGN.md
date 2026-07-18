@@ -22,6 +22,7 @@ colors:
   console-line: '#4ade8038'
   console-signal: '#4ade80'
   console-signal-strong: '#22c55e'
+  console-warn: '#eab308'
   console-text: '#e6ece6'
   console-text-dim: '#9aa69a'
 typography:
@@ -161,6 +162,7 @@ The console palette is **deliberately fixed across light and dark themes**. Cont
 - **Instrument Black** (`#161616`) / **Instrument Elevated** (`#1f1f1f`): console panel surfaces (CommandDeck, Loader, boot sequence).
 - **Signal Green** (`#4ade80`) / **Signal Strong** (`#22c55e`): the "alive" indicator — pulsing status dot, active console items, links inside the deck.
 - **Console Line** (`#4ade8038`): the green-tinted hairline that frames console panels.
+- **Console Warn** (`#eab308`): the dmesg-style boot log's `[tag]:` markers (Loader, DeckBootLog) — the console's one non-green accent, reserved for boot-log severity tags only.
 - **Console Text** (`#e6ece6`) / **Console Text Dim** (`#9aa69a`): readout copy and de-emphasized console metadata.
 
 ### Named Rules
@@ -198,7 +200,6 @@ The system is **flat by default and tonally layered**. Depth comes from the four
 ### Shadow Vocabulary
 
 - **CTA Lift** (`box-shadow: 0 18px 34px rgba(28,28,25,0.22)` → hover `0 22px 46px rgba(28,28,25,0.32)`): the primary button's soft, warm-tinted drop. The only shadow that exists near-at-rest, and it grows on hover.
-- **Hard Offset** (`box-shadow: 4px 4px 0 0 var(--color-surface-container-highest)`; dark: `…var(--color-primary-container)`): the signature almanac move — a crisp, paper-cutout offset that appears under the hero "Currently" card on hover. Tactile, hand-pressed, never blurred.
 - **Floating Console** (`shadow-2xl` + `backdrop-blur-xl`): reserved exclusively for the CommandDeck overlay and theme toggle island.
 - **Spotlight Glow** (`box-shadow: 0 0 80px -20px color-mix(in srgb, var(--color-tertiary) 55%, transparent)`): the agent's scene-focus flash when a section is spotlit.
 
@@ -226,7 +227,7 @@ Quiet, tactile content components; alive, instrument-grade console components.
 
 - **Corner Style:** generous (`16px`, `rounded-2xl`).
 - **Background:** a Container-ramp step (typically `surface-container-high`, often softened with `color-mix`).
-- **Shadow Strategy:** flat at rest (see Elevation). The hero "Currently" card adopts the **Hard Offset** on hover with a `-translate-y-1` lift.
+- **Shadow Strategy:** flat at rest (see Elevation). No card currently carries a resting or hover shadow of its own — depth comes from the Container ramp.
 - **Border:** `1px` Outline-Variant hairline.
 - **Internal Padding:** `32px` (`p-8`) for content cards.
 
@@ -247,12 +248,28 @@ Quiet, tactile content components; alive, instrument-grade console components.
 
 The portfolio's bold moment. A floating console overlay: Instrument-Black at `95%` with `backdrop-blur-xl`, `rounded-xl`, framed by the green Console Line, floating on `shadow-2xl`. Everything inside is monospace Console Text. A **Signal-Green status dot pulses while the agent is thinking**; active starter/command items take a Signal-Green tint and left marker; links glow Signal Strong on hover. It is the one surface allowed to feel overtly alive — quiet content, alive instrument.
 
-## 6. Do's and Don'ts
+## 6. The Dark Instrument
+
+The dark-theme overhaul deepened the instrument metaphor beyond the CommandDeck. Six pieces, all tokens/components already in the tree:
+
+**Phosphor scene** (`HeroScene.svelte`) — a hero-confined pastel-sage synthwave: rolling perspective grid, a slatted paper sun, a horizon glow, and scanlines over a near-black sky. Every color routes through `--color-scene-*` (sage/seafoam/cream only — no neon, no hue outside the existing palette). Dark-only, `display:none` in light, paused via `IntersectionObserver` when scrolled offscreen, and fully inert under `prefers-reduced-motion`.
+
+**Specimen-plate poster hero** (`HeroSection.svelte`) — the kicker `›` eyebrow and the name split around its middle initial (`<em>` italicized in the accent color) is now the shared hero typography for _both_ themes, not a dark-only variant. Dark mode additionally frames it with a specimen-plate border and vertical field-record rails (`.hero-frame`, `.hero-rail`), hidden below ~900px and behind `html.dark`.
+
+**Circular theme whoosh** (`store.ts`'s `runThemeWhoosh`) — toggling theme fires a View Transitions `clipPath` circle-reveal expanding from the toggle button's screen position. Scoped to the transition's lifetime via the `html[data-theme-whoosh]` attribute (so it never leaks into page-navigation view transitions) and falls back to an instant class swap when `prefers-reduced-motion` is set or `document.startViewTransition` doesn't exist.
+
+**CommandDeck perch** — on desktop (`lg+`), in dark theme, while the hero is in view and the deck is collapsed, the bar detaches from its normal bottom-dock and stands on the scene's horizon instead (`--scene-perch-*` tokens). It glides back to the standard bottom-center dock the moment the visitor scrolls past the hero or opens the deck.
+
+**dmesg-style boot voice** — both the first-visit full-screen `Loader.svelte` and `CommandDeck`'s first-open `DeckBootLog.svelte` play a fake kernel boot log (`src/lib/dmesg.ts`, deterministic fake timestamps, skippable on any key/click). Severity tags use the Console Warn token (`--color-console-warn`, `#eab308`) — the console's one narrow exception to green-only.
+
+**`--scene-*` tokens** — the hero scene's geometry (horizon height, sun position/size, frame inset, perch geometry) is a separate, undocumented-by-design tuning block in `global.css`, deliberately split from the `--color-scene-*` palette tokens so layout and color can be hand-tuned independently.
+
+## 7. Do's and Don'ts
 
 ### Do:
 
 - **Do** keep the two layers absolute: field-paper colors for content, `console-*` colors only inside the CommandDeck, Loader, and system indicators.
-- **Do** use Operative Forest (`#2f5a3c` light / `#5fba82` dark) as the _only_ content accent, and Signal Green (`#4ade80`) as the _only_ console accent.
+- **Do** use Operative Forest (`#2f5a3c` light / `#5fba82` dark) as the _only_ content accent, and Signal Green (`#4ade80`) as the console's primary accent — Console Warn (`#eab308`) is the sole, narrow exception, reserved for boot-log severity tags.
 - **Do** reference `var(--color-*)` tokens from `global.css`. Never hardcode a hex.
 - **Do** layer depth with the Container ramp; let shadows appear only on hover/focus or for true overlays.
 - **Do** reserve monospace for the system voice (readout eyebrows, nav, console, decoder text, timestamps).

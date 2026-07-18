@@ -6,7 +6,7 @@ The site has a built-in AI assistant powered by the Vercel AI SDK and an Upstash
 
 The chatbot relies on a script in `scripts/update-brain.ts`. This script reads my plain-text info, turns it into mathematical vectors (embeddings), and shoots them over to my Upstash Vector database.
 
-When someone asks a question on the site, the backend (`api/chat.ts`) searches the Vector database for the most relevant chunks of text, and feeds them into the LLM (Gemini/Claude/OpenAI) so it can generate an accurate, non-hallucinated response about me.
+When someone asks a question on the site, the backend (`api/chat.ts`) searches the Vector database for the most relevant chunks of text, and feeds them into the LLM (Gemini — the only model this uses) so it can generate an accurate, non-hallucinated response about me.
 
 ```mermaid
 flowchart TD
@@ -14,11 +14,15 @@ flowchart TD
     B --> C[(Upstash Vector DB)]
 
     D[Visitor asks a question] --> E{api/chat.ts}
-    E -->|1. Searches| C
-    C -->|2. Returns top facts| E
-    E -->|3. Injects facts as context| F[LLM / Gemini]
+    E -->|1. Searches, topK=6| C
+    C -->|2. Returns candidates with scores| E
+    E -->|3. Keeps score >= 0.75, injects as context| F[LLM / Gemini]
     F -->|4. Generates response| G[Command Deck UI]
 ```
+
+## The brain also syncs via CI
+
+Pushing a change to `scripts/my_facts.json` on `main` triggers `.github/workflows/brain.yml`: it diffs a content-hash manifest (`scripts/brain-manifest.json`) against the new facts and upserts/deletes only the vectors that actually changed, then commits the updated manifest back. A PR touching `my_facts.json` gets a dry-run job instead — same diff logic, no Upstash/Gemini calls, posted as a PR comment so you can sanity-check what would change before merging. The manual path below (`npx tsx scripts/update-brain.ts`) still works locally and does the same content-hash diffing.
 
 ## Adding New Knowledge
 
