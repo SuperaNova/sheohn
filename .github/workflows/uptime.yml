@@ -1,0 +1,33 @@
+name: Uptime Ping
+
+# Hourly synthetic check against production. Writes ONLY to Upstash Redis —
+# no commit step, since per-ping commits would trigger a Vercel deploy every
+# run.
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping production and record to Redis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Ping production endpoints
+        run: npx tsx scripts/ping-uptime.ts
+        env:
+          UPTIME_TARGET_BASE_URL: https://sheohn.dev
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}

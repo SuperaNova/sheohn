@@ -2,126 +2,136 @@
   import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
+  import type { BootInfo } from '../../lib/boot-info';
+  import { buildLoaderLines } from '../../lib/dmesg';
 
-  let progress = $state(0);
+  // bootInfo is computed at build time (src/lib/boot-data.ts, Astro
+  // frontmatter only) and handed down as a plain prop — see
+  // CommandDeck.svelte for the same plumbing. Defaulted defensively so this
+  // never breaks if ever rendered without it.
+  let {
+    bootInfo = {
+      commitSha: 'dev',
+      buildTimestamp: new Date().toISOString(),
+      dependencyCount: 0,
+    },
+  }: { bootInfo?: BootInfo } = $props();
+
+  const lines = $derived.by(() => buildLoaderLines(bootInfo));
+
+  // Non-linear reveal cadence: fast bursts (~15-50ms) with a few longer
+  // beats at cluster boundaries, deterministic (no Math.random) so this
+  // stays screenshot- and e2e-stable. Total ≈1.5s + hold. Distinct from
+  // each line's displayed dmesg timestamp — a separate fake kernel clock
+  // (see dmesg.ts).
+  const LINE_DELAYS_MS = [
+    30, 20, 15, 20, 25, 60, 15, 20, 15, 50, 20, 40, 15, 40, 15, 110, 20, 15, 45,
+    15, 120, 15, 15, 20, 15, 90, 15, 15, 15, 15, 15, 15, 15, 60, 15, 70, 15, 15,
+    80, 20, 90, 20, 100, 60,
+  ];
+  const HOLD_MS = 200;
+
   let isLoading = $state(true);
   let lineCount = $state(0);
+  let logEl = $state<HTMLElement | null>(null);
+  let finished = false;
 
-  const bootLines = [
-    'booting sheohn.os',
-    'mounting modules … ok',
-    'loading agent core … ok',
-    'system ready',
-  ];
+  function finish() {
+    if (finished) return;
+    finished = true;
+    isLoading = false;
+    document.body.style.overflow = '';
+  }
+
+  // Skippable on any key/click — instantly reveals every remaining line.
+  function skip() {
+    if (finished) return;
+    lineCount = lines.length;
+    finish();
+  }
+
+  $effect(() => {
+    void lineCount;
+    if (logEl) logEl.scrollTop = logEl.scrollHeight;
+  });
 
   onMount(() => {
     if (
       typeof document !== 'undefined' &&
       document.documentElement.classList.contains('skip-loader')
     ) {
+      finished = true;
       isLoading = false;
       return;
     }
 
     document.body.style.overflow = 'hidden';
 
-    const finish = () => {
-      isLoading = false;
-      document.body.style.overflow = '';
-    };
-
     // Respect reduced motion: skip the boot animation, show the end state.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      progress = 100;
-      lineCount = bootLines.length;
-      const t = setTimeout(finish, 200);
+      lineCount = lines.length;
+      const t = setTimeout(finish, HOLD_MS);
       return () => {
         clearTimeout(t);
         document.body.style.overflow = '';
       };
     }
 
-    const duration = 800;
-    const startTime = performance.now();
-    let rafId: number;
-
-    // Reveal boot-log lines one at a time as the bar fills.
-    const lineId = setInterval(() => {
-      if (lineCount < bootLines.length) lineCount += 1;
-    }, 170);
-
-    function tick(now: number) {
-      const t = Math.min((now - startTime) / duration, 1);
-      const easeOutQuart = 1 - Math.pow(1 - t, 4);
-      progress = Math.min(Math.round(easeOutQuart * 100), 100);
-
-      if (t < 1) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        clearInterval(lineId);
-        lineCount = bootLines.length;
-        setTimeout(finish, 200);
-      }
-    }
-    rafId = requestAnimationFrame(tick);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let elapsed = 0;
+    lines.forEach((_, i) => {
+      elapsed += LINE_DELAYS_MS[i] ?? 50;
+      timers.push(
+        setTimeout(() => {
+          lineCount = i + 1;
+        }, elapsed),
+      );
+    });
+    timers.push(setTimeout(finish, elapsed + HOLD_MS));
 
     return () => {
-      cancelAnimationFrame(rafId);
-      clearInterval(lineId);
+      timers.forEach(clearTimeout);
       document.body.style.overflow = '';
     };
   });
+
+  function handleKeydown(e: KeyboardEvent) {
+    // Loader itself never unmounts (persistent client:load island) so this
+    // listener can't be scoped to <svelte:window> inside {#if isLoading} —
+    // it must no-op itself once finished, or it would swallow every
+    // keystroke on the page forever (e.g. Enter in the command deck).
+    if (finished) return;
+    // Any key skips — don't let it also scroll the page or trigger a
+    // browser default (space, "/", arrows) while the overlay is up.
+    e.preventDefault();
+    skip();
+  }
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 {#if isLoading}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <div
     id="global-loader"
+    role="log"
+    aria-label="Boot sequence"
+    aria-live="polite"
+    bind:this={logEl}
+    onclick={skip}
     out:fly={{ y: '-100%', duration: 500, easing: cubicOut }}
-    class="fixed inset-0 z-[200] flex flex-col justify-end bg-[var(--color-console-surface)] p-6 font-mono text-[var(--color-console-text)] md:p-12"
+    class="fixed inset-0 z-[200] overflow-y-auto bg-[var(--color-console-surface)] p-4 font-mono text-[11px] leading-snug text-[var(--color-console-text)] sm:p-6 sm:text-[13px]"
   >
-    <!-- Faint architectural grid backdrop -->
-    <div
-      class="grid-backdrop pointer-events-none absolute inset-0 opacity-[0.06]"
-    ></div>
-
-    <div class="relative z-10">
-      <div
-        class="mb-8 space-y-1 text-xs text-[var(--color-console-text-dim)] sm:text-sm"
-      >
-        {#each bootLines.slice(0, lineCount) as line (line)}
-          <div>
-            <span class="text-[var(--color-console-signal)]">›</span>
-            {line}
-          </div>
-        {/each}
-      </div>
-
-      <div class="flex w-full items-end justify-between">
-        <div
-          class="text-xs tracking-[0.24em] text-[var(--color-console-text-dim)] uppercase"
+    {#each lines.slice(0, lineCount) as line (line.ts)}
+      <div>
+        <span class="whitespace-pre text-[var(--color-console-signal)]"
+          >{line.ts}</span
         >
-          System Initialization
-        </div>
-        <div class="text-7xl leading-none tracking-tighter md:text-9xl">
-          {progress}%
-        </div>
+        {#if line.tag}
+          <span class="text-[var(--color-console-warn)]">{line.tag}:</span>
+        {/if}
+        {line.text}
       </div>
-
-      <div class="mt-6 h-[2px] w-full overflow-hidden bg-white/10">
-        <div
-          class="h-full bg-[var(--color-console-signal)] transition-all duration-100 ease-linear"
-          style:width="{progress}%"
-        ></div>
-      </div>
-    </div>
+    {/each}
   </div>
 {/if}
-
-<style>
-  .grid-backdrop {
-    background-image:
-      linear-gradient(to right, var(--color-console-text) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--color-console-text) 1px, transparent 1px);
-    background-size: 4rem 4rem;
-  }
-</style>

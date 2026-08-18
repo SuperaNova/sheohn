@@ -14,14 +14,20 @@ const projects = allProjects
   .sort((a, b) => b.data.order - a.data.order)
   .map((p) => ({ slug: p.id, ...p.data }));
 import { personalInfo } from '../data/personalInfo';
+// Build-time only (pulls in node:child_process); just the SHA string
+// crosses into HeroSection's client bundle.
+import { getBootInfo } from '../lib/boot-data';
+
+const bootCommitSha = getBootInfo().commitSha;
 ---
 
 <BaseLayout
   title={`${personalInfo.name} - Portfolio`}
   description={`Portfolio of ${personalInfo.name} - ${personalInfo.title}`}
+  image="/og/home.png"
 >
   <main class="bg-[var(--color-surface)]">
-    <HeroSection client:load />
+    <HeroSection client:load {bootCommitSha} />
 
     <WorkManifest client:visible projects={projects} />
 

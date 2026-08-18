@@ -5,6 +5,7 @@ import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
 import CustomCursor from '../components/chrome/CustomCursor.svelte';
+import RumCollector from '../components/chrome/RumCollector.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandDeck from '../components/agent/CommandDeck.svelte';
 import { ClientRouter } from 'astro:transitions';
@@ -12,6 +13,12 @@ import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 
 import { personalInfo } from '../data/personalInfo';
+// Build-time only (pulls in node:child_process for the git-SHA fallback) —
+// evaluated here in Astro frontmatter, never imported by client code. See
+// src/lib/boot-data.ts for the full rationale.
+import { getBootInfo } from '../lib/boot-data';
+
+const bootInfo = getBootInfo();
 
 interface Props {
   title: string;
@@ -22,7 +29,7 @@ interface Props {
 const {
   title,
   description = `Portfolio of ${personalInfo.name} - ${personalInfo.title}.`,
-  image = '/og-image.jpg',
+  image = '/og/home.png',
 } = Astro.props;
 
 const canonicalURL = new URL(
@@ -39,6 +46,10 @@ const canonicalURL = new URL(
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <!-- Mobile browser-chrome color; kept in sync with the theme by the
+         inline script below (first paint + client-router nav) and by
+         store.ts's theme.subscribe (toggle, set_theme, whooshes). -->
+    <meta name="theme-color" content="#f3efe8" />
 
     <script
       type="application/ld+json"
@@ -84,10 +95,10 @@ const canonicalURL = new URL(
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
       rel="stylesheet"
     />
     <ClientRouter />
@@ -117,6 +128,15 @@ const canonicalURL = new URL(
         } else {
           document.documentElement.classList.remove('dark');
         }
+        const themeColorMeta = document.querySelector(
+          'meta[name="theme-color"]',
+        );
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute(
+            'content',
+            theme === 'dark' ? '#050505' : '#f3efe8',
+          );
+        }
 
         // 2. Prevent Loader from playing multiple times per session
         if (sessionStorage.getItem('loader-played')) {
@@ -144,7 +164,7 @@ const canonicalURL = new URL(
   >
     <!-- Console boot screen: plays once per session (skip-loader guard in the
          inline head script hides it on return visits / view transitions). -->
-    <Loader client:load />
+    <Loader client:load {bootInfo} />
 
     <!-- Ambient Background Glows -->
     <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
@@ -179,6 +199,10 @@ const canonicalURL = new URL(
     <ScrollProgress client:idle transition:persist />
     <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
+    <!-- Self-built RUM sibling to the Vercel telemetry below: no Svelte
+         reactivity needed, this island just runs the PerformanceObserver +
+         sendBeacon collector once and stays mounted via transition:persist. -->
+    <RumCollector client:idle transition:persist />
     <HeaderNav client:load transition:persist />
 
     <!-- pb leaves a scroll runway so the docked command deck never sits on top
@@ -190,7 +214,7 @@ const canonicalURL = new URL(
     <!-- Unified command surface: deterministic /commands + the AI agent in one
          docked bar. transition:persist keeps the conversation alive while the
          agent navigates the site (scene control / opening case studies). -->
-    <CommandDeck client:idle transition:persist />
+    <CommandDeck client:idle transition:persist {bootInfo} />
 
     <Analytics />
     <SpeedInsights />

@@ -40,11 +40,20 @@ export function linkify(text: string): Segment[] {
         href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
       );
     } else {
-      const label = m[3] ?? '';
+      const raw = m[3] ?? '';
+      // Strip trailing sentence punctuation ("see https://x.com." should link
+      // "https://x.com" and leave the period as trailing text) before
+      // validating the URL.
+      const trailingMatch = raw.match(/[.,;:!?'"]+$/);
+      const trailing = trailingMatch ? trailingMatch[0] : '';
+      const label = trailing ? raw.slice(0, -trailing.length) : raw;
       const href = safeHref(label);
-      segments.push(
-        href ? { kind: 'link', label, href } : { kind: 'text', value: m[0] },
-      );
+      if (href) {
+        segments.push({ kind: 'link', label, href });
+        if (trailing) segments.push({ kind: 'text', value: trailing });
+      } else {
+        segments.push({ kind: 'text', value: m[0] });
+      }
     }
     last = re.lastIndex;
   }

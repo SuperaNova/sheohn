@@ -1,0 +1,123 @@
+name: Bundle Size
+
+# size-limit per-chunk byte budgets over the built client output (see
+# .size-limit.js).
+#
+# andresz1/size-limit-action is unmaintained (last release Apr 2024), so
+# this workflow runs `size-limit` directly and posts the PR comment with
+# the `gh` CLI,
+# matching this repo's existing convention (see `eval.yml`'s regression-issue
+# steps) instead of introducing `actions/github-script`.
+
+on:
+  pull_request:
+    branches: [main]
+
+# Cancel older runs on the same PR when a new push lands (mirrors ci.yml).
+concurrency:
+  group: bundle-size-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default GITHUB_TOKEN permissions may be read-only depending on repo/org
+# settings; this workflow reads the repo (twice, PR + main) and comments on
+# the PR, so both are declared explicitly.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bundle-size:
+    name: size-limit budgets + PR byte-diff comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          path: pr
+
+      - name: Checkout main branch
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          path: base
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'npm'
+          cache-dependency-path: |
+            pr/package-lock.json
+            base/package-lock.json
+
+      - name: Install dependencies (PR branch)
+        working-directory: pr
+        run: npm ci --legacy-peer-deps
+
+      - name: Build (PR branch)
+        working-directory: pr
+        run: npm run build
+        env:
+          # Stub secrets so the build doesn't fail importing API routes.
+          # No external calls happen during the static build.
+          GOOGLE_GENERATIVE_AI_API_KEY: stub
+          UPSTASH_VECTOR_REST_URL: https://stub.upstash.io
+          UPSTASH_VECTOR_REST_TOKEN: stub
+          UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: stub
+          RESEND_API_KEY: stub
+
+      - name: Measure PR bundle
+        working-directory: pr
+        # continue-on-error: this step's exit code isn't the enforcement
+        # gate (that's the dedicated "Enforce budgets" step below) — it just
+        # needs to produce pr-size.json even when a chunk is over budget, so
+        # the diff comment below still has data to report.
+        continue-on-error: true
+        run: npx size-limit --json > ../pr-size.json
+
+      - name: Install dependencies (main branch)
+        working-directory: base
+        # `main` may not have `.size-limit.js` / the size-limit devDeps yet
+        # (e.g. the very first PR introducing this workflow) — that's fine,
+        # the steps below tolerate a missing/failed base measurement.
+        run: npm ci --legacy-peer-deps
+
+      - name: Build (main branch)
+        working-directory: base
+        run: npm run build
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: stub
+          UPSTASH_VECTOR_REST_URL: https://stub.upstash.io
+          UPSTASH_VECTOR_REST_TOKEN: stub
+          UPSTASH_REDIS_REST_URL: https://stub.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: stub
+          RESEND_API_KEY: stub
+
+      - name: Measure main bundle
+        working-directory: base
+        continue-on-error: true
+        run: npx size-limit --json > ../base-size.json
+
+      - name: Build the PR comment body
+        run: node pr/scripts/bundle-size-diff.mjs pr-size.json base-size.json > comment-body.md
+
+      - name: Comment byte diff on the PR
+        # Deliberately posts a NEW comment on every push rather than using
+        # `gh pr comment --edit-last`: --edit-last targets the most recent
+        # comment by the SAME author, and every workflow authenticating with
+        # the default GITHUB_TOKEN comments as github-actions[bot] — so on a
+        # PR where brain.yml's dry-run job also comments, --edit-last would
+        # overwrite the brain-sync diff (or vice versa on later pushes). One
+        # fresh comment per push is acceptable noise and can never clobber
+        # another workflow's comment (same approach as brain.yml).
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --body-file comment-body.md
+
+      - name: Enforce budgets (fails the job on over-budget)
+        working-directory: pr
+        run: npx size-limit

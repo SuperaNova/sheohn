@@ -4,6 +4,11 @@ export const personalInfo = {
   location: 'Cebu, PH',
   timezone: 'Asia/Manila',
   education: 'Bachelor of Science in Computer Science @ CIT-U',
+  // Condensed line for the hero's dark-poster typography (both themes).
+  heroMeta:
+    'BSCS @ CIT-U · President, GDG on Campus · systems, backend, AI workflows',
+  // Single toggle for every "available for opportunities" surface.
+  availableForOpportunities: true,
   bio: 'President of GDG on Campus CIT-U. Systems-focused developer building reliable backend infrastructure, AI workflows, and low-level tools.',
   strategicNote:
     'Dedicated to building optimized, system-level architectures and robust, high-performance software across cloud and local environments.',

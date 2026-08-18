@@ -194,7 +194,9 @@
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     resetBall();
-    playing = true;
+    // Hold the serve under reduced motion; mouse/touch movement still starts
+    // the game. Also keeps visual-regression screenshots deterministic.
+    playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     gameLoop();
 
     return () => {

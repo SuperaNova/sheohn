@@ -56,3 +56,7 @@ blob-report/
 
 # git worktrees
 .worktrees/
+
+# Stryker mutation testing
+stryker-tmp/
+reports/mutation/

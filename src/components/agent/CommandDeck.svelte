@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { fly } from 'svelte/transition';
+  import { SvelteSet } from 'svelte/reactivity';
+  import { get } from 'svelte/store';
 
   import { Chat } from '@ai-sdk/svelte';
   import { DefaultChatTransport } from 'ai';
@@ -13,6 +15,9 @@
     setTheme,
     commandDeckOpen,
     agentQuery,
+    lastRagTrace,
+    theme,
+    heroInView,
     type SceneTarget,
   } from '../../store';
   import { personalInfo } from '../../data/personalInfo';
@@ -20,8 +25,30 @@
   import DeckCommandList from './DeckCommandList.svelte';
   import DeckChatLog from './DeckChatLog.svelte';
   import DeckStarterChips from './DeckStarterChips.svelte';
+  import DeckShellOutput from './DeckShellOutput.svelte';
+  import DeckBootLog from './DeckBootLog.svelte';
+  import { execute } from '../../lib/shell/executor';
+  import { complete } from '../../lib/shell/completion';
+  import { getHistory, pushHistory } from '../../lib/shell/history';
+  import { vfsRoot } from '../../lib/shell/vfs';
+  import type { ShellCtx, ShellLogEntry } from '../../lib/shell/registry';
+  import type { BootInfo } from '../../lib/boot-info';
+  import { formatRagTrace, type RagQueryResult } from '../../lib/rag';
+  import { prefersReducedMotion } from '../../lib/motion';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
+
+  // Boot info is computed at build time (src/lib/boot-data.ts, Astro
+  // frontmatter only — see that file's doc comment) and handed down as a
+  // plain serializable prop. Defaulted defensively so the component never
+  // breaks if ever rendered without it (e.g. a future test harness).
+  let {
+    bootInfo = {
+      commitSha: 'dev',
+      buildTimestamp: new Date().toISOString(),
+      dependencyCount: 0,
+    },
+  }: { bootInfo?: BootInfo } = $props();
 
   // ── Deterministic commands (the `/` namespace) ─────────────────────────────
   // Lifted from the former CommandPalette so navigation stays instant + offline.
@@ -37,15 +64,47 @@
       label: 'Open résumé (pdf)',
       run: () => window.open(personalInfo.resumeUrl, '_blank'),
     },
+    {
+      name: 'trace',
+      label: 'Replay last RAG retrieval trace',
+      run: () => runTrace(),
+    },
   ];
 
   let inputEl = $state<HTMLInputElement | null>(null);
   let deckRoot = $state<HTMLElement | null>(null);
+
+  // Perched "field unit" posture: collapsed deck stands on the dark hero's
+  // horizon and glides down to the normal bottom-centre dock on scroll.
+  // Desktop-only (the frame/rails hide below lg too).
+  let isLg = $state(false);
+  $effect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => (isLg = mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  });
   let inputValue = $state('');
   let selectedIndex = $state(0);
   // Highlighted recommended chip for keyboard (↑/↓) navigation; -1 = none.
   let starterIndex = $state(-1);
   let expanded = $state(false);
+  // Opening from the perch delays the panel's fly-in until the bar has
+  // glided into dock; closing lags re-perching until the panel has flown
+  // out. Both avoid the panel and the gliding bar overlapping mid-transition.
+  const PANEL_GLIDE_DELAY_MS = 600;
+  const REPERCH_DELAY_MS = 250;
+  let openedFromPerch = $state(false);
+  let reperchHold = $state(false);
+  let reperchTimer: ReturnType<typeof setTimeout> | undefined;
+  const perched = $derived(
+    $theme === 'dark' && $heroInView && !expanded && isLg && !reperchHold,
+  );
+  // The "power on" chip is pointless once the site is already dark.
+  const visibleStarters = $derived(
+    starters.filter((s) => !s.hideWhenDark || $theme !== 'dark'),
+  );
   let chatError = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
   let pending = $state<string | null>(null);
@@ -58,12 +117,79 @@
   // Tailwind max-h-72 fallback applies on the server / before hydration).
   let listMaxPx = $state(0);
 
+  // ── Boot log (fake BIOS boot sequence) ──────────────────────────────────
+  // Plays once per browser session, the first time the deck expands. Gated
+  // by a sessionStorage key distinct from Loader.svelte's 'loader-played' so
+  // the two once-per-session animations don't collide.
+  const BOOT_PLAYED_KEY = 'deck-boot-played';
+  let showBootLog = $state(false);
+
+  function completeBoot() {
+    showBootLog = false;
+  }
+
+  // ── Shell state (pseudo-shell input router, src/lib/shell/) ─────────────
+  let cwd = $state('/');
+  let shellLog = $state<ShellLogEntry[]>([]);
+  let shellHistory = $state<string[]>(getHistory());
+  // What the visitor was typing before ArrowUp started browsing history —
+  // restored once they arrow back past the most recent entry.
+  let historyDraft = $state('');
+  let historyCursor = $state<number | null>(null);
+  let completionCandidates = $state<string[]>([]);
+
+  // Clears the completion hint the moment the visitor types past a shown
+  // suggestion (Tab-driven single-match completion sets inputValue itself
+  // and clears candidates inline, so this only fires for manual typing).
+  $effect(() => {
+    void inputValue;
+    completionCandidates = [];
+  });
+
   // Keep local `expanded` in sync with the shared store (hero CTA, Cmd+K).
   $effect(() => {
     const open = $commandDeckOpen;
     untrack(() => {
+      const wasExpanded = expanded;
       expanded = open;
-      if (open) queueMicrotask(() => inputEl?.focus());
+      clearTimeout(reperchTimer);
+
+      if (open) {
+        // Only delay the panel's fly-in when it was actually perched a
+        // moment ago — docked opens (light, subpages, mobile, scrolled)
+        // stay snappy.
+        openedFromPerch =
+          !prefersReducedMotion() && $theme === 'dark' && $heroInView && isLg;
+        reperchHold = false;
+        queueMicrotask(() => inputEl?.focus());
+        // First expand of the browser session: play the boot log instead of
+        // the normal panel content. Subsequent opens (this tab, this
+        // session) skip straight past it.
+        if (
+          !showBootLog &&
+          typeof sessionStorage !== 'undefined' &&
+          !sessionStorage.getItem(BOOT_PLAYED_KEY)
+        ) {
+          sessionStorage.setItem(BOOT_PLAYED_KEY, 'true');
+          showBootLog = true;
+        }
+        return;
+      }
+
+      // Closing: if this would re-perch, hold it back until the panel's
+      // fly-out has cleared the dock.
+      if (
+        wasExpanded &&
+        !prefersReducedMotion() &&
+        $theme === 'dark' &&
+        $heroInView &&
+        isLg
+      ) {
+        reperchHold = true;
+        reperchTimer = setTimeout(() => {
+          reperchHold = false;
+        }, REPERCH_DELAY_MS);
+      }
     });
   });
 
@@ -75,12 +201,14 @@
   type ToolCallArgs = {
     focus?: string;
     section?: string;
-    slug?: string;
     mode?: string;
   };
 
   // One handler per tool name — each validates its own args and no-ops on a
   // mismatch, so an unrecognized/malformed call is simply ignored.
+  // open_case_study is NOT handled here: the tool *call* can carry a
+  // hallucinated slug, so navigation waits for the server's validated result
+  // (see the messages effect below).
   const toolCallHandlers: Record<string, (args: ToolCallArgs) => void> = {
     trigger_ui_state: (args) => {
       if (args.focus) setFocus(args.focus);
@@ -89,9 +217,6 @@
       if (args.section && SCENE_TARGETS.includes(args.section)) {
         dispatchScene(args.section as SceneTarget);
       }
-    },
-    open_case_study: (args) => {
-      if (args.slug) dispatchRoute(`/projects/${args.slug}`);
     },
     set_theme: (args) => {
       if (args.mode === 'light' || args.mode === 'dark') setTheme(args.mode);
@@ -147,6 +272,51 @@
     if (inputValue.trim() !== '') starterIndex = -1;
   });
 
+  // Navigate to a case study only once the server tool has validated the slug
+  // (`status: 'opening'`) — navigating on the raw tool call would send the
+  // visitor to a 404 when the model hallucinates a slug, even though the
+  // server replies `not_found` so the model can correct itself in text.
+  const handledCaseStudyCalls = new SvelteSet<string>();
+  $effect(() => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type !== 'tool-open_case_study') continue;
+        const p = part as {
+          toolCallId: string;
+          state: string;
+          output?: { status?: string; slug?: string };
+        };
+        if (p.state !== 'output-available') continue;
+        if (handledCaseStudyCalls.has(p.toolCallId)) continue;
+        handledCaseStudyCalls.add(p.toolCallId);
+        if (p.output?.status === 'opening' && p.output.slug) {
+          dispatchRoute(`/projects/${p.output.slug}`);
+        }
+      }
+    }
+  });
+
+  // Mirrors the tool-open_case_study effect above: capture the most recent
+  // query_jared_memory result as it lands so `/trace` can replay it (spec
+  // #03's `lastRagTrace` store, src/store.ts).
+  const handledRagCalls = new SvelteSet<string>();
+  $effect(() => {
+    for (const message of messages) {
+      for (const part of message.parts) {
+        if (part.type !== 'tool-query_jared_memory') continue;
+        const p = part as {
+          toolCallId: string;
+          state: string;
+          output?: RagQueryResult;
+        };
+        if (p.state !== 'output-available') continue;
+        if (handledRagCalls.has(p.toolCallId)) continue;
+        handledRagCalls.add(p.toolCallId);
+        if (p.output) lastRagTrace.set(p.output);
+      }
+    }
+  });
+
   let wasLoading = false;
   $effect(() => {
     const loading = isLoading;
@@ -182,6 +352,44 @@
     navigate(path);
   }
 
+  // Injected into every shell command run — mirrors the store.ts calls the
+  // original DeckCommand.run bodies made directly, so `home`/`theme`/`resume`
+  // etc. behave identically whether typed bare or (still) via `/`.
+  function buildShellCtx(): ShellCtx {
+    return {
+      cwd,
+      vfs: vfsRoot,
+      history: shellHistory,
+      setCwd: (path) => {
+        cwd = path;
+      },
+      navigate: goto,
+      toggleTheme: () => toggleTheme(),
+      openResume: () => window.open(personalInfo.resumeUrl, '_blank'),
+      closeDeck: close,
+      clearOutput: () => {
+        shellLog = [];
+      },
+      getLastRagTrace: () => get(lastRagTrace),
+    };
+  }
+
+  // `/trace` command-palette fallback (pre-shell / `/`-prefixed dispatch —
+  // the bare `trace` shell builtin, src/lib/shell/builtins/trace.ts, covers
+  // the un-prefixed form). Shares formatRagTrace with that builtin so both
+  // entry points render identical output.
+  function runTrace() {
+    shellLog = [
+      ...shellLog,
+      {
+        command: '/trace',
+        lines: formatRagTrace(get(lastRagTrace)),
+        error: false,
+      },
+    ];
+    inputValue = '';
+  }
+
   function ask(text: string) {
     const trimmed = text.trim();
     if (!trimmed || !chat) return;
@@ -196,10 +404,37 @@
     inputValue = '';
   }
 
-  function handleSubmit(e: SubmitEvent) {
+  async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     if (commandMode) {
       filteredCommands[selectedIndex]?.run();
+      return;
+    }
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+
+    completionCandidates = [];
+    historyCursor = null;
+
+    // Try the client-side shell first — deterministic commands resolve
+    // instantly, offline. Anything the parser doesn't recognize as a known
+    // command falls through to the LLM agent exactly as free text does today.
+    const result = await execute(trimmed, buildShellCtx());
+    if (result.recognized) {
+      shellHistory = pushHistory(trimmed);
+      // `clear` already emptied shellLog via ctx.clearOutput — don't
+      // immediately re-append an entry for it.
+      if (trimmed.split(/\s+/)[0] !== 'clear') {
+        shellLog = [
+          ...shellLog,
+          {
+            command: trimmed,
+            lines: result.output.lines,
+            error: !!result.output.error,
+          },
+        ];
+      }
+      inputValue = '';
       return;
     }
     ask(inputValue);
@@ -220,21 +455,70 @@
   // row, so ←/→ are the primary axis; ↑/↓ are accepted too so it works
   // however the visitor reaches for it. Enter fires the highlighted chip.
   function onStarterKeydown(e: KeyboardEvent) {
-    if (!starters.length) return;
+    const chips = visibleStarters;
+    if (!chips.length) return;
     const next = e.key === 'ArrowRight' || e.key === 'ArrowDown';
     const prev = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
     if (next) {
       e.preventDefault();
-      starterIndex = (starterIndex + 1) % starters.length;
+      starterIndex = (starterIndex + 1) % chips.length;
     } else if (prev) {
       e.preventDefault();
-      starterIndex = (starterIndex <= 0 ? starters.length : starterIndex) - 1;
+      starterIndex = (starterIndex <= 0 ? chips.length : starterIndex) - 1;
     } else if (e.key === 'Enter' && starterIndex >= 0) {
       e.preventDefault();
-      const starter = starters[starterIndex];
+      const starter = chips[starterIndex];
       if (starter) ask(starter.q);
       starterIndex = -1;
     }
+  }
+
+  // Tab-completion (command names / vfs paths) and ArrowUp/ArrowDown history
+  // recall for the shell — only reachable once there's non-'/', non-empty
+  // input (starter-chip nav owns ArrowUp/Down while the input is empty).
+  function onShellKeydown(e: KeyboardEvent) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const cursor = inputEl?.selectionStart ?? inputValue.length;
+      const result = complete(inputValue, cursor, vfsRoot, cwd);
+      if (result.candidates.length === 1) {
+        const candidate = result.candidates[0] ?? '';
+        const before = inputValue.slice(0, result.replaceStart);
+        const after = inputValue.slice(cursor);
+        inputValue = before + candidate + after;
+        const pos = before.length + candidate.length;
+        queueMicrotask(() => inputEl?.setSelectionRange(pos, pos));
+        completionCandidates = [];
+      } else {
+        completionCandidates = result.candidates;
+      }
+      return;
+    }
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    navigateHistory(e.key === 'ArrowUp' ? -1 : 1);
+  }
+
+  // -1 = older (ArrowUp), 1 = newer (ArrowDown). Mirrors a normal terminal:
+  // walking past the newest entry restores whatever the visitor was typing.
+  function navigateHistory(direction: -1 | 1) {
+    if (!shellHistory.length) return;
+    if (historyCursor === null) {
+      if (direction !== -1) return;
+      historyDraft = inputValue;
+      historyCursor = shellHistory.length - 1;
+      inputValue = shellHistory[historyCursor] ?? '';
+      return;
+    }
+    const next = historyCursor + direction;
+    if (next < 0) return;
+    if (next >= shellHistory.length) {
+      historyCursor = null;
+      inputValue = historyDraft;
+      return;
+    }
+    historyCursor = next;
+    inputValue = shellHistory[next] ?? '';
   }
 
   function onInputKeydown(e: KeyboardEvent) {
@@ -242,11 +526,15 @@
       onCommandModeKeydown(e);
       return;
     }
-    if (inputValue.trim() === '') onStarterKeydown(e);
+    if (inputValue.trim() === '') {
+      onStarterKeydown(e);
+      return;
+    }
+    onShellKeydown(e);
   }
 
   function handleWindowKeydown(e: KeyboardEvent) {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       if (expanded) close();
       else {
@@ -319,11 +607,17 @@
   bind:this={deckRoot}
   aria-label="Command Deck"
   data-cursor-green="true"
-  class="fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
+  class="deck-root fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
+  class:deck-perched={perched}
 >
   {#if expanded}
     <div
-      transition:fly={{ y: 16, duration: 220 }}
+      in:fly={{
+        y: 16,
+        duration: 220,
+        delay: openedFromPerch ? PANEL_GLIDE_DELAY_MS : 0,
+      }}
+      out:fly={{ y: 16, duration: 220 }}
       class="mb-2 overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 shadow-2xl backdrop-blur-xl"
     >
       <div
@@ -347,51 +641,85 @@
           >esc</button
         >
       </div>
-      {#if commandMode}
-        <!-- Deterministic command palette -->
-        <DeckCommandList
-          commands={filteredCommands}
-          {selectedIndex}
-          {inputValue}
-          maxHeightPx={listMaxPx}
-          onHover={(i) => (selectedIndex = i)}
-        />
-      {:else if chatError}
-        <div class="p-4 font-mono text-xs text-red-400">
-          [ agent offline ] — slash-commands still work. Type
-          <span class="text-[var(--color-console-signal)]">/</span> to list them.
-        </div>
-      {:else if messages.length}
-        <!-- Agent conversation -->
-        <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
-        <!-- Persistent recommended commands — reachable after chatting too. -->
-        {@render starterChips(
-          'border-t border-[var(--color-console-line)] p-3',
-        )}
+      {#if showBootLog}
+        <!-- Fake BIOS boot log — plays once per session, above the
+             normal shell/chat surface, before falling through to it. -->
+        <DeckBootLog {bootInfo} onComplete={completeBoot} />
       {:else}
-        <!-- Empty state: starter queries that each drive the page -->
-        <div class="p-4 font-mono text-[13px]">
-          <p class="text-[var(--color-console-text-dim)]">
-            <span class="text-[var(--color-console-signal)]">system:</span> ask
-            about Jared, or type
-            <span class="text-[var(--color-console-signal)]">/</span> for commands.
-          </p>
-          {@render starterChips('mt-3')}
-        </div>
+        {#if shellLog.length}
+          <!-- Shell command output — rendered alongside, not instead of, the
+               LLM transcript below, so a mixed shell + chat session stays legible. -->
+          <DeckShellOutput
+            log={shellLog}
+            maxHeightPx={listMaxPx ? Math.round(listMaxPx * 0.6) : undefined}
+          />
+        {/if}
+        {#if commandMode}
+          <!-- Deterministic command palette -->
+          <DeckCommandList
+            commands={filteredCommands}
+            {selectedIndex}
+            {inputValue}
+            maxHeightPx={listMaxPx}
+            onHover={(i) => (selectedIndex = i)}
+          />
+        {:else if chatError}
+          <div class="p-4 font-mono text-xs text-red-400">
+            [ agent offline ] — slash-commands still work. Type
+            <span class="text-[var(--color-console-signal)]">/</span> to list them.
+          </div>
+        {:else if messages.length}
+          <!-- Agent conversation -->
+          <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
+          <!-- Persistent recommended commands — reachable after chatting too. -->
+          {@render starterChips(
+            'border-t border-[var(--color-console-line)] p-3',
+          )}
+        {:else}
+          <!-- Empty state: starter queries that each drive the page -->
+          <div class="p-4 font-mono text-[13px]">
+            <p class="text-[var(--color-console-text-dim)]">
+              <span class="text-[var(--color-console-signal)]">system:</span>
+              ask about Jared, or type
+              <span class="text-[var(--color-console-signal)]">/</span> for commands.
+            </p>
+            {@render starterChips('mt-3')}
+          </div>
+        {/if}
       {/if}
     </div>
   {/if}
 
   {#snippet starterChips(wrapperClass: string)}
     <div class={wrapperClass}>
-      <DeckStarterChips {starters} {starterIndex} showHint={true} onAsk={ask} />
+      <DeckStarterChips
+        starters={visibleStarters}
+        {starterIndex}
+        showHint={true}
+        onAsk={ask}
+      />
     </div>
   {/snippet}
+
+  <!-- Perched "field unit" readout — collapses away when the deck docks.
+       Decorative flavor text (real build data), not unique page content. -->
+  <div class="deck-readout" aria-hidden="true">
+    <p class="deck-readout-head">
+      <span class="deck-readout-pulse"></span>
+      sheohn·os — field unit
+    </p>
+    <p><span class="deck-ok">[ok]</span> build {bootInfo.commitSha} · vercel</p>
+    <p>
+      <span class="deck-ok">[ok]</span>
+      {bootInfo.dependencyCount} deps · rag online
+    </p>
+    <p class="deck-dim">agent: idle<span class="deck-cursor">▌</span></p>
+  </div>
 
   <!-- The persistent docked command bar -->
   <form
     onsubmit={handleSubmit}
-    class="flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_0_40px_rgba(74,222,128,0.15)] backdrop-blur-xl transition-all duration-500 focus-within:border-[var(--color-console-signal)]/50 focus-within:shadow-[0_0_50px_rgba(74,222,128,0.25)]"
+    class="deck-bar flex items-center gap-2 rounded-full border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-4 py-2.5 shadow-[0_0_40px_rgba(74,222,128,0.15)] backdrop-blur-xl transition-all duration-500 focus-within:border-[var(--color-console-signal)]/50 focus-within:shadow-[0_0_50px_rgba(74,222,128,0.25)]"
   >
     <span
       class="font-mono text-sm text-[var(--color-console-signal)]"
@@ -433,4 +761,159 @@
       >{shortcut}</kbd
     >
   </form>
+
+  {#if completionCandidates.length > 1}
+    <!-- Ambiguous Tab-completion — multiple matches, nothing auto-filled. -->
+    <div
+      class="mt-1.5 truncate rounded-lg border border-[var(--color-console-line)] bg-[var(--color-console-surface)]/95 px-3 py-1 font-mono text-[11px] text-[var(--color-console-text-dim)] backdrop-blur-xl"
+    >
+      {completionCandidates.join('  ')}
+    </div>
+  {/if}
 </aside>
+
+<style>
+  /* Readout lines hidden while docked; the perch rules below reveal them.
+     Perch geometry comes from the --scene-perch-* tunables in global.css. */
+  .deck-readout {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 1.1rem;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    font-size: 0.72rem;
+    line-height: 1.9;
+    color: var(--color-console-text);
+    transition:
+      max-height 0.45s ease,
+      opacity 0.3s ease,
+      padding 0.45s ease;
+  }
+
+  .deck-readout-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    color: var(--color-console-signal);
+    margin-bottom: 0.35rem;
+  }
+
+  .deck-readout-pulse {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--color-console-signal);
+  }
+
+  .deck-ok {
+    color: var(--color-console-signal);
+  }
+
+  .deck-dim {
+    color: var(--color-console-text-dim);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .deck-readout-pulse {
+      animation: deck-pulse 2.2s ease-in-out infinite;
+    }
+    .deck-cursor {
+      animation: deck-blink 1.1s steps(2, start) infinite;
+    }
+  }
+
+  @keyframes deck-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @keyframes deck-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Perch/dock glide — desktop dark-hero only. The transition lives on the
+     lg+ rule so the mobile keyboard-offset bottom tweak never animates. */
+  @media (min-width: 1024px) {
+    :global(html.dark) .deck-root {
+      transition:
+        left 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        bottom 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+        translate 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Tailwind's -translate-x-1/2 centers the docked bar via the `translate`
+       property (not `transform`) — cancel that same property when perched. */
+    :global(html.dark) .deck-root.deck-perched {
+      left: calc(100vw - var(--scene-perch-width) - var(--scene-perch-right));
+      bottom: var(--scene-perch-bottom);
+      width: var(--scene-perch-width);
+      translate: 0;
+    }
+
+    :global(html.dark) .deck-perched .deck-readout {
+      max-height: 10rem;
+      opacity: 1;
+      padding: 0.8rem 1.1rem 0.4rem;
+    }
+
+    /* Perched, the pill reads as the console's input line inside one panel:
+       the aside carries the panel chrome, the form drops its own. */
+    :global(html.dark) .deck-perched {
+      border: 1px solid var(--color-console-line);
+      border-radius: 12px;
+      background: color-mix(
+        in srgb,
+        var(--color-console-surface) 95%,
+        transparent
+      );
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 40px rgba(74, 222, 128, 0.12);
+    }
+
+    :global(html.dark) .deck-perched .deck-bar {
+      border-color: transparent;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      padding-top: 0.35rem;
+      padding-bottom: 0.7rem;
+    }
+
+    /* Console-line type size while perched, so the full placeholder fits
+       the narrow panel. */
+    :global(html.dark) .deck-perched .deck-bar input,
+    :global(html.dark) .deck-perched .deck-bar span {
+      font-size: 0.72rem;
+    }
+
+    /* Landing shadow: the console stands on the grid, not in the air. */
+    .deck-root::after {
+      content: '';
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: -16px;
+      height: 24px;
+      background: radial-gradient(
+        ellipse 50% 50% at 50% 50%,
+        rgba(3, 8, 5, 0.85),
+        transparent 70%
+      );
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    :global(html.dark) .deck-perched::after {
+      opacity: 1;
+    }
+  }
+</style>

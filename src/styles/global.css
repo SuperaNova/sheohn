@@ -46,8 +46,32 @@
   --color-console-line: rgba(74, 222, 128, 0.22);
   --color-console-signal: #4ade80;
   --color-console-signal-strong: #22c55e;
+  --color-console-warn: #eab308;
   --color-console-text: #e6ece6;
   --color-console-text-dim: #9aa69a;
+
+  /* Dark-hero pastel-phosphor scene tokens — sage/seafoam/cream only, no
+     new hue. Hardcoded hex/rgba lives ONLY inside this token block;
+     everything that paints the scene references var(--color-scene-*). */
+  --color-scene-sky-0: #05080a;
+  --color-scene-sky-1: #0a1410;
+  --color-scene-sky-2: #142a1e;
+  --color-scene-grid-line: rgba(169, 216, 187, 0.55);
+  --color-scene-grid-shadow: rgba(169, 216, 187, 0.3);
+  --color-scene-horizon-line: #a9d8bb;
+  --color-scene-glow: rgba(191, 230, 207, 0.55);
+  --color-scene-glow-soft: rgba(191, 230, 207, 0.12);
+  --color-scene-glow-shadow: rgba(191, 230, 207, 0.35);
+  --color-scene-sun-top: #f3efe8;
+  --color-scene-sun-mid: #dceade;
+  --color-scene-sun-bottom: #b9d9c6;
+  --color-scene-star-cream-1: rgba(243, 239, 232, 0.9);
+  --color-scene-star-cream-2: rgba(243, 239, 232, 0.7);
+  --color-scene-star-cream-3: rgba(243, 239, 232, 0.55);
+  --color-scene-star-seafoam-1: rgba(191, 230, 207, 0.8);
+  --color-scene-star-seafoam-2: rgba(191, 230, 207, 0.6);
+  --color-scene-scanline: rgba(0, 0, 0, 0.14);
+  --color-scene-vignette: rgba(3, 6, 5, 0.55);
 }
 
 :root {
@@ -83,6 +107,37 @@ html.dark {
   /* The dark-theme CTA gradient is lighter forest, so lift the › marker to keep
      it crisp on it. on-cta (light label) reads in both themes — no override. */
   --color-on-cta-accent: #8ed6a4;
+}
+
+/* hero scene composition — hand-tune freely
+   Dimensional/positional knobs for the dark hero scene. Colors are NOT
+   here — see --color-scene-* under @theme above. */
+html.dark {
+  /* height of the grid floor / where the horizon line sits, from the bottom
+     of the hero */
+  --scene-horizon-y: 32vh;
+  /* sun's horizontal center; variant D offsets it right-of-centre so the
+     text column (left) and the sun/console cluster (right) balance */
+  --scene-sun-x: 62%;
+  --scene-sun-size: clamp(180px, 22vw, 320px);
+  /* how far below the horizon the sun's center sits (bigger = more of the
+     disc peeks above the horizon) */
+  --scene-sun-drop: clamp(90px, 11vw, 160px);
+  /* specimen-plate frame inset (top right bottom left) */
+  --scene-frame-inset: 4.6rem 1.4rem 1.4rem;
+  /* CommandDeck perch geometry, ground position on the horizon */
+  --scene-perch-right: max(3rem, 12vw);
+  --scene-perch-bottom: calc(var(--scene-horizon-y) - 4vh);
+  --scene-perch-width: 21rem;
+}
+
+/* Poster copy insets are theme-shared: the light hero uses the same column
+   geometry as the dark poster. */
+html {
+  /* horizontal inset of the poster text column from the viewport edge */
+  --scene-copy-inset-x: clamp(2.9rem, 4vw + 1.4rem, 4.9rem);
+  /* breathing room between the plate frame's top edge and the kicker */
+  --scene-copy-inset-top: clamp(1.5rem, 4vw, 3.5rem);
 }
 
 /* Always reserve the scrollbar gutter so the centered header (and content)
@@ -217,6 +272,22 @@ html.skip-loader #global-loader {
   }
 }
 
+/* Theme whoosh (store.ts's runThemeWhoosh): a JS clip-path animation on
+   ::view-transition-new(root) owns the circular reveal, so neutralize the
+   default crossfade AND the page-nav opacity:0/page-enter rules above —
+   scoped to the [data-theme-whoosh] attribute, which only exists for the
+   transition's duration, so page navigation is untouched. */
+html[data-theme-whoosh]::view-transition-old(root),
+html[data-theme-whoosh]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html[data-theme-whoosh]::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
 /* Agent spotlight: dim + blur everything except the focused section. */
 body.scene-dimmed
   :is(#home, #projects, #contact, #about, #stack):not(.is-spotlit) {
@@ -254,4 +325,66 @@ body.scene-dimmed
     background: transparent;
     box-shadow: 0 0 0 0 transparent;
   }
+}
+
+/* Dark selection — the default blue reads as broken on the dark scene.
+   Placed after Tailwind's generated utilities so it wins on tied
+   specificity; light keeps its existing `selection:` utility. */
+html.dark ::selection {
+  background: color-mix(in srgb, var(--color-scene-glow) 55%, transparent);
+  color: var(--color-on-surface);
+}
+
+/* Faint static grid echo of the hero scene for dark-mode subpages. A page
+   opts in by rendering .subpage-scene-echo inside an `isolate`d <main>,
+   which scopes the negative z-index. */
+.subpage-scene-echo {
+  display: none;
+  pointer-events: none;
+}
+
+html.dark .subpage-scene-echo {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(
+      to right,
+      var(--color-scene-grid-line) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      var(--color-scene-grid-line) 1px,
+      transparent 1px
+    );
+  background-size: 3rem 3rem;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
+}
+
+/* Dark home page: a full-bleed tinted band behind Selected Work, divided
+   from the hero above by a straight line (contact's border-t below already
+   supplies the bottom division — no second line needed here). */
+html.dark .work-manifest {
+  position: relative;
+}
+
+html.dark .work-manifest::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  translate: -50%;
+  width: 100vw;
+  z-index: -1;
+  background: color-mix(
+    in srgb,
+    var(--color-scene-sky-0) 82%,
+    var(--color-surface)
+  );
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-scene-horizon-line) 22%, transparent);
 }
