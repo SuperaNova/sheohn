@@ -4,13 +4,17 @@
 import { Redis } from '@upstash/redis';
 import { parsePingEntry, type PingEntry } from './uptime-ping';
 
+// Unlike the other Redis modules, this one is also imported by
+// scripts/ping-uptime.ts under plain Node, where import.meta.env does not
+// exist — so it is read defensively before falling back to process.env.
+const metaEnv = (
+  import.meta as ImportMeta & { env?: Record<string, string | undefined> }
+).env;
+
 const redis = new Redis({
-  url:
-    import.meta.env.UPSTASH_REDIS_REST_URL ||
-    process.env.UPSTASH_REDIS_REST_URL,
+  url: metaEnv?.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL,
   token:
-    import.meta.env.UPSTASH_REDIS_REST_TOKEN ||
-    process.env.UPSTASH_REDIS_REST_TOKEN,
+    metaEnv?.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 const PINGS_KEY = 'uptime:pings';
