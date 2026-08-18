@@ -48,7 +48,7 @@
 
 <section
   id="projects"
-  class="content-wrap section-space relative z-10 work-manifest"
+  class="content-wrap section-space work-manifest relative z-10"
   use:inview={{ once: true, amount: 0.15 }}
 >
   <div class="manifest-inner">
@@ -95,7 +95,7 @@
             {dim ? 'opacity-30' : ''}"
         >
           <div class="flex items-center gap-4 py-3.5 text-sm">
-            <span class="w-6 tabular-nums text-[var(--color-on-surface-muted)]">
+            <span class="w-6 text-[var(--color-on-surface-muted)] tabular-nums">
               {String(i + 1).padStart(2, '0')}
             </span>
             <span
@@ -127,11 +127,11 @@
 
           <!-- reveal on hover / keyboard focus; always-open on touch (no hover) -->
           <div
-            class="manifest-detail grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr]"
+            class="manifest-detail grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out group-focus-within:grid-rows-[1fr] group-hover:grid-rows-[1fr]"
           >
             <div class="overflow-hidden">
               <div
-                class="manifest-detail-body pb-5 pl-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 md:pl-[3rem]"
+                class="manifest-detail-body pb-5 pl-10 opacity-0 transition-opacity duration-300 group-focus-within:opacity-100 group-hover:opacity-100 md:pl-[3rem]"
               >
                 <p
                   class="max-w-2xl text-sm leading-relaxed text-[var(--color-on-surface)] md:text-[15px]"

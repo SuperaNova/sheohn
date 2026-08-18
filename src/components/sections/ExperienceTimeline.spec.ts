@@ -13,7 +13,6 @@ beforeAll(() => {
 });
 
 test('renders the experience timeline from config data', () => {
-  // @ts-expect-error - Svelte 5 component type mismatch with testing-library
   render(ExperienceTimeline);
 
   // We should see titles from the personalInfo.ts injected into the component

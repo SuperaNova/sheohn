@@ -175,7 +175,7 @@
 <section
   id="home"
   bind:this={sectionEl}
-  class="relative isolate flex min-h-[100svh] scroll-mt-24 items-center py-20 hero-section"
+  class="hero-section relative isolate flex min-h-[100svh] scroll-mt-24 items-center py-20"
   class:hero-powering={powering}
   use:inview={{ once: true, amount: 0.2 }}
 >
@@ -219,7 +219,7 @@
         <h1
           style:transition-delay="120ms"
           style:animation-delay="470ms"
-          class="hero-item hero-name relative cursor-pointer font-display leading-[0.95] text-balance text-[var(--color-on-surface)]"
+          class="hero-item hero-name font-display relative cursor-pointer leading-[0.95] text-balance text-[var(--color-on-surface)]"
           tabindex="0"
           aria-describedby="hero-name-copy-hint"
           onclick={copyName}
@@ -296,7 +296,7 @@
               <button
                 type="button"
                 onclick={() => dispatchAgentQuery(s.q)}
-                class="group inline-flex items-center gap-1.5 rounded-md border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_60%,transparent)] px-2.5 py-1.5 text-[var(--color-on-surface-muted)] transition-colors pointer-coarse:min-h-[44px] hover:border-[var(--color-tertiary)] hover:text-[var(--color-on-surface)]"
+                class="group inline-flex items-center gap-1.5 rounded-md border border-[var(--color-outline-variant)] bg-[color-mix(in_srgb,var(--color-surface-container)_60%,transparent)] px-2.5 py-1.5 text-[var(--color-on-surface-muted)] transition-colors hover:border-[var(--color-tertiary)] hover:text-[var(--color-on-surface)] pointer-coarse:min-h-[44px]"
               >
                 <span
                   aria-hidden="true"

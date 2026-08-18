@@ -6,6 +6,7 @@
     "tailwindcss",
     "@tailwindcss/typography",
     "tsx",
+    "vite",
     "lint-staged",
     "@secretlint/secretlint-rule-preset-recommend"
   ]

@@ -23,8 +23,7 @@ const REFUSAL_PATTERNS = [
 ];
 
 export type CandidateValidation =
-  | { valid: true }
-  | { valid: false; reason: string };
+  { valid: true } | { valid: false; reason: string };
 
 /**
  * Strips a markdown code fence Gemini sometimes wraps the file in

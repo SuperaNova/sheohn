@@ -112,7 +112,7 @@
     <img
       {src}
       {alt}
-      class="w-full rounded-lg shadow-2xl md:max-h-full md:max-w-full md:w-auto md:object-contain"
+      class="w-full rounded-lg shadow-2xl md:max-h-full md:w-auto md:max-w-full md:object-contain"
       transition:scale={{ duration: 200, start: 0.94 }}
     />
   </div>

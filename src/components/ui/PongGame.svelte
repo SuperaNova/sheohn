@@ -207,7 +207,7 @@
 </script>
 
 <div
-  class="relative mx-auto mt-8 w-full max-w-[600px] rounded-xl border border-[var(--color-on-surface-muted)] bg-[var(--color-surface-container)] shadow-2xl overflow-hidden aspect-[3/2]"
+  class="relative mx-auto mt-8 aspect-[3/2] w-full max-w-[600px] overflow-hidden rounded-xl border border-[var(--color-on-surface-muted)] bg-[var(--color-surface-container)] shadow-2xl"
 >
   <div
     class="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-3 text-xs font-semibold tracking-widest text-[var(--color-on-surface-muted)]"
@@ -219,7 +219,7 @@
   <canvas
     bind:this={canvas}
     onmousemove={handleMouseMove}
-    class="block w-full h-full touch-none cursor-none"
+    class="block h-full w-full cursor-none touch-none"
   ></canvas>
 
   {#if !playing && playerScore === 0 && aiScore === 0}

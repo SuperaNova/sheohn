@@ -95,7 +95,7 @@
       viewBox="0 0 640 380"
       role="img"
       aria-label="Architecture diagram: Astro Islands and CI feed the Agent Loop, which calls RAG and the Rate Limiter"
-      class="mx-auto h-auto w-full min-w-[560px] max-w-[640px]"
+      class="mx-auto h-auto w-full max-w-[640px] min-w-[560px]"
     >
       <defs>
         <marker

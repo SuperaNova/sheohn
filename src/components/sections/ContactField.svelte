@@ -49,8 +49,7 @@
       bind:value
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={error ? `${id}-error` : undefined}
-      class="resize-y {fieldClass}"
-    ></textarea>
+      class="resize-y {fieldClass}"></textarea>
   {:else}
     <input
       {id}
