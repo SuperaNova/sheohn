@@ -1,0 +1,66 @@
+{
+  "date": "2026-08-24",
+  "commitSha": "25d6781fca3fa7ad1c7ad99bd5e1b5972803ef38",
+  "cases": [
+    {
+      "name": "open_case_study — named project",
+      "status": "failed",
+      "durationMs": 101,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "open_resume — resume request",
+      "status": "failed",
+      "durationMs": 55,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "focus_section — tech stack overview",
+      "status": "failed",
+      "durationMs": 56,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "set_theme — dark mode",
+      "status": "failed",
+      "durationMs": 56,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "trigger_ui_state — tech highlight",
+      "status": "failed",
+      "durationMs": 56,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "query_jared_memory — background question",
+      "status": "failed",
+      "durationMs": 54,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "plain conversation — off-topic decline",
+      "status": "failed",
+      "durationMs": 52,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "plain conversation — trivial math",
+      "status": "failed",
+      "durationMs": 51,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "query_jared_memory — education facts",
+      "status": "failed",
+      "durationMs": 54,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    },
+    {
+      "name": "query_jared_memory — leadership facts",
+      "status": "failed",
+      "durationMs": 56,
+      "error": "Error: <title>Error</title><script type=\"module\" src=\"/@vite/client\"></script>\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m200\u001b[39m\nReceived: \u001b[31m500\u001b[39m"
+    }
+  ]
+}

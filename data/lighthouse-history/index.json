@@ -1,4 +1,26 @@
 {
-  "latest": null,
-  "runs": []
+  "latest": {
+    "date": "2026-08-24",
+    "commitSha": "25d6781fca3fa7ad1c7ad99bd5e1b5972803ef38",
+    "scores": {
+      "performance": 93.3,
+      "accessibility": 98.3,
+      "bestPractices": 93,
+      "seo": 100
+    },
+    "urlCount": 8
+  },
+  "runs": [
+    {
+      "date": "2026-08-24",
+      "commitSha": "25d6781fca3fa7ad1c7ad99bd5e1b5972803ef38",
+      "scores": {
+        "performance": 93.3,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    }
+  ]
 }
