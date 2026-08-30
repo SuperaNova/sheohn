@@ -1,5 +1,23 @@
-import { expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { formatRagTrace, RAG_MIN_SCORE, type RagQueryResult } from './rag';
+
+const ENV_KEYS = [
+  'UPSTASH_VECTOR_REST_URL',
+  'UPSTASH_VECTOR_REST_TOKEN',
+] as const;
+let savedEnv: Record<string, string | undefined>;
+
+beforeEach(() => {
+  savedEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
+});
+
+afterEach(() => {
+  for (const k of ENV_KEYS) {
+    if (savedEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedEnv[k];
+  }
+  vi.resetModules();
+});
 
 test('formatRagTrace reports no retrieval yet when trace is null', () => {
   const lines = formatRagTrace(null);
@@ -44,4 +62,33 @@ test('formatRagTrace labels empty kept/filtered-out lists explicitly', () => {
 
   expect(joined).toContain('(none — nothing cleared the relevance threshold)');
   expect(joined).toContain('(none)');
+});
+
+test('getVectorIndex throws naming the missing token', async () => {
+  delete process.env.UPSTASH_VECTOR_REST_TOKEN;
+  process.env.UPSTASH_VECTOR_REST_URL = 'https://example.upstash.io';
+  vi.resetModules();
+  const { getVectorIndex } = await import('./rag');
+
+  expect(() => getVectorIndex()).toThrow(/UPSTASH_VECTOR_REST_TOKEN/);
+});
+
+test('getVectorIndex throws naming the missing url', async () => {
+  delete process.env.UPSTASH_VECTOR_REST_URL;
+  process.env.UPSTASH_VECTOR_REST_TOKEN = 'test-token';
+  vi.resetModules();
+  const { getVectorIndex } = await import('./rag');
+
+  expect(() => getVectorIndex()).toThrow(/UPSTASH_VECTOR_REST_URL/);
+});
+
+test('getVectorIndex memoizes the client across repeated calls', async () => {
+  process.env.UPSTASH_VECTOR_REST_URL = 'https://example.upstash.io';
+  process.env.UPSTASH_VECTOR_REST_TOKEN = 'test-token';
+  vi.resetModules();
+  const { getVectorIndex } = await import('./rag');
+
+  const first = getVectorIndex();
+  const second = getVectorIndex();
+  expect(second).toBe(first);
 });

@@ -225,3 +225,40 @@ export function findRegressedCases(
 
   return regressed.sort();
 }
+
+// ---------------------------------------------------------------------------
+// Pass-rate floor
+// ---------------------------------------------------------------------------
+
+/**
+ * Combines pass→fail regression detection with an absolute pass-rate floor,
+ * so a run can be flagged even with no prior run to regress from (e.g. the
+ * first-ever run scoring 0/10). `previous` is `null` when there's no run to
+ * compare against — regression detection is skipped, but the floor still
+ * applies.
+ */
+export type EvalHealthCheck = {
+  regressedCases: string[];
+  passRate: number;
+  floor: number;
+  floorBreached: boolean;
+  flagged: boolean;
+};
+
+export function checkEvalHealth(
+  current: EvalRunDetail,
+  previous: EvalRunDetail | null,
+  floor: number,
+): EvalHealthCheck {
+  const regressedCases = previous ? findRegressedCases(previous, current) : [];
+  const { passRate } = summarizeCases(current.cases);
+  const floorBreached = passRate < floor;
+
+  return {
+    regressedCases,
+    passRate,
+    floor,
+    floorBreached,
+    flagged: regressedCases.length > 0 || floorBreached,
+  };
+}

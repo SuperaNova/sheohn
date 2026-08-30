@@ -99,10 +99,21 @@ jobs:
         continue-on-error: true
         run: npx size-limit --json > ../base-size.json
 
+      - name: Enforce budgets (fails the job on over-budget)
+        working-directory: pr
+        run: npx size-limit
+
       - name: Build the PR comment body
+        # continue-on-error: this step is cosmetic (PR comment formatting)
+        # and must never mask or skip the enforcement gate above, which has
+        # already run and recorded the job's real pass/fail result.
+        continue-on-error: true
         run: node pr/scripts/bundle-size-diff.mjs pr-size.json base-size.json > comment-body.md
 
       - name: Comment byte diff on the PR
+        # continue-on-error: same reasoning as the step above — a comment-API
+        # failure here is cosmetic and must not affect the job's outcome.
+        #
         # Deliberately posts a NEW comment on every push rather than using
         # `gh pr comment --edit-last`: --edit-last targets the most recent
         # comment by the SAME author, and every workflow authenticating with
@@ -111,13 +122,10 @@ jobs:
         # overwrite the brain-sync diff (or vice versa on later pushes). One
         # fresh comment per push is acceptable noise and can never clobber
         # another workflow's comment (same approach as brain.yml).
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh pr comment "${{ github.event.pull_request.number }}" \
             --repo "${{ github.repository }}" \
             --body-file comment-body.md
-
-      - name: Enforce budgets (fails the job on over-budget)
-        working-directory: pr
-        run: npx size-limit

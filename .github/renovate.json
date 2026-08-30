@@ -17,6 +17,12 @@
     },
 
     {
+      "description": "Hold TypeScript below typescript-eslint's supported ceiling",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1"
+    },
+
+    {
       "description": "Only allow Node.js LTS (even-numbered) major versions",
       "matchPackageNames": ["node"],
       "allowedVersions": "/^(18|20|22|24|26)\\./"
@@ -32,10 +38,8 @@
     },
 
     {
-      "description": "Group ALL major updates into one PR — manual review required",
+      "description": "One PR per major update — manual review required, never grouped",
       "matchUpdateTypes": ["major"],
-      "groupName": "all major dependencies",
-      "groupSlug": "all-major",
       "automerge": false,
       "labels": ["dependencies", "major-update"]
     }

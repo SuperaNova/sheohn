@@ -10,12 +10,12 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { Index } from '@upstash/vector';
 import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
 import {
   RAG_MIN_SCORE,
+  getVectorIndex,
   type RagFact,
   type RagQueryResult,
 } from '../../lib/rag';
@@ -37,16 +37,6 @@ import {
  * and update `src/lib/prompts.ts` so the LLM knows when to use it.
  */
 export const prerender = false;
-
-// Initialize the Vector DB client outside the route so it natively caches on the Edge/Serverless function
-const index = new Index({
-  url:
-    import.meta.env.UPSTASH_VECTOR_REST_URL ||
-    process.env.UPSTASH_VECTOR_REST_URL,
-  token:
-    import.meta.env.UPSTASH_VECTOR_REST_TOKEN ||
-    process.env.UPSTASH_VECTOR_REST_TOKEN,
-});
 
 const ratelimit = createRateLimiter('ratelimit_chat', 10, '1 m');
 
@@ -310,7 +300,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             // relevant but ranked #4-6 now has a chance to clear the bar
             // instead of never being retrieved at all.
             const results = await withRetry(() =>
-              index.query({
+              getVectorIndex().query({
                 vector: embedding,
                 topK: 6,
                 includeMetadata: true,

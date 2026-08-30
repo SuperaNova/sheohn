@@ -10,6 +10,42 @@
  * duplicating it.
  */
 
+import { Index } from '@upstash/vector';
+
+// Read defensively so this also works outside Vite (see uptime-redis.ts).
+const metaEnv = (
+  import.meta as ImportMeta & { env?: Record<string, string | undefined> }
+).env;
+
+let cachedIndex: Index | undefined;
+
+/**
+ * Lazily builds and memoizes the Upstash Vector client. Deferred to first use
+ * (rather than module scope) so a missing env var throws a named error only
+ * when `query_jared_memory` actually runs, instead of failing the whole
+ * chat.ts route module at import time. Memoized so it still only builds once
+ * per warm serverless instance.
+ */
+export function getVectorIndex(): Index {
+  if (cachedIndex) return cachedIndex;
+
+  const url =
+    metaEnv?.UPSTASH_VECTOR_REST_URL || process.env.UPSTASH_VECTOR_REST_URL;
+  const token =
+    metaEnv?.UPSTASH_VECTOR_REST_TOKEN || process.env.UPSTASH_VECTOR_REST_TOKEN;
+
+  const missing = [
+    !url && 'UPSTASH_VECTOR_REST_URL',
+    !token && 'UPSTASH_VECTOR_REST_TOKEN',
+  ].filter(Boolean);
+  if (missing.length > 0) {
+    throw new Error(`Missing required env var(s): ${missing.join(', ')}`);
+  }
+
+  cachedIndex = new Index({ url, token });
+  return cachedIndex;
+}
+
 /** A single retrieved chunk from the Upstash Vector index. */
 export interface RagFact {
   id: string;

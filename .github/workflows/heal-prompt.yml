@@ -78,12 +78,18 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
       - name: Generate a candidate patch
+        id: heal
+        # No continue-on-error: a real error (bad API key, unreadable
+        # detail file, Gemini call throwing) must fail the job. A benign
+        # "no valid candidate this round" outcome exits 0 with
+        # patched=false, which the steps below gate on instead.
         run: npx tsx scripts/heal-prompt.ts "${{ steps.before.outputs.detail_path }}"
         env:
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
 
       - name: Re-run eval:agent against the candidate patch
         id: eval
+        if: steps.heal.outputs.patched == 'true'
         # A still-failing (or partially-failing) re-run must not skip the
         # comparison step below — that's what decides whether to discard.
         continue-on-error: true
@@ -100,6 +106,7 @@ jobs:
         # EVAL_HISTORY_DIR redirects output away from data/eval-history so
         # this candidate/test run never overwrites the real committed
         # history that eval.yml just wrote.
+        if: steps.heal.outputs.patched == 'true'
         env:
           EVAL_HISTORY_DIR: .heal-scratch/eval-history
           EVAL_DATE: candidate
@@ -107,6 +114,7 @@ jobs:
 
       - name: Compare before/after pass rate
         id: compare
+        if: steps.heal.outputs.patched == 'true'
         run: |
           npx tsx scripts/compare-eval-runs.ts \
             "${{ steps.before.outputs.detail_path }}" \
@@ -114,12 +122,12 @@ jobs:
             | tee "$RUNNER_TEMP/pr-body.md"
 
       - name: Discard branch if the candidate did not improve
-        if: steps.compare.outputs.improved != 'true'
+        if: steps.heal.outputs.patched == 'true' && steps.compare.outputs.improved != 'true'
         run: |
           echo "Candidate did not strictly improve on the triggering failure (before=${{ steps.compare.outputs.before_pass_rate }}%, after=${{ steps.compare.outputs.after_pass_rate }}%) — discarding, no PR."
 
       - name: Commit the healed prompt
-        if: steps.compare.outputs.improved == 'true'
+        if: steps.heal.outputs.patched == 'true' && steps.compare.outputs.improved == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -127,11 +135,11 @@ jobs:
           git commit -m "prompt-heal: recover ${{ steps.compare.outputs.recovered_count }} failing eval case(s)"
 
       - name: Push the healing branch
-        if: steps.compare.outputs.improved == 'true'
+        if: steps.heal.outputs.patched == 'true' && steps.compare.outputs.improved == 'true'
         run: git push origin "${{ steps.branch.outputs.name }}"
 
       - name: Ensure the prompt-heal label exists
-        if: steps.compare.outputs.improved == 'true'
+        if: steps.heal.outputs.patched == 'true' && steps.compare.outputs.improved == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -142,7 +150,7 @@ jobs:
             --force
 
       - name: Open the PR
-        if: steps.compare.outputs.improved == 'true'
+        if: steps.heal.outputs.patched == 'true' && steps.compare.outputs.improved == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

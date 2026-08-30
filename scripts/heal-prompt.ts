@@ -7,9 +7,14 @@
 // Usage: npx tsx scripts/heal-prompt.ts [path-to-eval-detail.json]
 //   - Detail path defaults to data/eval-history/<index.json's latest.date>.json
 //   - Requires GOOGLE_GENERATIVE_AI_API_KEY.
-//   - On a valid candidate: overwrites src/lib/prompts.ts, exits 0.
-//   - On an invalid/missing candidate: writes nothing, exits 1 — the
-//     workflow treats this as "no healing possible this round", not a crash.
+//   - On a valid candidate: overwrites src/lib/prompts.ts, writes
+//     patched=true to $GITHUB_OUTPUT, exits 0.
+//   - Benign no-op (no failing cases to heal, or the candidate is rejected
+//     by validateCandidate): writes nothing, writes patched=false to
+//     $GITHUB_OUTPUT, exits 0 — the workflow skips the re-eval.
+//   - Real error (missing GOOGLE_GENERATIVE_AI_API_KEY, unreadable/missing
+//     detail file, Gemini call throws): exits 1 so the job legitimately
+//     fails. $GITHUB_OUTPUT writes are no-ops when that env var is unset.
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +29,7 @@ import {
 } from '../src/lib/prompt-heal';
 import type { EvalHistoryIndex, EvalRunDetail } from '../src/lib/eval-history';
 import { evalCases } from '../tests/eval/cases';
+import { writeGithubOutput } from './lib/run-metadata';
 
 const HISTORY_DIR =
   process.env.EVAL_HISTORY_DIR ?? path.join('data', 'eval-history');
@@ -54,7 +60,8 @@ async function main(): Promise<void> {
     console.error(
       `[heal-prompt] ${detailPath} has no failing cases — nothing to heal.`,
     );
-    process.exit(1);
+    writeGithubOutput({ patched: 'false' });
+    process.exit(0);
   }
 
   const originalSource = fs.readFileSync(PROMPTS_PATH, 'utf8');
@@ -78,7 +85,8 @@ async function main(): Promise<void> {
 
   if (!result.valid) {
     console.error(`[heal-prompt] candidate rejected: ${result.reason}`);
-    process.exit(1);
+    writeGithubOutput({ patched: 'false' });
+    process.exit(0);
   }
 
   fs.writeFileSync(PROMPTS_PATH, candidate, 'utf8');
@@ -88,6 +96,7 @@ async function main(): Promise<void> {
       .map((c) => c.name)
       .join(', ')}`,
   );
+  writeGithubOutput({ patched: 'true' });
 }
 
 main().catch((err) => {
