@@ -9,7 +9,6 @@
     { id: 'home', label: 'home', path: '/' },
     { id: 'projects', label: 'projects', path: '/projects' },
     { id: 'about', label: 'about', path: '/about' },
-    { id: 'colophon', label: 'colophon', path: '/colophon' },
     {
       id: 'resume',
       label: 'resume',
@@ -32,8 +31,6 @@
       activeId = 'projects';
     } else if (path.startsWith('/about')) {
       activeId = 'about';
-    } else if (path.startsWith('/colophon')) {
-      activeId = 'colophon';
     } else {
       activeId = '';
     }
