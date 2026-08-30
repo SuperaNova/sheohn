@@ -1,10 +1,10 @@
 {
   "latest": {
-    "date": "2026-08-24",
-    "commitSha": "25d6781fca3fa7ad1c7ad99bd5e1b5972803ef38",
-    "passRate": 0,
+    "date": "2026-08-30",
+    "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
+    "passRate": 100,
     "totalCases": 10,
-    "passedCases": 0
+    "passedCases": 10
   },
   "runs": [
     {
@@ -13,6 +13,13 @@
       "passRate": 0,
       "totalCases": 10,
       "passedCases": 0
+    },
+    {
+      "date": "2026-08-30",
+      "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
+      "passRate": 100,
+      "totalCases": 10,
+      "passedCases": 10
     }
   ]
 }
