@@ -35,16 +35,25 @@ if (prSizes.length === 0) {
   process.exit(0);
 }
 
+// Renders a placeholder for a missing/unparsable size (the JSON shape has
+// changed across size-limit versions before — see e.g. the 12 -> 13 major).
+function formatBytes(value) {
+  return Number.isFinite(value) ? `${value.toLocaleString()} B` : '—';
+}
+
 const rows = prSizes.map((entry) => {
   const base = baseByName.get(entry.name);
   let diffCell = 'new';
   if (base) {
-    const diff = entry.size - base.size;
-    const sign = diff > 0 ? '+' : '';
-    diffCell = `${sign}${diff.toLocaleString()} B`;
+    diffCell = '—';
+    if (Number.isFinite(entry.size) && Number.isFinite(base.size)) {
+      const diff = entry.size - base.size;
+      const sign = diff > 0 ? '+' : '';
+      diffCell = `${sign}${diff.toLocaleString()} B`;
+    }
   }
   const status = entry.passed ? '✅' : '❌ OVER BUDGET';
-  return `| \`${entry.name}\` | ${entry.size.toLocaleString()} B | ${entry.sizeLimit.toLocaleString()} B | ${diffCell} | ${status} |`;
+  return `| \`${entry.name}\` | ${formatBytes(entry.size)} | ${formatBytes(entry.sizeLimit)} | ${diffCell} | ${status} |`;
 });
 
 const anyFailed = prSizes.some((entry) => !entry.passed);

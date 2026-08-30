@@ -32,10 +32,8 @@
     },
 
     {
-      "description": "Group ALL major updates into one PR — manual review required",
+      "description": "One PR per major update — manual review required, never grouped",
       "matchUpdateTypes": ["major"],
-      "groupName": "all major dependencies",
-      "groupSlug": "all-major",
       "automerge": false,
       "labels": ["dependencies", "major-update"]
     }
