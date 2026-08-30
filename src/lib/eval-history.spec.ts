@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   appendSummary,
   buildEvalRunDetail,
+  checkEvalHealth,
   createEmptyIndex,
   extractCaseResults,
   findRegressedCases,
@@ -288,5 +289,114 @@ describe('findRegressedCases', () => {
     };
 
     expect(findRegressedCases(previous, current)).toEqual([]);
+  });
+});
+
+describe('checkEvalHealth', () => {
+  test('flags a run below the floor with no previous run', () => {
+    const current: EvalRunDetail = {
+      date: '2026-08-24',
+      commitSha: 'a',
+      cases: Array.from({ length: 10 }, (_, i) => ({
+        name: `case ${i}`,
+        status: 'failed' as const,
+        durationMs: 10,
+      })),
+    };
+
+    const result = checkEvalHealth(current, null, 70);
+    expect(result.passRate).toBe(0);
+    expect(result.floorBreached).toBe(true);
+    expect(result.regressedCases).toEqual([]);
+    expect(result.flagged).toBe(true);
+  });
+
+  test('flags a run below the floor even with a previous run and no flips', () => {
+    const previous: EvalRunDetail = {
+      date: '2026-08-17',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'failed', durationMs: 10 },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: '2026-08-24',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'failed', durationMs: 10 },
+      ],
+    };
+
+    const result = checkEvalHealth(current, previous, 70);
+    expect(result.passRate).toBe(50);
+    expect(result.floorBreached).toBe(true);
+    expect(result.regressedCases).toEqual([]);
+    expect(result.flagged).toBe(true);
+  });
+
+  test('reports both a regression and a floor breach when the run has both', () => {
+    const previous: EvalRunDetail = {
+      date: '2026-08-17',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 10 },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: '2026-08-24',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'failed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 10 },
+      ],
+    };
+
+    const result = checkEvalHealth(current, previous, 70);
+    expect(result.regressedCases).toEqual(['a']);
+    expect(result.floorBreached).toBe(true);
+    expect(result.flagged).toBe(true);
+  });
+
+  test('does not flag a run at or above the floor with no regressions', () => {
+    const previous: EvalRunDetail = {
+      date: '2026-08-17',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 10 },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: '2026-08-24',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 10 },
+      ],
+    };
+
+    const result = checkEvalHealth(current, previous, 70);
+    expect(result.passRate).toBe(100);
+    expect(result.floorBreached).toBe(false);
+    expect(result.flagged).toBe(false);
+  });
+
+  test('an overridden floor can flip the verdict for the same pass rate', () => {
+    const current: EvalRunDetail = {
+      date: '2026-08-24',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 10 },
+        { name: 'c', status: 'passed', durationMs: 10 },
+        { name: 'd', status: 'failed', durationMs: 10 },
+      ],
+    };
+
+    expect(checkEvalHealth(current, null, 70).floorBreached).toBe(false);
+    expect(checkEvalHealth(current, null, 90).floorBreached).toBe(true);
   });
 });
