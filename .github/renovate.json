@@ -17,6 +17,12 @@
     },
 
     {
+      "description": "Hold TypeScript below typescript-eslint's supported ceiling",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1"
+    },
+
+    {
       "description": "Only allow Node.js LTS (even-numbered) major versions",
       "matchPackageNames": ["node"],
       "allowedVersions": "/^(18|20|22|24|26)\\./"
