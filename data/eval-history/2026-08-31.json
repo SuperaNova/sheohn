@@ -1,0 +1,56 @@
+{
+  "date": "2026-08-31",
+  "commitSha": "129ab7c1021d9df654f989e812a1e55c1c6511d0",
+  "cases": [
+    {
+      "name": "open_case_study — named project",
+      "status": "passed",
+      "durationMs": 5524
+    },
+    {
+      "name": "open_resume — resume request",
+      "status": "passed",
+      "durationMs": 19341
+    },
+    {
+      "name": "focus_section — tech stack overview",
+      "status": "passed",
+      "durationMs": 10280
+    },
+    {
+      "name": "set_theme — dark mode",
+      "status": "passed",
+      "durationMs": 12913
+    },
+    {
+      "name": "trigger_ui_state — tech highlight",
+      "status": "passed",
+      "durationMs": 10743
+    },
+    {
+      "name": "query_jared_memory — background question",
+      "status": "passed",
+      "durationMs": 11889
+    },
+    {
+      "name": "plain conversation — off-topic decline",
+      "status": "passed",
+      "durationMs": 8185
+    },
+    {
+      "name": "plain conversation — trivial math",
+      "status": "passed",
+      "durationMs": 9065
+    },
+    {
+      "name": "query_jared_memory — education facts",
+      "status": "passed",
+      "durationMs": 11048
+    },
+    {
+      "name": "query_jared_memory — leadership facts",
+      "status": "passed",
+      "durationMs": 15099
+    }
+  ]
+}

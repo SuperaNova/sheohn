@@ -1,9 +1,9 @@
 {
   "latest": {
-    "date": "2026-08-30",
-    "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
+    "date": "2026-08-31",
+    "commitSha": "129ab7c1021d9df654f989e812a1e55c1c6511d0",
     "scores": {
-      "performance": 90.4,
+      "performance": 93.6,
       "accessibility": 98.3,
       "bestPractices": 93,
       "seo": 100
@@ -27,6 +27,17 @@
       "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
       "scores": {
         "performance": 90.4,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-08-31",
+      "commitSha": "129ab7c1021d9df654f989e812a1e55c1c6511d0",
+      "scores": {
+        "performance": 93.6,
         "accessibility": 98.3,
         "bestPractices": 93,
         "seo": 100
