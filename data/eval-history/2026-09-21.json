@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-21",
+  "commitSha": "eea98bd8e9e9d67c0aca21c3f33decf11444cc45",
+  "cases": [
+    {
+      "name": "open_case_study — named project",
+      "status": "passed",
+      "durationMs": 25764
+    },
+    {
+      "name": "open_resume — resume request",
+      "status": "failed",
+      "durationMs": 55450,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "focus_section — tech stack overview",
+      "status": "passed",
+      "durationMs": 7727
+    },
+    {
+      "name": "set_theme — dark mode",
+      "status": "passed",
+      "durationMs": 10495
+    },
+    {
+      "name": "trigger_ui_state — tech highlight",
+      "status": "passed",
+      "durationMs": 11393
+    },
+    {
+      "name": "query_jared_memory — background question",
+      "status": "passed",
+      "durationMs": 55427
+    },
+    {
+      "name": "plain conversation — off-topic decline",
+      "status": "passed",
+      "durationMs": 7624
+    },
+    {
+      "name": "plain conversation — trivial math",
+      "status": "passed",
+      "durationMs": 12394
+    },
+    {
+      "name": "query_jared_memory — education facts",
+      "status": "passed",
+      "durationMs": 25882
+    },
+    {
+      "name": "query_jared_memory — leadership facts",
+      "status": "passed",
+      "durationMs": 55466
+    }
+  ]
+}
