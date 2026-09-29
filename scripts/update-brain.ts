@@ -1,18 +1,6 @@
-// Brain-as-code sync: pushes scripts/my_facts.json into the Upstash Vector
-// index, keyed by content-hash IDs so only new/changed facts are embedded
-// and removed facts' vectors get deleted.
-//
-// Diff logic (hashing + manifest set-diff) lives in src/lib/brain-diff.ts so
-// it's unit-tested and reusable; this script is the thin I/O wrapper: reads
-// scripts/my_facts.json + scripts/brain-manifest.json, calls Upstash/Gemini,
-// and rewrites the manifest.
-//
-// Usage:
-//   npx tsx scripts/update-brain.ts             # real sync (needs credentials)
-//   npx tsx scripts/update-brain.ts --dry-run   # diff only, no network calls,
-//                                                 # no manifest rewrite — safe
-//                                                 # to run without credentials
-//                                                 # (used by brain.yml's PR job)
+// Syncs scripts/my_facts.json into the Upstash Vector index by content-hash ID; diff logic is in
+// src/lib/brain-diff.ts.
+// Usage: npx tsx scripts/update-brain.ts [--dry-run]  (dry run: diff only, no network, no manifest write)
 import { Index } from '@upstash/vector';
 import { embedMany } from 'ai';
 import { google } from '@ai-sdk/google';
@@ -61,17 +49,13 @@ async function updateBrain(): Promise<void> {
   const nextManifest = computeManifest(myFacts);
   const { toAdd, toRemove } = diffManifests(previousManifest, nextManifest);
 
-  // Map hashed ID -> fact text so only the new/changed facts get embedded
-  // (and so the dry-run diff below can show the added facts' text).
+  // Hashed ID -> fact text, so only new/changed facts get embedded.
   const idToText = new Map(
     myFacts.map((fact, i) => [nextManifest[i]!.id, fact]),
   );
 
   if (isDryRun) {
-    // No embedMany/Upstash calls, no manifest rewrite — safe to run without
-    // real Gemini/Upstash credentials (this is what brain.yml's PR job runs).
-    // The summary line goes to stderr so stdout stays pure JSON — brain.yml
-    // pipes stdout straight into a PR comment via `tee`.
+    // Dry run needs no credentials. The summary goes to stderr so stdout stays pure JSON for brain.yml's PR comment.
     console.error(
       `[update-brain] dry-run: ${toAdd.length} to add, ${toRemove.length} to remove.`,
     );

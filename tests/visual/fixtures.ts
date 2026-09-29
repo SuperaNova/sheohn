@@ -2,21 +2,16 @@ import type { Page } from '@playwright/test';
 import { test as base, expect } from '@playwright/test';
 
 /**
- * Shared fixture for the visual suite; import `test`/`expect` from here
- * (kept independent of tests/e2e/fixtures.ts). Emulates reduced motion so
- * animations settle before screenshots, pre-seeds the Loader's
- * sessionStorage flag, and freezes `Date` so the header's live clock can't
- * diff between runs.
+ * Shared visual-suite fixture (independent of tests/e2e/fixtures.ts): emulates reduced motion,
+ * pre-seeds the Loader's sessionStorage flag, and freezes `Date` so the header clock can't diff.
  */
 
-// 2026-01-01T04:00:00Z — renders as "12:00 (UTC+08:00)" in the header's
-// Asia/Manila clock. Arbitrary but fixed; keep as-is or all baselines with a
-// visible clock must be regenerated.
+// 2026-01-01T04:00:00Z renders as "12:00 (UTC+08:00)" in the header clock; changing it
+// invalidates every baseline showing the clock.
 const FROZEN_EPOCH_MS = Date.UTC(2026, 0, 1, 4, 0, 0);
 
-// Raw string, NOT a function: Playwright's transpiler rewrites TS class
-// syntax using module-scope helpers that don't exist in-page, so a
-// function-form init script throws silently and the freeze never applies.
+// Raw string, not a function: Playwright's TS transpile leaves module-scope helpers
+// missing in-page, so a function-form init script silently fails.
 const FREEZE_DATE_SCRIPT = `(() => {
   const frozenNow = ${FROZEN_EPOCH_MS};
   const OriginalDate = Date;
@@ -53,10 +48,8 @@ export const test = base.extend({
 export { expect };
 
 /**
- * Pre-seeds localStorage's 'theme' key to match the `?theme=` query param a
- * test navigates with. Needed because store.ts's initTheme() reads only
- * localStorage and silently reverts the URL-driven theme right after
- * hydration (pre-existing bug, worked around here rather than fixed).
+ * Seeds localStorage 'theme' to match the `?theme=` param so the stored preference
+ * can't disagree with the URL-driven theme on later navigations.
  */
 export async function seedTheme(page: Page, theme: 'light' | 'dark') {
   await page.addInitScript((t) => {

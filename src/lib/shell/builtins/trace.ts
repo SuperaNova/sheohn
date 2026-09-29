@@ -1,9 +1,6 @@
-// `trace`: replays the last turn's query_jared_memory retrieval pipeline —
-// the query, the facts that cleared RAG_MIN_SCORE (what grounded the
-// agent's answer / became footnote citations), and the candidates that
-// scored below it. Spec #03's locked design: the actual formatting lives in
-// src/lib/rag.ts (formatRagTrace) so this builtin and CommandDeck's `/trace`
-// slash-command fallback render identical output.
+// `trace`: replays the last query_jared_memory retrieval (the query, facts above RAG_MIN_SCORE,
+// and lower-scored candidates). Formatting lives in rag.ts (formatRagTrace), shared with the
+// deck's `/trace` fallback.
 
 import type { Command, ShellOutput } from '../registry';
 import { formatRagTrace } from '../../rag';

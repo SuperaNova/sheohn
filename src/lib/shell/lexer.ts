@@ -1,14 +1,7 @@
-// A small POSIX-flavored tokenizer for the pseudo-shell. Handles single and
-// double quotes (quoted whitespace stays inside one token) and splits on
-// unquoted `|` into pipeline stages. Deliberately does not support escape
-// sequences, globbing, or redirection — this is a toy shell over a virtual
-// filesystem, not a real one.
+// POSIX-flavored tokenizer for the pseudo-shell: single/double quotes and `|` pipeline stages;
+// no escapes, globbing, or redirection.
 
-/**
- * Tokenize a raw input string into a pipeline of argv-style token arrays,
- * one array per `|`-separated stage. Empty stages (e.g. leading/trailing
- * pipes, or fully blank input) are dropped.
- */
+/** Tokenizes input into argv-style arrays, one per `|` stage; empty stages are dropped. */
 export function tokenize(input: string): string[][] {
   const pipeline: string[][] = [];
   let stage: string[] = [];

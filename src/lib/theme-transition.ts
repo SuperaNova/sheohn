@@ -1,9 +1,4 @@
-/**
- * Pure decision logic for the theme whoosh (View Transitions circular
- * reveal) and the quiet dark-landing entrance. DOM/browser-touching code
- * stays in store.ts / the components — this module only computes answers
- * from plain inputs so it can be unit tested without jsdom quirks.
- */
+/** Pure decision logic for the theme whoosh and the dark-landing entrance; DOM code stays elsewhere. */
 
 export interface Point {
   x: number;
@@ -17,11 +12,7 @@ interface Rect {
   height: number;
 }
 
-/**
- * Picks the theme-whoosh origin: the center of the first on-screen
- * (non-zero-area) toggle button rect, or the viewport's top-right corner
- * when none is visible (e.g. the toggle is hidden behind a mobile menu).
- */
+/** Whoosh origin: center of the first non-zero-area toggle rect, else the top-right corner. */
 export function pickToggleOrigin(
   rects: readonly Rect[],
   viewport: { width: number; height: number },
@@ -55,11 +46,7 @@ export function isEnteringDark(
   return previous === 'light' && next === 'dark';
 }
 
-/**
- * Gate for the once-per-session quiet dark-landing entrance (grid draw-in +
- * glow bloom, no flash/whoosh): only for visitors who land already in dark,
- * only once per session, never under reduced motion.
- */
+/** Gate for the quiet dark-landing entrance: lands in dark, once per session, not under reduced motion. */
 export function shouldPlayDarkEntrance(opts: {
   theme: 'light' | 'dark';
   alreadyPlayed: boolean;

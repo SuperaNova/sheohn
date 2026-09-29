@@ -1,9 +1,7 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  // Lazy PDF embed. Rendered with `client:visible`, so the heavy <iframe> only
-  // mounts when the section scrolls into view — opening the case study is
-  // instant and navigating away never blocks on a PDF fetch. A spinner shows
-  // until the document's load event fires, then the frame fades in.
+  // Lazy PDF embed via `client:visible`: the iframe mounts on scroll into view; a spinner shows
+  // until its load event.
 
   let {
     src,
@@ -12,8 +10,7 @@
   }: { src: string; title: string; caption?: string } = $props();
 
   let loaded = $state(false);
-  // Mobile taps navigate straight to a new tab with no preview of the iframe
-  // first, so surface the filename up front instead of a blind "trust me" link.
+  // Mobile taps open a new tab with no preview, so surface the filename up front.
   const fileName = $derived(src.split('/').pop() || src);
 </script>
 

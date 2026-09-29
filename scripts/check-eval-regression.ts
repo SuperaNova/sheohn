@@ -6,6 +6,8 @@
 // (versus the previous run, when there is one) plus an absolute pass-rate
 // floor breach (independent of any previous run — this is what catches a
 // first-ever run scoring 0/10, which has no prior run to regress from).
+// Infra-errored cases (upstream 5xx/timeouts) never count as regressions and
+// are excluded from the pass rate; they are listed as a separate note.
 //
 // Usage: npx tsx scripts/check-eval-regression.ts
 //   - EVAL_MIN_PASS_RATE overrides the floor (default 70).
@@ -21,6 +23,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   checkEvalHealth,
+  type EvalHealthCheck,
   type EvalHistoryIndex,
   type EvalRunDetail,
 } from '../src/lib/eval-history';
@@ -40,6 +43,7 @@ function resolveFloor(): number {
 
 function formatRegressionBody(
   regressed: string[],
+  baselineDates: Record<string, string>,
   current: EvalRunDetail,
   previous: EvalRunDetail,
 ): string {
@@ -52,6 +56,12 @@ function formatRegressionBody(
     const c = casesByName.get(name);
     lines.push(`### ${name}`);
     lines.push(`- status: \`${c?.status ?? 'unknown'}\``);
+    const baselineDate = baselineDates[name];
+    if (baselineDate && baselineDate !== previous.date) {
+      lines.push(
+        `- last scored pass: \`${baselineDate}\` (later runs hit infra errors)`,
+      );
+    }
     if (c?.error) {
       lines.push('```');
       lines.push(c.error);
@@ -60,6 +70,27 @@ function formatRegressionBody(
     lines.push('');
   }
   return lines.join('\n');
+}
+
+function formatErroredNote(erroredCases: string[]): string {
+  return [
+    `Note: ${erroredCases.length} case(s) hit an upstream infrastructure error and were not scored: ${erroredCases.join(', ')}`,
+    '',
+  ].join('\n');
+}
+
+function formatSystemicInfraBody(
+  current: EvalRunDetail,
+  inconclusive: boolean,
+  erroredCount: number,
+): string {
+  const heading = inconclusive
+    ? '**Eval run inconclusive: every case hit an infra error**'
+    : `**Eval run degraded: ${erroredCount} of ${current.cases.length} cases hit infra errors**`;
+  return [
+    `${heading} in ${current.date} (${current.commitSha}). Check Gemini availability and the /api/chat route.`,
+    '',
+  ].join('\n');
 }
 
 function formatFloorBreachBody(
@@ -71,6 +102,41 @@ function formatFloorBreachBody(
     `**Pass rate floor breached**: \`${current.date}\` (${current.commitSha}) scored ${passRate}% overall, below the ${floor}% floor.`,
     '',
   ].join('\n');
+}
+
+// Walks back from the run before `current` until every current case has a
+// scored baseline; missing detail files are skipped. Returns oldest first.
+function loadPriorRuns(
+  index: EvalHistoryIndex,
+  current: EvalRunDetail,
+): EvalRunDetail[] {
+  const loaded: EvalRunDetail[] = [];
+  const unresolved = new Set(current.cases.map((c) => c.name));
+  for (let i = index.runs.length - 2; i >= 0 && unresolved.size > 0; i--) {
+    const detailPath = path.join(HISTORY_DIR, `${index.runs[i]!.date}.json`);
+    if (!fs.existsSync(detailPath)) {
+      console.error(
+        `[check-eval-regression] missing detail file: ${detailPath} — skipping it.`,
+      );
+      continue;
+    }
+    const run = readJson<EvalRunDetail>(detailPath);
+    loaded.push(run);
+    for (const c of run.cases) {
+      if (c.status !== 'errored') unresolved.delete(c.name);
+    }
+  }
+  return loaded.reverse();
+}
+
+function resolveIssueTitle(health: EvalHealthCheck): string {
+  if (health.regressedCases.length > 0) {
+    return `Eval regression: ${health.regressedCases.length} case(s) failed`;
+  }
+  if (health.floorBreached) return 'Eval regression: pass rate below floor';
+  return health.inconclusive
+    ? 'Eval run inconclusive: every case hit an infra error'
+    : 'Eval run degraded: many cases hit infra errors';
 }
 
 function main(): void {
@@ -102,32 +168,23 @@ function main(): void {
   }
   const current = readJson<EvalRunDetail>(currentDetailPath);
 
-  let previous: EvalRunDetail | null = null;
-  if (index.runs.length < 2) {
+  const priorRuns = loadPriorRuns(index, current);
+  if (priorRuns.length === 0) {
     console.log(
-      '[check-eval-regression] fewer than 2 runs in history — skipping regression comparison, floor check still applies.',
+      '[check-eval-regression] no prior run details available — skipping regression comparison, floor check still applies.',
     );
-  } else {
-    const previousEntry = index.runs[index.runs.length - 2]!;
-    const previousDetailPath = path.join(
-      HISTORY_DIR,
-      `${previousEntry.date}.json`,
-    );
-    if (fs.existsSync(previousDetailPath)) {
-      previous = readJson<EvalRunDetail>(previousDetailPath);
-    } else {
-      console.error(
-        `[check-eval-regression] missing previous detail file: ${previousDetailPath} — skipping regression comparison, floor check still applies.`,
-      );
-    }
   }
+  const previous = priorRuns[priorRuns.length - 1] ?? null;
 
-  const health = checkEvalHealth(current, previous, floor);
+  const health = checkEvalHealth(current, priorRuns, floor);
 
   if (!health.flagged) {
     console.log(
       `[check-eval-regression] no regressions, pass rate ${health.passRate}% at/above the ${floor}% floor.`,
     );
+    if (health.erroredCases.length > 0) {
+      console.log(formatErroredNote(health.erroredCases));
+    }
     writeGithubOutput({ has_regression: 'false', regressed_count: '0' });
     return;
   }
@@ -138,7 +195,12 @@ function main(): void {
       `[check-eval-regression] ${health.regressedCases.length} regression(s): ${health.regressedCases.join(', ')}`,
     );
     bodyParts.push(
-      formatRegressionBody(health.regressedCases, current, previous!),
+      formatRegressionBody(
+        health.regressedCases,
+        health.baselineDates,
+        current,
+        previous!,
+      ),
     );
   }
   if (health.floorBreached) {
@@ -147,12 +209,28 @@ function main(): void {
     );
     bodyParts.push(formatFloorBreachBody(current, health.passRate, floor));
   }
+  if (health.systemicInfra) {
+    console.log(
+      `[check-eval-regression] ${health.erroredCases.length} of ${current.cases.length} cases errored — flagging as systemic.`,
+    );
+    bodyParts.push(
+      formatSystemicInfraBody(
+        current,
+        health.inconclusive,
+        health.erroredCases.length,
+      ),
+    );
+  }
+  if (health.erroredCases.length > 0) {
+    bodyParts.push(formatErroredNote(health.erroredCases));
+  }
   console.log('');
   console.log(bodyParts.join('\n'));
 
   writeGithubOutput({
     has_regression: 'true',
     regressed_count: String(health.regressedCases.length),
+    issue_title: resolveIssueTitle(health),
   });
 }
 

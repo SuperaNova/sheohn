@@ -77,6 +77,10 @@ export interface RagQueryResult {
  */
 export const RAG_MIN_SCORE = 0.75;
 
+export const RAG_EMBEDDING_MODEL = 'gemini-embedding-001';
+export const RAG_EMBEDDING_DIMENSIONS = 1536;
+export const RAG_TOP_K = 6;
+
 /**
  * Human-readable replay of a stored `RagQueryResult`, shared by both
  * `/trace` entry points (the shell builtin and the CommandDeck slash-command
@@ -92,7 +96,7 @@ export function formatRagTrace(trace: RagQueryResult | null): string[] {
   const totalCandidates = trace.facts.length + trace.filteredOut.length;
   const lines: string[] = [
     `query      "${trace.query}"`,
-    `embedding  gemini-embedding-001 (1536d) — computed`,
+    `embedding  ${RAG_EMBEDDING_MODEL} (${RAG_EMBEDDING_DIMENSIONS}d) — computed`,
     `retrieval  topK candidates: ${totalCandidates}`,
     '',
     `kept (score >= ${RAG_MIN_SCORE}):`,

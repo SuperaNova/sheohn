@@ -1,11 +1,5 @@
-// Real Pagefind loading requires an actual built index and a browser-like
-// dynamic `import()` of a runtime-only static path — not meaningfully
-// unit-testable in jsdom without a real production build present. What IS
-// testable in isolation, and is the behavior that matters most for the
-// shell's UX, is the graceful-degradation path: under `npm run test:unit`
-// (jsdom, no real `/pagefind/pagefind.js` asset anywhere on disk), the
-// dynamic import 404s/throws, and this module must swallow that and resolve
-// to `null` rather than rejecting or throwing synchronously.
+// Real Pagefind loading needs a built index; test the degradation path, where the missing
+// asset makes the dynamic import throw and the module must resolve to `null`.
 
 import { describe, expect, test } from 'vitest';
 import { loadPagefind, search } from './pagefind-client';

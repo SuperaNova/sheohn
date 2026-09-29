@@ -15,8 +15,7 @@ function send(
 ): void {
   if (typeof navigator === 'undefined' || !navigator.sendBeacon) return;
   try {
-    // A raw string body defaults to text/plain; a Blob lets sendBeacon set
-    // application/json so the endpoint's content-type guard accepts it.
+    // A Blob body lets sendBeacon send application/json (strings default to text/plain).
     const blob = new Blob([JSON.stringify({ route, metric, value })], {
       type: 'application/json',
     });
@@ -55,8 +54,7 @@ function observeLcp(): void {
   });
 }
 
-// Simplified cumulative-sum CLS: sums every non-user-initiated shift for the
-// page's lifetime, rather than the full session-windowing algorithm.
+// Simplified CLS: sums non-user-initiated shifts over the page lifetime, not session windows.
 function observeCls(): void {
   observe('layout-shift', (list) => {
     for (const entry of list.getEntries() as (PerformanceEntry & {
@@ -68,8 +66,7 @@ function observeCls(): void {
   });
 }
 
-// Simplified INP: tracks the single largest interaction `duration` seen,
-// rather than the full INP session-percentile algorithm.
+// Simplified INP: the largest interaction duration seen, not session percentiles.
 function observeInp(): void {
   observe(
     'event',
@@ -95,12 +92,10 @@ function finalize(route: string): void {
 export function initRumCollector(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  // Captured once: vitals must attribute to the page actually measured, not
-  // wherever the visitor ends up after an SPA navigation.
+  // Captured once so vitals attribute to the measured page, not the post-navigation one.
   const initialRoute = window.location.pathname;
 
-  // Real LCP/CLS/INP only exist for the initial navigation, so observers are
-  // attached once here, never re-attached on a view-transition swap.
+  // Real vitals exist only for the initial navigation, so observers attach once.
   observeLcp();
   observeCls();
   observeInp();
@@ -111,14 +106,12 @@ export function initRumCollector(): void {
   });
   window.addEventListener('pagehide', onHide);
 
-  // Fires on the initial load AND after every Astro view-transition swap, so
-  // /stats pageviews reflect client-side navigation too.
+  // Fires on load and after every view-transition swap, so pageviews include client navigation.
   document.addEventListener('astro:page-load', () => {
     send(window.location.pathname, 'pageview');
   });
 
-  // astro:page-load's initial firing is bound to window 'load'; if this
-  // (client:idle) runs after 'load' already happened, that firing is missed.
+  // astro:page-load's first firing is bound to window 'load'; if this ran after it, send now.
   if (document.readyState === 'complete') {
     send(initialRoute, 'pageview');
   }

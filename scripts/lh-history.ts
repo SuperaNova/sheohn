@@ -1,13 +1,8 @@
-// Thin CLI wrapper around src/lib/lighthouse-history.ts's pure transform
-// logic. Reads the `lhci autorun --config=lighthouserc.live.json` output
-// (manifest.json + per-run JSON reports, same shape scripts/lh-summary.mjs
-// prints) and appends a summary entry to data/lighthouse-history/index.json,
-// alongside data/eval-history's commit-back pattern.
-//
+// CLI wrapper over src/lib/lighthouse-history.ts: reads the `lhci autorun` output and appends a
+// summary entry to data/lighthouse-history/index.json.
 // Usage: npx tsx scripts/lh-history.ts [--dir .lighthouseci-live]
-//   - Date defaults to today (UTC, YYYY-MM-DD); override with $LH_DATE.
-//   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then
-//     the literal string "unknown".
+//   - Date defaults to today (UTC); override with $LH_DATE.
+//   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then "unknown".
 import fs from 'node:fs';
 import path from 'node:path';
 import {

@@ -1,14 +1,8 @@
-// Thin CLI wrapper around src/lib/uptime-ping.ts + src/lib/uptime-redis.ts.
-//
-// Curls each of PING_TARGETS against a live host and records latency/status
-// pings to Upstash Redis. Run hourly by .github/workflows/uptime.yml.
-//
+// CLI wrapper over src/lib/uptime-ping.ts and uptime-redis.ts: pings each PING_TARGET on a live
+// host and records latency/status to Upstash Redis.
 // Usage: npx tsx scripts/ping-uptime.ts
-//   - Target host defaults to https://sheohn.dev; override with
-//     $UPTIME_TARGET_BASE_URL (used for local smoke-testing against `npm
-//     run dev`).
-//   - Reads UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN from
-//     process.env (same convention as scripts/update-brain.ts).
+//   - Host defaults to https://sheohn.dev; override with $UPTIME_TARGET_BASE_URL.
+//   - Reads UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN from process.env.
 import 'dotenv/config';
 import {
   buildPingEntry,
@@ -32,8 +26,7 @@ async function pingOne(target: PingTarget): Promise<void> {
     });
     status = response.status;
   } catch (err) {
-    // Network error / timeout — 0 is not a real HTTP status, so it always
-    // reads as unhealthy against any endpoint's expectedStatus.
+    // Network error or timeout: 0 is not a real status, so it always reads as unhealthy.
     console.error(`[ping-uptime] ${target.endpoint} (${url}) failed:`, err);
     status = 0;
   }

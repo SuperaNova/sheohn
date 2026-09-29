@@ -1,12 +1,9 @@
-// Upstash Redis client for the uptime ping history. Same env-var-fallback
-// pattern as src/lib/ratelimit.ts; a second client instance here keeps that
-// module's export surface untouched.
+// Upstash Redis client for uptime ping history; own client, same env-var fallback as ratelimit.ts.
 import { Redis } from '@upstash/redis';
 import { parsePingEntry, type PingEntry } from './uptime-ping';
 
-// Unlike the other Redis modules, this one is also imported by
-// scripts/ping-uptime.ts under plain Node, where import.meta.env does not
-// exist — so it is read defensively before falling back to process.env.
+// Also imported by scripts/ping-uptime.ts under plain Node, where import.meta.env is undefined,
+// so read it defensively before falling back to process.env.
 const metaEnv = (
   import.meta as ImportMeta & { env?: Record<string, string | undefined> }
 ).env;
@@ -27,10 +24,7 @@ export async function recordPing(entry: PingEntry): Promise<void> {
   await redis.ltrim(PINGS_KEY, 0, MAX_PINGS - 1);
 }
 
-/**
- * Reads the most recent pings (newest first). Fails open — returns [] on
- * any Redis error — so /status renders its empty state instead of crashing.
- */
+/** Newest-first recent pings; returns [] on any Redis error so /status shows its empty state. */
 export async function getRecentPings(limit = 150): Promise<PingEntry[]> {
   try {
     const raw = await redis.lrange<unknown>(PINGS_KEY, 0, limit - 1);

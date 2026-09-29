@@ -1,10 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  // Thin top progress bar shown while Astro's ClientRouter is fetching the
-  // next page. On throttled connections the swap can take a while, so this
-  // gives immediate feedback that the tap registered and navigation is
-  // in flight — otherwise it just feels broken.
+  // Thin top progress bar while ClientRouter fetches the next page, so slow swaps show feedback.
   let visible = $state(false);
   let progress = $state(0);
   let creep = 0;

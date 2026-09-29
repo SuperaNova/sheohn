@@ -13,9 +13,7 @@ import Analytics from '@vercel/analytics/astro';
 import SpeedInsights from '@vercel/speed-insights/astro';
 
 import { personalInfo } from '../data/personalInfo';
-// Build-time only (pulls in node:child_process for the git-SHA fallback) —
-// evaluated here in Astro frontmatter, never imported by client code. See
-// src/lib/boot-data.ts for the full rationale.
+// Build-time only (boot-data pulls in node:child_process); never imported by client code.
 import { getBootInfo } from '../lib/boot-data';
 
 const bootInfo = getBootInfo();
@@ -46,9 +44,7 @@ const canonicalURL = new URL(
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <!-- Mobile browser-chrome color; kept in sync with the theme by the
-         inline script below (first paint + client-router nav) and by
-         store.ts's theme.subscribe (toggle, set_theme, whooshes). -->
+    <!-- Mobile browser-chrome color, synced with the theme by the inline script and store.ts. -->
     <meta name="theme-color" content="#f3efe8" />
 
     <script
@@ -105,10 +101,7 @@ const canonicalURL = new URL(
 
     <script is:inline>
       function applyThemeAndLoader() {
-        // Opt in to scroll-reveal start states only when JS is running. CSS
-        // gates the hidden (opacity:0) state behind html.js-reveal, so no-JS
-        // and headless renders keep content visible. Set before paint to avoid
-        // a flash of the resolved content.
+        // Opt in to scroll-reveal start states only with JS; no-JS and headless renders stay visible.
         document.documentElement.classList.add('js-reveal');
 
         const isLocalAudit =
@@ -119,9 +112,7 @@ const canonicalURL = new URL(
           : null;
         const override =
           urlTheme === 'light' || urlTheme === 'dark' ? urlTheme : null;
-        // Default to light on first visit to showcase the canonical design.
-        // Returning users keep their explicit choice (localStorage); OS preference
-        // is intentionally ignored so the design lands the same way every time.
+        // Default to light on first visit; returning users keep their stored choice (OS preference ignored).
         const theme = override || localStorage.getItem('theme') || 'light';
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
@@ -151,8 +142,7 @@ const canonicalURL = new URL(
       // Run on every page navigation (Astro View Transitions)
       document.addEventListener('astro:after-swap', applyThemeAndLoader);
 
-      // Scroll to top before the DOM swap so the new page always starts at 0
-      // instead of jumping from whatever position the user was at mid-transition.
+      // Scroll to top before the DOM swap so new pages start at 0.
       document.addEventListener('astro:before-swap', () =>
         window.scrollTo(0, 0),
       );
@@ -162,11 +152,9 @@ const canonicalURL = new URL(
   <body
     class="relative selection:bg-[color-mix(in_srgb,var(--color-primary)_42%,transparent)] selection:text-slate-100"
   >
-    <!-- Console boot screen: plays once per session (skip-loader guard in the
-         inline head script hides it on return visits / view transitions). -->
+    <!-- Console boot screen: plays once per session (the head script hides it on return visits). -->
     <Loader client:load {bootInfo} />
 
-    <!-- Ambient Background Glows -->
     <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <div
         class="absolute -top-[20%] -left-[10%] h-[50%] w-[50%] rounded-full bg-[var(--color-tertiary)] opacity-[0.06] blur-[120px] dark:opacity-[0.10]"
@@ -178,10 +166,7 @@ const canonicalURL = new URL(
       </div>
     </div>
 
-    <!-- Static film grain, clipped to the viewport. The grain no longer drifts,
-         so the layer is sized to the screen (inset-0) instead of oversized —
-         far less area to paint and blend. overflow-hidden still guards against
-         the repeating tile bleeding past the edge on mobile. -->
+    <!-- Static film grain, viewport-sized; overflow-hidden stops tile bleed on mobile. -->
     <div
       class="pointer-events-none fixed inset-0 z-50 overflow-hidden opacity-[0.08] mix-blend-multiply invert dark:opacity-[0.25] dark:mix-blend-overlay dark:invert-0"
     >
@@ -199,21 +184,16 @@ const canonicalURL = new URL(
     <ScrollProgress client:idle transition:persist />
     <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
-    <!-- Self-built RUM sibling to the Vercel telemetry below: no Svelte
-         reactivity needed, this island just runs the PerformanceObserver +
-         sendBeacon collector once and stays mounted via transition:persist. -->
+    <!-- RUM collector island: runs once and stays mounted via transition:persist. -->
     <RumCollector client:idle transition:persist />
     <HeaderNav client:load transition:persist />
 
-    <!-- pb leaves a scroll runway so the docked command deck never sits on top
-         of the last content on a page. -->
+    <!-- pb leaves a scroll runway so the docked deck never covers the last content. -->
     <div id="main-content" class="pb-28">
       <slot />
     </div>
 
-    <!-- Unified command surface: deterministic /commands + the AI agent in one
-         docked bar. transition:persist keeps the conversation alive while the
-         agent navigates the site (scene control / opening case studies). -->
+    <!-- Command deck; transition:persist keeps the conversation alive across agent navigation. -->
     <CommandDeck client:idle transition:persist {bootInfo} />
 
     <Analytics />

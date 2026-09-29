@@ -1,10 +1,5 @@
-// Build-time-only module: computes real build/deploy facts for the command
-// deck's boot log.
-//
-// CRITICAL: imports `node:child_process`, so it must never be reachable
-// from client-shipped code — no .svelte file, not even type-only (use
-// src/lib/boot-info.ts for the shared type). Call it from Astro frontmatter
-// and pass the result down as a plain prop.
+// Build-time-only: computes real build/deploy facts for the deck's boot log. Imports
+// `node:child_process`, so never reach it from client code (use boot-info.ts for the type).
 import { execSync } from 'node:child_process';
 import pkg from '../../package.json' with { type: 'json' };
 import type { BootInfo } from './boot-info';
@@ -27,8 +22,7 @@ function resolveCommitSha(env: BootInfoEnv): string {
     const sha = exec('git rev-parse --short HEAD').trim();
     return sha || 'dev';
   } catch {
-    // No git binary, no HEAD (shallow checkout), or any other failure —
-    // this must never throw/block the build.
+    // No git binary or HEAD (e.g. shallow checkout); must never block the build.
     return 'dev';
   }
 }
@@ -44,11 +38,7 @@ function countDependencies(): number {
   );
 }
 
-/**
- * Computes the boot-log facts. Call this ONLY from Astro frontmatter
- * (build-time Node context) — never from a Svelte component or anything it
- * imports. `env` is for tests; production callers can omit it.
- */
+/** Computes the boot-log facts; call only from Astro frontmatter. `env` is for tests. */
 export function getBootInfo(env: BootInfoEnv = {}): BootInfo {
   const vercelGitCommitSha =
     env.vercelGitCommitSha ??
@@ -58,10 +48,6 @@ export function getBootInfo(env: BootInfoEnv = {}): BootInfo {
     commitSha: resolveCommitSha({ vercelGitCommitSha, exec: env.exec }),
     buildTimestamp: new Date().toISOString(),
     dependencyCount: countDependencies(),
-    // vectorCount intentionally omitted — see the BootInfo doc comment in
-    // ./boot-info.ts. A live Upstash query at build time would both fail
-    // against CI's stub credentials and is the wrong place for a network
-    // call in a static build; a real count (if ever added) belongs behind a
-    // request-time guard, not here.
+    // vectorCount omitted: a live Upstash query doesn't belong in a static build.
   };
 }

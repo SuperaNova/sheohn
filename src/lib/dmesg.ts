@@ -1,7 +1,5 @@
-// Pure, client-safe dmesg-style line builders shared by Loader.svelte (first
-// visit) and DeckBootLog.svelte (first deck open). No node imports — do NOT
-// import boot-data.ts here (see its doc comment for why); BootInfo comes
-// from boot-info.ts instead.
+// Client-safe dmesg-style line builders for Loader and DeckBootLog. Don't import boot-data.ts
+// here; BootInfo comes from boot-info.ts.
 import type { BootInfo } from './boot-info';
 
 export interface DmesgLine {
@@ -17,12 +15,7 @@ interface RawLine {
   text: string;
 }
 
-/**
- * Formats a fake kernel-style monotonic timestamp: seconds right-padded to a
- * minimum field width of 4 with spaces, 6 fixed decimal places.
- * `[ {0,3}\d+\.\d{6}]` for any input — width only grows past 4 once the
- * whole-seconds part itself needs more digits.
- */
+/** Fake kernel monotonic timestamp: seconds space-padded to width 4, 6 decimals. */
 export function formatDmesgTimestamp(seconds: number): string {
   const [secPart, fracPart] = seconds.toFixed(6).split('.');
   return `[${(secPart ?? '0').padStart(4, ' ')}.${fracPart}]`;
@@ -38,10 +31,8 @@ function toLines(raw: RawLine[], offsetsSec: number[]): DmesgLine[] {
   }));
 }
 
-// Deterministic, strictly-monotonic, non-linear offsets (clusters of close
-// lines + longer "pause" jumps) — mirrors how a real boot log's timestamps
-// bunch up around fast steps and stretch out around slow ones. No
-// Math.random(): screenshots and e2e stay stable across runs.
+// Deterministic, strictly-monotonic offsets (bursts plus pauses); no Math.random so
+// screenshots and e2e stay stable.
 const LOADER_OFFSETS_SEC = [
   // core
   0.001379, 0.001501, 0.001688, 0.001854, 0.002012,

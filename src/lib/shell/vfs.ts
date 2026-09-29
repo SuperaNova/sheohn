@@ -1,9 +1,5 @@
-// A tiny in-memory virtual filesystem assembled from real repo data: the
-// `projects` content collection (raw MDX/MD source, lazily loaded) and
-// `personalInfo` (structured facts about Jared). Tree-building and
-// path-resolution logic here is pure and takes its data as arguments so it
-// can be unit tested without Vite's `import.meta.glob` — the real glob call
-// lives at the bottom of this file, kept as thin as possible.
+// In-memory virtual filesystem over the `projects` collection and `personalInfo`. Logic is pure
+// and takes its data as arguments so tests can skip Vite's `import.meta.glob` (wired at the bottom).
 
 import { personalInfo } from '../../data/personalInfo';
 
@@ -51,13 +47,7 @@ function addChild(parent: VfsDirNode, child: VfsNode): void {
   parent.children[child.name] = child;
 }
 
-/**
- * Flattens `personalInfo` into a short list of human-readable fact
- * sentences, sourced only from fields that actually exist on the object —
- * nothing invented. Backs `/facts.json`, in the spirit of
- * `scripts/my_facts.json` (which feeds the real RAG pipeline and isn't
- * importable from client code).
- */
+/** Flattens `personalInfo` into fact sentences for `/facts.json`; only existing fields, nothing invented. */
 export function buildFacts(info: PersonalInfo): string[] {
   const facts: string[] = [
     `${info.name} — ${info.title}, based in ${info.location}.`,
@@ -79,12 +69,7 @@ export function buildFacts(info: PersonalInfo): string[] {
   return facts;
 }
 
-/**
- * Builds the virtual filesystem tree. `projectFiles` mirrors the return
- * shape of `import.meta.glob(..., { query: '?raw', import: 'default' })`
- * (a map of source path → lazy string loader) so tests can inject a fake
- * record instead of relying on a real Vite glob.
- */
+/** Builds the tree; `projectFiles` has the shape of `import.meta.glob(..., { query: '?raw' })`. */
 export function buildVfs(
   projectFiles: GlobRecord,
   info: PersonalInfo = personalInfo,
@@ -128,11 +113,7 @@ export function buildVfs(
   return root;
 }
 
-/**
- * Resolves `input` (absolute or relative, may contain `.`/`..`) against
- * `cwd` into a normalized absolute path. Purely string manipulation — does
- * not check whether the resulting path exists.
- */
+/** Resolves `input` (absolute or relative, with `.`/`..`) against `cwd`; string-only, no existence check. */
 export function resolvePath(cwd: string, input: string): string {
   if (!input) return cwd || '/';
   const isAbsolute = input.startsWith('/');
@@ -182,9 +163,7 @@ export async function readFile(
   return node.read();
 }
 
-// ── Real glob wiring (thin — kept out of the testable logic above) ────────
-// Lazy by design: NOT `eager: true`, so each project's raw source is its own
-// chunk, only fetched when a `cat`/`grep` actually reads it.
+// Lazy (not `eager`) so each project's source is its own chunk, fetched only on read.
 const projectFiles = import.meta.glob('/src/content/projects/*.{md,mdx}', {
   query: '?raw',
   import: 'default',

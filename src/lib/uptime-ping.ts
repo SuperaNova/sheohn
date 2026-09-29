@@ -1,15 +1,11 @@
-// Pure logic for the hourly uptime ping; scripts/ping-uptime.ts wraps it for
-// I/O and src/pages/status.astro reads PING_TARGETS/isHealthyPing to render.
+// Pure logic for the hourly uptime ping; scripts/ping-uptime.ts wraps it and status.astro renders it.
 
 export interface PingTarget {
   /** Redis-safe identifier stored alongside each ping. */
   endpoint: string;
   path: string;
   method: 'GET';
-  /**
-   * Both API routes are POST-only with no GET handler, so Astro returns 404
-   * (not 405) for the undefined method — no Gemini/Resend call ever runs.
-   */
+  /** POST-only routes: Astro returns 404 (not 405) for GET, so no Gemini/Resend call runs. */
   expectedStatus: number;
 }
 
@@ -29,7 +25,7 @@ export const PING_TARGETS: readonly PingTarget[] = [
   },
 ] as const;
 
-/** Stored Redis record shape — kept to exactly these four fields. */
+/** Stored Redis record shape. */
 export interface PingEntry {
   ts: number;
   endpoint: string;
@@ -71,11 +67,7 @@ function tryParseJson(raw: string): unknown {
   }
 }
 
-/**
- * Defensively parses a Redis list item back into a PingEntry. Tolerates
- * already-deserialized objects (Upstash auto-parses JSON list items) and raw
- * JSON strings, returning null for anything malformed rather than throwing.
- */
+/** Parses a Redis list item (already-parsed object or JSON string) into a PingEntry; null if malformed. */
 export function parsePingEntry(raw: unknown): PingEntry | null {
   const value = typeof raw === 'string' ? tryParseJson(raw) : raw;
 

@@ -11,9 +11,7 @@
     general?: string;
   }
 
-  // Maps the API's Zod issue array (400) onto our field-keyed error shape.
-  // Falls back to a general message when the response isn't the expected shape
-  // or names no known field.
+  // Maps the API's Zod issue array (400) onto field-keyed errors; falls back to a general message.
   function mapServerErrors(
     body: {
       error?: Array<{ path?: string[]; message: string }>;
@@ -42,8 +40,7 @@
 
   const isSubmitting = $derived(status === 'submitting');
 
-  // Validate the same constraints the server enforces, with specific copy.
-  // Returns the field errors; empty object means the form is ready to send.
+  // Mirrors the server's constraints with specific copy; an empty object means ready to send.
   function validate(): FieldErrors {
     const next: FieldErrors = {};
     if (name.trim().length < 2) {
@@ -62,9 +59,7 @@
     e.preventDefault();
     if (status === 'submitting') return;
 
-    // Validate on submit rather than disabling the button: the control stays
-    // operable for keyboard/SR users, and a failed attempt surfaces specific,
-    // focusable errors instead of a silent dead button.
+    // Validate on submit instead of disabling the button, so it stays operable for keyboard/SR users.
     const clientErrors = validate();
     if (Object.keys(clientErrors).length > 0) {
       errors = clientErrors;
