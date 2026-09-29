@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-// Formats a Markdown byte-diff table from two `size-limit --json` outputs (PR and main) for
+// Formats a Markdown byte-diff table from two `size-limit --json` outputs (PR and base branch) for
 // bundle-size.yml's PR comment. A missing/unparsable base file reports every row as "new".
 // Usage: node scripts/bundle-size-diff.mjs <pr-size.json> <base-size.json>
 
@@ -53,9 +53,9 @@ const anyFailed = prSizes.some((entry) => !entry.passed);
 
 console.log('### Bundle size (size-limit)\n');
 console.log(
-  'Gzip size of each budgeted client JS chunk vs. its configured limit, and the byte diff against `main`.\n',
+  'Gzip size of each budgeted client JS chunk vs. its configured limit, and the byte diff against the base branch.\n',
 );
-console.log('| Chunk | Size (gzip) | Budget | vs `main` | Status |');
+console.log('| Chunk | Size (gzip) | Budget | vs base | Status |');
 console.log('| --- | --- | --- | --- | --- |');
 console.log(rows.join('\n'));
 if (anyFailed) {
