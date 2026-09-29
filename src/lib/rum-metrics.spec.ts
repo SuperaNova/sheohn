@@ -2,9 +2,23 @@ import { describe, expect, test } from 'vitest';
 import {
   boundariesFor,
   bucketFor,
+  bucketForBoundaries,
   estimatePercentile,
   estimatePercentiles,
 } from './rum-metrics';
+
+describe('bucketForBoundaries', () => {
+  test('finds the matching range for an arbitrary boundary set', () => {
+    const boundaries = [
+      { min: 0, max: 10, label: 'low' },
+      { min: 10, max: 20, label: 'mid' },
+      { min: 20, max: Infinity, label: 'high' },
+    ];
+    expect(bucketForBoundaries(boundaries, 5)).toBe('low');
+    expect(bucketForBoundaries(boundaries, 10)).toBe('mid');
+    expect(bucketForBoundaries(boundaries, 999)).toBe('high');
+  });
+});
 
 describe('bucketFor', () => {
   test('buckets lcp at boundary edges', () => {
