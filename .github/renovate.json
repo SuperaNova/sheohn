@@ -24,6 +24,12 @@
     },
 
     {
+      "description": "Hold zod below 4.5: ai's client stream parsing bundles it and 4.6 adds ~7.5 kB to CommandDeck",
+      "matchPackageNames": ["zod"],
+      "allowedVersions": "<4.5"
+    },
+
+    {
       "description": "Only allow Node.js LTS (even-numbered) major versions",
       "matchPackageNames": ["node"],
       "allowedVersions": "/^(18|20|22|24|26)\\./"
