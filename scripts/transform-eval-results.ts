@@ -1,14 +1,7 @@
-// Thin CLI wrapper around src/lib/eval-history.ts's pure transform logic.
-//
-// Reads a Playwright JSON reporter report (from `npm run eval:agent --
-// --reporter=json`, see .github/workflows/eval.yml) and writes:
-//   - data/eval-history/<ISO-date>.json   — full per-case detail for this run
-//   - data/eval-history/index.json        — appends a summary rollup entry
-//     AND refreshes a top-level `latest` field that mirrors it (see the
-//     `EvalHistoryIndex` doc comment in src/lib/eval-history.ts for why:
-//     shields.io's dynamic-JSON badge needs a stable JSONPath, and "last
-//     element of a growing array" isn't one).
-//
+// Transforms a Playwright JSON report (`npm run eval:agent -- --reporter=json`) via src/lib/eval-history.ts:
+//   - data/eval-history/<ISO-date>.json: full per-case detail for this run
+//   - data/eval-history/index.json: appends a summary entry and refreshes a top-level `latest`
+//     field (shields.io's dynamic-JSON badge needs a stable JSONPath).
 // Usage: npx tsx scripts/transform-eval-results.ts [path-to-report.json]
 //   - Report path defaults to $PLAYWRIGHT_JSON_OUTPUT_NAME, then
 //     ./playwright-report/results.json.

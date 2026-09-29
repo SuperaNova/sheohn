@@ -1,9 +1,5 @@
-// The agent streams plain text that may contain markdown links
-// ([label](url)) or bare URLs (the resume fallback link). Splitting into
-// segments lets each piece render through Svelte's normal auto-escaping
-// instead of dangerouslySetInnerHTML. URLs are protocol-validated
-// (http/https/mailto only) so a prompt-injected javascript: link can never
-// become clickable.
+// Splits streamed text into link/text segments so Svelte auto-escapes each piece.
+// Only http/https/mailto hrefs are allowed, so injected javascript: links never render.
 export type Segment =
   | { kind: 'text'; value: string }
   | { kind: 'link'; label: string; href: string };
@@ -26,7 +22,6 @@ function safeHref(url: string): string | null {
 
 export function linkify(text: string): Segment[] {
   const segments: Segment[] = [];
-  // markdown link  OR  bare http(s) url
   const re = /\[([^\]]+)\]\(([^)\s]+)\)|((?:https?:\/\/)[^\s<>()]+)/g;
   let last = 0;
   let m: RegExpExecArray | null;
@@ -41,9 +36,7 @@ export function linkify(text: string): Segment[] {
       );
     } else {
       const raw = m[3] ?? '';
-      // Strip trailing sentence punctuation ("see https://x.com." should link
-      // "https://x.com" and leave the period as trailing text) before
-      // validating the URL.
+      // Strip trailing punctuation so "see https://x.com." links without the period.
       const trailingMatch = raw.match(/[.,;:!?'"]+$/);
       const trailing = trailingMatch ? trailingMatch[0] : '';
       const label = trailing ? raw.slice(0, -trailing.length) : raw;

@@ -1,19 +1,15 @@
-// Pure logic for the self-healing prompt bot; scripts/heal-prompt.ts and
-// scripts/compare-eval-runs.ts wrap it. Lives under src/ so vitest's
-// `src/**` include glob covers it. The Gemini call itself stays in the
-// script — not unit-testable here without mocking the SDK.
+// Pure logic for the self-healing prompt bot (wrapped by scripts/heal-prompt.ts and
+// scripts/compare-eval-runs.ts); under src/ so vitest's include glob covers it.
 import type { EvalCaseResult, EvalRunDetail } from './eval-history';
 import { summarizeCases } from './eval-history';
 
 const REQUIRED_EXPORT = 'export const SYSTEM_PROMPT';
 const REQUIRED_IMPORT = "import { personalInfo } from '../data/personalInfo';";
 
-// The real file's body is well over 1KB; anything drastically shorter is
-// almost certainly a truncated or empty model response.
+// The real file is well over 1KB; much shorter is likely a truncated or empty response.
 const MIN_CANDIDATE_LENGTH = 400;
 
-// Phrases that indicate the model refused or emitted a placeholder instead
-// of a real replacement file.
+// Phrases indicating a refusal or placeholder instead of a real replacement file.
 const REFUSAL_PATTERNS = [
   /\bi cannot\b/i,
   /\bi can.?t (help|assist|comply)/i,
@@ -113,11 +109,7 @@ export function enrichFailingCases(
   });
 }
 
-/**
- * Builds the healing prompt sent to Gemini: explains SYSTEM_PROMPT's
- * section structure, shows each failing case's visitor prompt / expected
- * behavior / actual failure, and asks for a complete replacement file.
- */
+/** Builds the healing prompt sent to Gemini: failing cases plus a request for a complete replacement file. */
 export function buildHealPrompt(
   promptsSource: string,
   failingCases: FailingCaseContext[],
@@ -178,10 +170,8 @@ export type ImprovementResult = {
 };
 
 /**
- * Compares the triggering (failing) run against the candidate branch's
- * re-eval run. "Improved" means strictly better pass rate plus at least one
- * genuinely recovered case — errored cases leave the denominator, so a rate
- * bump alone could just be an infra flake.
+ * "Improved" means strictly better pass rate plus at least one recovered case;
+ * errored cases leave the denominator, so a rate bump alone could be an infra flake.
  */
 export function evaluateImprovement(
   before: EvalRunDetail,

@@ -48,8 +48,8 @@ export const test = base.extend({
 export { expect };
 
 /**
- * Seeds localStorage 'theme' to match the `?theme=` param; initTheme() reads only
- * localStorage and would revert the URL-driven theme after hydration.
+ * Seeds localStorage 'theme' to match the `?theme=` param so the stored preference
+ * can't disagree with the URL-driven theme on later navigations.
  */
 export async function seedTheme(page: Page, theme: 'light' | 'dark') {
   await page.addInitScript((t) => {
