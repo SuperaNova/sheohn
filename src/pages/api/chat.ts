@@ -6,6 +6,7 @@ import {
   convertToModelMessages,
   type UIMessage,
 } from 'ai';
+import { waitUntil } from '@vercel/functions';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
@@ -14,11 +15,20 @@ import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
 import {
+  RAG_EMBEDDING_DIMENSIONS,
+  RAG_EMBEDDING_MODEL,
   RAG_MIN_SCORE,
+  RAG_TOP_K,
   getVectorIndex,
   type RagFact,
   type RagQueryResult,
 } from '../../lib/rag';
+import {
+  recordAgentCacheEvent,
+  recordAgentRequest,
+  recordAgentTurn,
+} from '../../lib/agent-redis';
+import { collectToolNames } from '../../lib/agent-metrics';
 
 /**
  * AI Chatbot API Endpoint (/api/chat)
@@ -125,6 +135,8 @@ function setCachedFacts(query: string, result: RagQueryResult): void {
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
+  const startedAt = Date.now();
+
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
@@ -136,6 +148,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   // rate limiter.
   const ip = clientAddress ?? '127.0.0.1';
   const limitResult = await safeLimit(ratelimit, `ratelimit_chat_${ip}`);
+  // waitUntil keeps telemetry alive past the response without blocking it.
+  waitUntil(recordAgentRequest(!!(limitResult && !limitResult.success)));
 
   if (limitResult && !limitResult.success) {
     const { limit, reset, remaining } = limitResult;
@@ -201,6 +215,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     // Bounds the whole multi-step tool loop so a hung Gemini call can't hang
     // the request indefinitely.
     timeout: { totalMs: 25_000 },
+    onFinish: ({ steps }) => {
+      waitUntil(
+        recordAgentTurn({
+          durationMs: Date.now() - startedAt,
+          toolNames: collectToolNames(steps),
+        }),
+      );
+    },
     // Cancels the Gemini stream and tool loop the moment the client
     // disconnects, instead of letting the request keep running unattended.
     abortSignal: request.signal,
@@ -280,29 +302,26 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         }),
         execute: async ({ query }): Promise<RagQueryResult> => {
           const cached = getCachedFacts(query);
+          waitUntil(recordAgentCacheEvent(cached ? 'hit' : 'miss'));
           if (cached) return cached;
 
           try {
             const { embedding } = await withRetry(() =>
               embed({
-                model: google.embeddingModel('gemini-embedding-001'),
+                model: google.embeddingModel(RAG_EMBEDDING_MODEL),
                 value: query,
                 providerOptions: {
                   google: {
-                    outputDimensionality: 1536,
+                    outputDimensionality: RAG_EMBEDDING_DIMENSIONS,
                   },
                 },
               }),
             );
 
-            // Query wider than the old topK:3 so the relevance filter below
-            // has real candidates to work with — a chunk that's actually
-            // relevant but ranked #4-6 now has a chance to clear the bar
-            // instead of never being retrieved at all.
             const results = await withRetry(() =>
               getVectorIndex().query({
                 vector: embedding,
-                topK: 6,
+                topK: RAG_TOP_K,
                 includeMetadata: true,
               }),
             );

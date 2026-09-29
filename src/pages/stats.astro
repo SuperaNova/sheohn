@@ -1,6 +1,6 @@
 ---
 // SSR: each route's stats are a live Redis read at request time. getRouteStats
-// fails open internally, so an unreachable/empty Redis renders empty states
+// and getAgentStats fail open internally, so an unreachable/empty Redis renders empty states
 // instead of a 500.
 export const prerender = false;
 
@@ -9,6 +9,7 @@ import SectionReveal from '../components/ui/SectionReveal.svelte';
 import { getCollection } from 'astro:content';
 import { buildKnownRoutes, STATIC_ROUTES } from '../lib/rum-routes';
 import { getRouteStats, type RouteStats } from '../lib/rum-redis';
+import { getAgentStats } from '../lib/agent-redis';
 
 let knownRoutes: string[] = [...STATIC_ROUTES];
 try {
@@ -25,6 +26,8 @@ const routeStats: { route: string; stats: RouteStats }[] = await Promise.all(
   })),
 );
 
+const agentStats = await getAgentStats();
+
 const totalPageviews = routeStats.reduce(
   (sum, r) => sum + r.stats.pageviews,
   0,
@@ -32,6 +35,10 @@ const totalPageviews = routeStats.reduce(
 
 function fmtMs(n: number): string {
   return n > 0 ? `${Math.round(n)}ms` : '—';
+}
+
+function fmtPercent(n: number): string {
+  return `${n}%`;
 }
 
 function fmtCls(n: number): string {
@@ -138,6 +145,84 @@ function fmtCls(n: number): string {
               )}
             </div>
           ))
+        }
+      </div>
+    </SectionReveal>
+    <SectionReveal
+      client:visible
+      id="stats-agent"
+      class="content-wrap relative z-10 flex scroll-mt-24 flex-col border-t border-[var(--color-outline-variant)] bg-transparent py-16"
+    >
+      <div class="mb-10 flex items-end justify-between gap-6">
+        <h2
+          class="font-display text-3xl text-[var(--color-on-surface)] sm:text-4xl"
+        >
+          Agent
+        </h2>
+        <span class="readout">Trailing 14 Days</span>
+      </div>
+      <p class="max-w-2xl text-[var(--color-on-surface-muted)]">
+        {agentStats.requests.total} chat requests, {
+          agentStats.requests.rejected
+        }
+        rejected by the rate limiter.
+      </p>
+
+      <div
+        class="mt-10 flex flex-col gap-px overflow-hidden rounded-xl border border-[var(--color-console-line)] bg-[var(--color-console-line)]"
+      >
+        {
+          agentStats.requests.total === 0 ? (
+            <div class="bg-[var(--color-console-surface)] p-6">
+              <p class="font-mono text-xs text-[var(--color-console-text-dim)]">
+                No data recorded yet.
+              </p>
+            </div>
+          ) : (
+            <div class="bg-[var(--color-console-surface)] p-6">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                    Requests
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
+                    {agentStats.requests.total} total ·{' '}
+                    {agentStats.requests.rejected} rejected ·{' '}
+                    {fmtPercent(agentStats.requests.rejectionRate)}
+                  </p>
+                </div>
+                <div>
+                  <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                    Latency
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
+                    p50 {fmtMs(agentStats.latency.p50)} · p95{' '}
+                    {fmtMs(agentStats.latency.p95)}
+                  </p>
+                </div>
+                <div>
+                  <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                    RAG Cache
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
+                    {agentStats.cache.hits + agentStats.cache.misses === 0
+                      ? '—'
+                      : `${fmtPercent(agentStats.cache.hitRate)} hit · ${agentStats.cache.hits}/${agentStats.cache.hits + agentStats.cache.misses}`}
+                  </p>
+                </div>
+              </div>
+              <div class="mt-6">
+                <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                  Tool Calls
+                </p>
+                <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
+                  {agentStats.toolCalls
+                    .map((tool) => `${tool.name} ${tool.count}`)
+                    .join(' · ')}
+                </p>
+              </div>
+            </div>
+          )
         }
       </div>
     </SectionReveal>
