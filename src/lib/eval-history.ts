@@ -1,8 +1,10 @@
 // Pure logic for the weekly eval scoreboard; the scripts/ CLIs wrap it.
 // Lives under src/ so vitest's `src/**` include glob covers it.
+import { isInfraErrorMessage } from './eval-infra';
 
 /** A single test-case outcome, normalized from Playwright's JSON reporter. */
-type EvalCaseStatus = 'passed' | 'failed' | 'skipped';
+/** 'errored' = upstream infrastructure failure; absent from history written before it existed. */
+type EvalCaseStatus = 'passed' | 'failed' | 'skipped' | 'errored';
 
 export type EvalCaseResult = {
   name: string;
@@ -18,30 +20,20 @@ export type EvalRunDetail = {
   cases: EvalCaseResult[];
 };
 
-/**
- * Rollup for one run — this is the shape appended to `index.json`'s `runs`
- * array AND mirrored (as the single newest entry) in its top-level `latest`
- * field. `passRate` is a percentage (0-100), rounded to 1 decimal place, so
- * a shields.io dynamic-JSON badge can display it directly with `suffix=%25`.
- */
+/** Per-run rollup; `passRate` is a 0-100 percentage rounded to 1 decimal (shields.io badge). */
 export type EvalSummaryEntry = {
   date: string;
   commitSha: string;
   passRate: number;
   totalCases: number;
   passedCases: number;
+  /** Infra-errored cases, excluded from `totalCases`/`passRate`; omitted when zero. */
+  erroredCases?: number;
 };
 
 /**
- * `data/eval-history/index.json`'s shape.
- *
- * `latest` mirrors the newest entry of `runs` (or `null` before the first
- * run has ever completed — the seed file ships with `{ latest: null, runs:
- * [] }`). It exists so the README's shields.io dynamic-JSON badge (and
- * the /status page) can point a stable JSONPath
- * (`$.latest.passRate`) at "the current number" instead of "the last
- * element of a growing array", which shields' dynamic/json badge query
- * language (JSONPath-Plus) can't express robustly as the array grows.
+ * `data/eval-history/index.json`. `latest` mirrors the newest run (null before the first)
+ * so a badge can target the stable path `$.latest.passRate`.
  */
 export type EvalHistoryIndex = {
   latest: EvalSummaryEntry | null;
@@ -56,15 +48,27 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-/** Derives the summary rollup (pass rate etc.) from a run's per-case results. */
+/**
+ * Derives the summary rollup (pass rate etc.) from a run's per-case results.
+ * Errored cases are left out of the denominator: they say nothing about the agent.
+ */
 export function summarizeCases(
   cases: EvalCaseResult[],
-): Pick<EvalSummaryEntry, 'passRate' | 'totalCases' | 'passedCases'> {
-  const totalCases = cases.length;
+): Pick<
+  EvalSummaryEntry,
+  'passRate' | 'totalCases' | 'passedCases' | 'erroredCases'
+> {
+  const erroredCases = cases.filter((c) => c.status === 'errored').length;
+  const totalCases = cases.length - erroredCases;
   const passedCases = cases.filter((c) => c.status === 'passed').length;
   const passRate =
     totalCases === 0 ? 0 : round1((passedCases / totalCases) * 100);
-  return { passRate, totalCases, passedCases };
+  return {
+    passRate,
+    totalCases,
+    passedCases,
+    ...(erroredCases > 0 ? { erroredCases } : {}),
+  };
 }
 
 /** Builds the summary entry appended to `index.json` for a completed run. */
@@ -87,15 +91,7 @@ export function appendSummary(
   };
 }
 
-// ---------------------------------------------------------------------------
-// Playwright JSON reporter parsing
-// ---------------------------------------------------------------------------
-
-/**
- * Minimal subset of Playwright's JSON reporter output
- * (`@playwright/test`'s `JSONReport*` types) that this module reads.
- * Only the fields actually consumed are declared.
- */
+/** Minimal subset of Playwright's JSON reporter output that this module reads. */
 type PlaywrightJsonTestResult = {
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
   duration: number;
@@ -137,18 +133,8 @@ function flattenSpecs(
 }
 
 /**
- * Converts a Playwright JSON report into per-case results.
- *
- * `tests/eval/agent.eval.ts` declares one `test()` per golden case with no
- * nested `describe` blocks, so each spec's `title` is exactly the eval
- * case's `name` (see `tests/eval/cases.ts`) — this is what
- * `findRegressedCases` below matches on.
- *
- * A test's overall `status` ('expected' | 'unexpected' | 'flaky' | 'skipped')
- * already reflects Playwright's retry logic (`retries: 1` in
- * `playwright.eval.config.ts`): 'flaky' means it failed then passed on
- * retry, so it counts as passed here — only 'unexpected' (failed even after
- * retries) counts as a failure.
+ * Converts a Playwright JSON report into per-case results; spec title is the eval case name.
+ * 'flaky' (failed, then passed on retry) counts as passed; only 'unexpected' fails.
  */
 export function extractCaseResults(
   report: PlaywrightJsonReport,
@@ -158,7 +144,7 @@ export function extractCaseResults(
 
   for (const spec of specs) {
     for (const test of spec.tests) {
-      const status: EvalCaseStatus =
+      const baseStatus: EvalCaseStatus =
         test.status === 'unexpected'
           ? 'failed'
           : test.status === 'skipped'
@@ -171,10 +157,14 @@ export function extractCaseResults(
       );
 
       let error: string | undefined;
-      if (status === 'failed') {
+      if (baseStatus === 'failed') {
         const lastResult = test.results[test.results.length - 1];
         error = lastResult?.error?.message ?? lastResult?.errors?.[0]?.message;
       }
+      const status: EvalCaseStatus =
+        baseStatus === 'failed' && isInfraErrorMessage(error)
+          ? 'errored'
+          : baseStatus;
 
       results.push({
         name: spec.title,
@@ -199,46 +189,61 @@ export function buildEvalRunDetail(
   };
 }
 
-// ---------------------------------------------------------------------------
-// Regression diff
-// ---------------------------------------------------------------------------
+type EvalBaseline = { status: EvalCaseStatus; date: string };
 
 /**
- * Returns the names of cases that passed in `previous` but did not pass in
- * `current` (matched by case name). Cases absent from `previous` (newly
- * added golden cases) are never reported as regressions.
+ * Per-case baseline from prior runs (oldest first): the most recent status that
+ * isn't 'errored', so an infra-errored week doesn't hide an earlier pass.
  */
-export function findRegressedCases(
-  previous: EvalRunDetail,
-  current: EvalRunDetail,
-): string[] {
-  const previousStatusByName = new Map(
-    previous.cases.map((c) => [c.name, c.status]),
-  );
-
-  const regressed = current.cases
-    .filter(
-      (c) =>
-        previousStatusByName.get(c.name) === 'passed' && c.status !== 'passed',
-    )
-    .map((c) => c.name);
-
-  return regressed.sort();
+function buildBaselines(priorRuns: EvalRunDetail[]): Map<string, EvalBaseline> {
+  const baselines = new Map<string, EvalBaseline>();
+  for (const run of priorRuns) {
+    for (const c of run.cases) {
+      if (c.status !== 'errored') {
+        baselines.set(c.name, { status: c.status, date: run.date });
+      }
+    }
+  }
+  return baselines;
 }
 
-// ---------------------------------------------------------------------------
-// Pass-rate floor
-// ---------------------------------------------------------------------------
+/** Cases whose baseline was 'passed' but are now failed or skipped; errored and new cases never count. */
+export function findRegressions(
+  priorRuns: EvalRunDetail[],
+  current: EvalRunDetail,
+): { name: string; baselineDate: string }[] {
+  const baselines = buildBaselines(priorRuns);
+  return current.cases
+    .filter(
+      (c) =>
+        baselines.get(c.name)?.status === 'passed' &&
+        c.status !== 'passed' &&
+        c.status !== 'errored',
+    )
+    .map((c) => ({ name: c.name, baselineDate: baselines.get(c.name)!.date }))
+    .sort((x, y) => x.name.localeCompare(y.name));
+}
+
+export function findRegressedCases(
+  priorRuns: EvalRunDetail[],
+  current: EvalRunDetail,
+): string[] {
+  return findRegressions(priorRuns, current).map((r) => r.name);
+}
 
 /**
- * Combines pass→fail regression detection with an absolute pass-rate floor,
- * so a run can be flagged even with no prior run to regress from (e.g. the
- * first-ever run scoring 0/10). `previous` is `null` when there's no run to
- * compare against — regression detection is skipped, but the floor still
- * applies.
+ * Flags regressions plus an absolute pass-rate floor, so a first run (no prior runs)
+ * can still fail.
  */
 export type EvalHealthCheck = {
   regressedCases: string[];
+  /** Date of each regressed case's last scored baseline run. */
+  baselineDates: Record<string, string>;
+  erroredCases: string[];
+  /** True when every case errored, so nothing was scored and the floor is not applied. */
+  inconclusive: boolean;
+  /** True when more than half the cases errored, which usually means something systemic. */
+  systemicInfra: boolean;
   passRate: number;
   floor: number;
   floorBreached: boolean;
@@ -247,18 +252,35 @@ export type EvalHealthCheck = {
 
 export function checkEvalHealth(
   current: EvalRunDetail,
-  previous: EvalRunDetail | null,
+  priorRuns: EvalRunDetail[],
   floor: number,
 ): EvalHealthCheck {
-  const regressedCases = previous ? findRegressedCases(previous, current) : [];
-  const { passRate } = summarizeCases(current.cases);
-  const floorBreached = passRate < floor;
+  const regressions = findRegressions(priorRuns, current);
+  const regressedCases = regressions.map((r) => r.name);
+  const {
+    passRate,
+    totalCases,
+    erroredCases: erroredCount = 0,
+  } = summarizeCases(current.cases);
+  const inconclusive = totalCases === 0 && current.cases.length > 0;
+  const systemicInfra = erroredCount * 2 > current.cases.length;
+  const floorBreached = !inconclusive && passRate < floor;
+  const erroredCases = current.cases
+    .filter((c) => c.status === 'errored')
+    .map((c) => c.name)
+    .sort();
 
   return {
     regressedCases,
+    baselineDates: Object.fromEntries(
+      regressions.map((r) => [r.name, r.baselineDate]),
+    ),
+    erroredCases,
+    inconclusive,
+    systemicInfra,
     passRate,
     floor,
     floorBreached,
-    flagged: regressedCases.length > 0 || floorBreached,
+    flagged: regressedCases.length > 0 || floorBreached || systemicInfra,
   };
 }
