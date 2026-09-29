@@ -14,11 +14,7 @@ export interface CompletionResult {
 
 const EMPTY: CompletionResult = { candidates: [], replaceStart: 0 };
 
-/**
- * Returns completion candidates for `input` at `cursor`. Command names are
- * suggested while completing the first word; vfs paths are suggested for
- * the arguments of path-taking builtins (`cd`, `cat`, `ls`, `grep`).
- */
+/** Completion candidates at `cursor`: command names for the first word, vfs paths for path-taking builtins. */
 export function complete(
   input: string,
   cursor: number,

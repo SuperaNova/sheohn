@@ -1,6 +1,4 @@
-// Build-time-only module: pure filesystem inspection, no network — must stay
-// safe under a stub-secret CI build. Call only from Astro frontmatter (same
-// constraint as boot-data.ts).
+// Build-time-only filesystem inspection (no network); call only from Astro frontmatter.
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBootInfo } from './boot-data';
@@ -77,11 +75,7 @@ function readEvalPassRate(path: string): number | undefined {
   }
 }
 
-/**
- * Computes the colophon page's data. Every optional field degrades to
- * `undefined` (never throws) so the stub-secret CI build always succeeds
- * regardless of which local-only files exist.
- */
+/** Computes the colophon data; optional fields degrade to `undefined` so a stub-secret CI build succeeds. */
 export function getColophonData(paths: ColophonDataPaths = {}): ColophonData {
   const bootInfo = getBootInfo();
 

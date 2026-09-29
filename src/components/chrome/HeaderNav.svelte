@@ -19,8 +19,7 @@
 
   let activeId = $state('');
   let isMenuOpen = $state(false);
-  // Set client-side only (kept empty on the server) to avoid a hydration
-  // mismatch on the live clock.
+  // Client-only (empty on the server) to avoid a hydration mismatch on the live clock.
   let clock = $state('');
 
   function computeActive() {
@@ -60,8 +59,7 @@
     computeActive();
     tickClock();
     const clockId = setInterval(tickClock, 30_000);
-    // Recompute + close the menu on every view-transition navigation, so the
-    // active marker tracks the page even when hydration is slow.
+    // Recompute and close the menu on every navigation so the active marker tracks the page.
     const onPageLoad = () => {
       computeActive();
       isMenuOpen = false;

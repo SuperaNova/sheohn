@@ -1,14 +1,8 @@
 import fs from 'fs';
 
-// Formats a Markdown byte-diff table from two `size-limit --json` outputs —
-// one measured on the PR branch, one measured on `main` — for
-// `.github/workflows/bundle-size.yml` to post as a PR comment.
-//
+// Formats a Markdown byte-diff table from two `size-limit --json` outputs (PR and main) for
+// bundle-size.yml's PR comment. A missing/unparsable base file reports every row as "new".
 // Usage: node scripts/bundle-size-diff.mjs <pr-size.json> <base-size.json>
-//
-// Tolerant of a missing/unparsable base file (e.g. the very first PR that
-// introduces size-limit itself, where `main` has no `.size-limit.js` yet) —
-// every row is then reported as "new" rather than failing the script.
 
 const [, , prPath, basePath] = process.argv;
 
@@ -35,8 +29,7 @@ if (prSizes.length === 0) {
   process.exit(0);
 }
 
-// Renders a placeholder for a missing/unparsable size (the JSON shape has
-// changed across size-limit versions before — see e.g. the 12 -> 13 major).
+// Placeholder for a missing/unparsable size (the JSON shape varies across size-limit versions).
 function formatBytes(value) {
   return Number.isFinite(value) ? `${value.toLocaleString()} B` : '—';
 }

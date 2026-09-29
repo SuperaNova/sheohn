@@ -1,15 +1,9 @@
 <script lang="ts">
-  // Dark-hero pastel-phosphor scene: decorative skybox, stars, slatted
-  // paper sun, horizon glow, rolling grid, scanlines, vignette. Dark-only
-  // (display:none in light); colors/geometry come from the --color-scene-*
-  // tokens and tunables block in global.css. Confined to the hero section —
-  // animations pause when it scrolls offscreen and never run under reduced
-  // motion.
+  // Dark-only decorative hero scene (sky, stars, sun, glow, grid, scanlines, vignette); tokens come
+  // from global.css. Animations pause offscreen and never run under reduced motion.
   import { prefersReducedMotion } from '../../lib/motion';
 
-  // Both flags are driven by HeroSection (which watches the theme store) —
-  // powering = full power-on choreography on toggling into dark, entrance =
-  // the quieter once-per-session grid/glow-only dark-landing entrance.
+  // Driven by HeroSection: powering = full power-on choreography, entrance = quieter dark-landing.
   let {
     powering = false,
     entrance = false,
@@ -55,8 +49,7 @@
 </div>
 
 <style>
-  /* Confined to the hero: z-index:-1 inside the section's `isolate`
-     context paints behind the hero content only. */
+  /* z-index:-1 inside the section's `isolate` context paints behind hero content only. */
   .scene {
     position: absolute;
     inset: 0;
@@ -119,8 +112,7 @@
     opacity: 0.7;
   }
 
-  /* Animations exist only when motion is allowed; the base styles are a
-     correct static frame. */
+  /* Animations only when motion is allowed; the base styles are a static frame. */
   @media (prefers-reduced-motion: no-preference) {
     .scene-stars {
       animation: scene-twinkle 5.5s ease-in-out infinite alternate;
@@ -149,18 +141,15 @@
     }
   }
 
-  /* `class:scene-paused` keeps the class in the template so Svelte's
-     unused-CSS pruning can't strip this rule. */
+  /* `class:scene-paused` stays in the template so Svelte doesn't prune this rule. */
   :global(.scene-paused) .scene-stars,
   :global(.scene-paused) .scene-grid {
     animation-play-state: paused;
   }
 
-  /* Power-on choreography (toggling into dark) and the quieter dark-landing
-     entrance (already dark on load) — both toggled by HeroSection reacting
-     to the theme store, both classes kept in the template via `class:` so
-     Svelte can't prune these rules. Grid draw-in + glow bloom play for
-     both; sun-rise and the scanline sweep are power-on only. */
+  /* Power-on and the quieter dark-landing entrance, toggled by HeroSection via `class:` so
+       Svelte keeps these rules. Grid draw-in and glow bloom play for both; sun-rise and sweep
+       are power-on only. */
   @media (prefers-reduced-motion: no-preference) {
     .scene-powering .scene-grid-wrap,
     .scene-entrance .scene-grid-wrap {
@@ -307,8 +296,7 @@
     filter: drop-shadow(0 0 6px var(--color-scene-grid-shadow));
   }
 
-  /* One-shot scanline sweep, played only during the power-on choreography
-     (see .scene-powering below) — invisible at rest. */
+  /* One-shot scanline sweep during power-on; invisible at rest. */
   .scene-sweep {
     position: absolute;
     left: 0;

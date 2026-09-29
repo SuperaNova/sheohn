@@ -1,7 +1,4 @@
-// Pure logic for the Lighthouse score history committed alongside eval
-// history; scripts/lh-history.ts wraps it for I/O (reading
-// .lighthouseci-live/manifest.json + per-run reports, writing
-// data/lighthouse-history/index.json).
+// Pure logic for the Lighthouse score history; scripts/lh-history.ts wraps it for I/O.
 
 /** Scores are 0-100, averaged across every representative run in a batch. */
 interface LighthouseCategoryScores {

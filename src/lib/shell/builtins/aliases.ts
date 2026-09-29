@@ -1,6 +1,4 @@
-// Aliases for the six original CommandDeck slash commands. Each calls the
-// same ctx callback the old `DeckCommand.run` used to call directly, so
-// behavior (navigate + close deck, toggle theme, open résumé) is unchanged.
+// Aliases for the six original deck slash commands; each calls the matching ctx callback.
 
 import type { Command, ShellOutput } from '../registry';
 

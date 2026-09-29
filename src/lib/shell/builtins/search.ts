@@ -1,23 +1,10 @@
-// `search`: full-text search over the real, deployed Pagefind index (see
-// the `postbuild` script in package.json). A SIBLING to `grep`, not an
-// extension of it: `grep` (`./text.ts`)
-// does synchronous substring matching over the in-memory virtual FS, and
-// always succeeds/fails on the same simple pass/fail contract. `search` is
-// a separate, async query against a real, WebAssembly-backed site index
-// that plainly does not exist in dev — it needs a third outcome grep's
-// contract has no room for ("index unavailable" vs. "zero matches"), so
-// giving it its own builtin keeps grep's existing behavior/tests untouched
-// and keeps each command's error semantics simple to reason about, the way
-// a real shell composes distinct tools (`grep` vs. a hypothetical `ag`)
-// rather than overloading one flag-riddled command.
+// `search`: full-text search over the deployed Pagefind index. Separate from `grep` because it is
+// async and needs a third outcome ("index unavailable" vs. zero matches).
 
 import type { Command, ShellOutput } from '../registry';
 import { search as pagefindSearch } from '../pagefind-client';
 
-/** Message for the "index unavailable" case (dev
- * mode, or a build that shipped without the postbuild indexing step) —
- * exported so the colocated test can assert on it without duplicating the
- * string. */
+/** Shown when the index is unavailable (dev, or a build without the postbuild step). */
 export const INDEX_UNAVAILABLE_MESSAGE =
   'search index available in production builds';
 

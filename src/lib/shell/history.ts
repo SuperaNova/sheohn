@@ -1,8 +1,7 @@
-// localStorage-backed shell command history. Capped at MAX_HISTORY entries
-// so a long-lived session can't grow the stored array unboundedly.
+// localStorage-backed shell history, capped at MAX_HISTORY entries.
 
 const STORAGE_KEY = 'sheohn-shell-history';
-/** Cap on persisted history length — oldest entries fall off the front. */
+/** Cap on persisted history; oldest entries fall off the front. */
 const MAX_HISTORY = 200;
 
 function hasStorage(): boolean {
@@ -23,11 +22,7 @@ export function getHistory(): string[] {
   }
 }
 
-/**
- * Appends `entry` to history (skipping blank input and immediate repeats of
- * the last entry) and persists it, capped to MAX_HISTORY. Returns the new
- * history array so callers can update in-memory state without a re-read.
- */
+/** Appends `entry` (skipping blanks and immediate repeats), persists, and returns the new history. */
 export function pushHistory(entry: string): string[] {
   const trimmed = entry.trim();
   const current = getHistory();
@@ -39,7 +34,7 @@ export function pushHistory(entry: string): string[] {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
-      // Storage unavailable or full — history just won't persist this run.
+      // Storage unavailable or full; history just won't persist.
     }
   }
   return next;
@@ -51,6 +46,6 @@ export function clearHistory(): void {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // Ignore — nothing to clean up if storage isn't available.
+    // Nothing to clean up if storage is unavailable.
   }
 }

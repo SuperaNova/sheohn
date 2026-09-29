@@ -34,8 +34,7 @@
       .map((s) => s.toLowerCase())
       .join(' · ');
 
-  // The agent's trigger_ui_state sets activeFocus; dim non-matching rows so the
-  // relevant module is emphasised when a tech is called out.
+  // The agent's trigger_ui_state sets activeFocus; dim non-matching rows.
   function matches(p: ProjectData, focus: string) {
     const f = focus.toLowerCase();
     return (
