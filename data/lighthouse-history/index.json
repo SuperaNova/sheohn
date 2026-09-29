@@ -1,9 +1,9 @@
 {
   "latest": {
-    "date": "2026-08-30",
-    "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
+    "date": "2026-09-28",
+    "commitSha": "1f2294f39afd55a8ab5a223669551b981e66e57b",
     "scores": {
-      "performance": 90.4,
+      "performance": 91.8,
       "accessibility": 98.3,
       "bestPractices": 93,
       "seo": 100
@@ -27,6 +27,61 @@
       "commitSha": "1225df40708bb9df5d68a5e42faf6c8c0fb1d08e",
       "scores": {
         "performance": 90.4,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-08-31",
+      "commitSha": "129ab7c1021d9df654f989e812a1e55c1c6511d0",
+      "scores": {
+        "performance": 93.6,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-09-07",
+      "commitSha": "d79256d7f5073578acf974ca431a33226717b7a3",
+      "scores": {
+        "performance": 90.3,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-09-14",
+      "commitSha": "e476d8554fcf41ea55cf30e847b88dfc467a7cc4",
+      "scores": {
+        "performance": 94.6,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-09-21",
+      "commitSha": "eea98bd8e9e9d67c0aca21c3f33decf11444cc45",
+      "scores": {
+        "performance": 93.4,
+        "accessibility": 98.3,
+        "bestPractices": 93,
+        "seo": 100
+      },
+      "urlCount": 8
+    },
+    {
+      "date": "2026-09-28",
+      "commitSha": "1f2294f39afd55a8ab5a223669551b981e66e57b",
+      "scores": {
+        "performance": 91.8,
         "accessibility": 98.3,
         "bestPractices": 93,
         "seo": 100

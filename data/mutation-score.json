@@ -1,13 +1,13 @@
 {
   "latest": {
-    "date": "2026-08-24",
-    "commitSha": "1aeeec130a3d37b1ca3e9197357af714d906d5d3",
-    "mutationScore": 55.7,
-    "killed": 1162,
-    "survived": 601,
+    "date": "2026-09-28",
+    "commitSha": "cb7698e6bbc5a459c7a83cd402470fff10c1500a",
+    "mutationScore": 56,
+    "killed": 1193,
+    "survived": 614,
     "timeout": 1,
     "noCoverage": 323,
-    "totalMutants": 2087
+    "totalMutants": 2131
   },
   "runs": [
     {
@@ -19,6 +19,56 @@
       "timeout": 1,
       "noCoverage": 323,
       "totalMutants": 2087
+    },
+    {
+      "date": "2026-08-31",
+      "commitSha": "c60c5289c5f291f84568d065575dbc3f139a2f68",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
+    },
+    {
+      "date": "2026-09-07",
+      "commitSha": "5d5a4ba8c7b4a5970a92bc594a1f1233a9060043",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
+    },
+    {
+      "date": "2026-09-14",
+      "commitSha": "8ef13398a30747a44492a48b5ec424e8f7b1cdf8",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
+    },
+    {
+      "date": "2026-09-21",
+      "commitSha": "f977625b8154de17379280b33b3571ec378a2448",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
+    },
+    {
+      "date": "2026-09-28",
+      "commitSha": "cb7698e6bbc5a459c7a83cd402470fff10c1500a",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
     }
   ]
 }
