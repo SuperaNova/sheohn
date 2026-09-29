@@ -1,9 +1,8 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Shared Upstash Redis client. Built once at module load so it caches across
-// invocations on the serverless function. import.meta.env is read first for
-// Astro SSR; process.env is the runtime fallback.
+// Shared Upstash Redis client, built once at module load; import.meta.env first (Astro SSR),
+// process.env as the runtime fallback.
 const redis = new Redis({
   url:
     import.meta.env.UPSTASH_REDIS_REST_URL ||
@@ -13,8 +12,7 @@ const redis = new Redis({
     process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-// Build a sliding-window rate limiter on the shared Redis client. Each route
-// passes its own prefix + window so the counters stay isolated per endpoint.
+// Sliding-window limiter on the shared client; each route passes its own prefix and window.
 export function createRateLimiter(
   prefix: string,
   tokens: number,
@@ -28,9 +26,7 @@ export function createRateLimiter(
   });
 }
 
-// Run a limit check, failing OPEN on infrastructure errors: if Upstash Redis
-// is unreachable the request proceeds rather than 500ing the endpoint —
-// throttling is a guard, not a dependency.
+// Fails OPEN on infrastructure errors: throttling is a guard, not a dependency.
 export async function safeLimit(
   limiter: Ratelimit,
   key: string,

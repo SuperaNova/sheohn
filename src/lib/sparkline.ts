@@ -15,12 +15,7 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/**
- * Maps a series of values onto an SVG `points` string normalized to fit the
- * given box (higher values render higher, i.e. smaller y). An empty series
- * returns ''; a single value or an all-equal series renders as a flat
- * mid-height line rather than collapsing to the bottom edge.
- */
+/** Maps values to an SVG `points` string in the given box; empty gives '', a flat series a mid-height line. */
 export function buildSparklinePoints(
   values: number[],
   dims: SparklineDimensions = {},

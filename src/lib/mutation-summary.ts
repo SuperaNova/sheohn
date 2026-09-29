@@ -1,8 +1,5 @@
-// Pure logic for the weekly mutation-score badge; scripts/mutation-summary.ts
-// wraps it for I/O (reading Stryker's JSON reporter output, writing
-// data/mutation-score.json). Field names mirror Stryker's own
-// mutation-testing-metrics package (killed/survived/timeout/noCoverage/
-// totalMutants/mutationScore) rather than inventing new ones.
+// Pure logic for the weekly mutation-score badge; scripts/mutation-summary.ts wraps it for I/O.
+// Field names mirror Stryker's mutation-testing-metrics.
 
 type MutantStatus =
   | 'Killed'
@@ -31,11 +28,7 @@ export interface MutationCounts {
   totalMutants: number;
 }
 
-/**
- * Rollup for one run — appended to `data/mutation-score.json`'s `runs` array
- * AND mirrored (as the newest entry) in its top-level `latest` field, same
- * convention as `eval-history.ts` / `lighthouse-history.ts`.
- */
+/** Per-run rollup appended to `runs` and mirrored as `latest` (same convention as eval-history). */
 export type MutationSummaryEntry = MutationCounts & {
   date: string;
   commitSha: string;
@@ -82,8 +75,7 @@ export function countMutants(report: StrykerMutationReport): MutationCounts {
           counts.noCoverage += 1;
           break;
         default:
-          // CompileError/RuntimeError/Ignored/Pending are excluded from the
-          // score denominator (Stryker's own "valid mutants" definition).
+          // CompileError/RuntimeError/Ignored/Pending are excluded from the score denominator.
           break;
       }
     }

@@ -29,8 +29,7 @@ console.log(
   '===================================================================',
 );
 
-// With numberOfRuns > 1 each URL appears multiple times; only the median
-// ("representative") run is meaningful, so skip the rest to keep output clean.
+// With numberOfRuns > 1 each URL repeats; only the median ("representative") run counts.
 manifest
   .filter((run) => run.isRepresentativeRun)
   .forEach((run) => {
