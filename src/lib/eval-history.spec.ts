@@ -6,6 +6,7 @@ import {
   createEmptyIndex,
   extractCaseResults,
   findRegressedCases,
+  findRegressions,
   summarizeCases,
   summarizeRun,
   type EvalRunDetail,
@@ -241,7 +242,7 @@ describe('findRegressedCases', () => {
       ],
     };
 
-    expect(findRegressedCases(previous, current)).toEqual([
+    expect(findRegressedCases([previous], current)).toEqual([
       'set_theme — dark mode',
     ]);
   });
@@ -258,7 +259,7 @@ describe('findRegressedCases', () => {
       cases: [{ name: 'x', status: 'failed', durationMs: 10 }],
     };
 
-    expect(findRegressedCases(previous, current)).toEqual([]);
+    expect(findRegressedCases([previous], current)).toEqual([]);
   });
 
   test('does not report newly added cases with no prior history', () => {
@@ -273,7 +274,7 @@ describe('findRegressedCases', () => {
       cases: [{ name: 'new case', status: 'failed', durationMs: 10 }],
     };
 
-    expect(findRegressedCases(previous, current)).toEqual([]);
+    expect(findRegressedCases([previous], current)).toEqual([]);
   });
 
   test('returns an empty array when nothing regressed', () => {
@@ -288,7 +289,7 @@ describe('findRegressedCases', () => {
       cases: [{ name: 'x', status: 'passed', durationMs: 10 }],
     };
 
-    expect(findRegressedCases(previous, current)).toEqual([]);
+    expect(findRegressedCases([previous], current)).toEqual([]);
   });
 });
 
@@ -304,7 +305,7 @@ describe('checkEvalHealth', () => {
       })),
     };
 
-    const result = checkEvalHealth(current, null, 70);
+    const result = checkEvalHealth(current, [], 70);
     expect(result.passRate).toBe(0);
     expect(result.floorBreached).toBe(true);
     expect(result.regressedCases).toEqual([]);
@@ -329,7 +330,7 @@ describe('checkEvalHealth', () => {
       ],
     };
 
-    const result = checkEvalHealth(current, previous, 70);
+    const result = checkEvalHealth(current, [previous], 70);
     expect(result.passRate).toBe(50);
     expect(result.floorBreached).toBe(true);
     expect(result.regressedCases).toEqual([]);
@@ -354,7 +355,7 @@ describe('checkEvalHealth', () => {
       ],
     };
 
-    const result = checkEvalHealth(current, previous, 70);
+    const result = checkEvalHealth(current, [previous], 70);
     expect(result.regressedCases).toEqual(['a']);
     expect(result.floorBreached).toBe(true);
     expect(result.flagged).toBe(true);
@@ -378,7 +379,7 @@ describe('checkEvalHealth', () => {
       ],
     };
 
-    const result = checkEvalHealth(current, previous, 70);
+    const result = checkEvalHealth(current, [previous], 70);
     expect(result.passRate).toBe(100);
     expect(result.floorBreached).toBe(false);
     expect(result.flagged).toBe(false);
@@ -396,7 +397,215 @@ describe('checkEvalHealth', () => {
       ],
     };
 
-    expect(checkEvalHealth(current, null, 70).floorBreached).toBe(false);
-    expect(checkEvalHealth(current, null, 90).floorBreached).toBe(true);
+    expect(checkEvalHealth(current, [], 70).floorBreached).toBe(false);
+    expect(checkEvalHealth(current, [], 90).floorBreached).toBe(true);
+  });
+});
+
+describe('errored cases', () => {
+  const infraMessage = 'apiRequestContext.post: Request context disposed.';
+
+  function reportWith(message: string): PlaywrightJsonReport {
+    return {
+      suites: [
+        {
+          title: 'agent.eval.ts',
+          specs: [
+            {
+              title: 'case a',
+              tests: [
+                {
+                  status: 'unexpected',
+                  results: [
+                    { status: 'failed', duration: 5, error: { message } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  test('extractCaseResults classifies infra failures as errored', () => {
+    expect(extractCaseResults(reportWith(infraMessage))[0]?.status).toBe(
+      'errored',
+    );
+    expect(
+      extractCaseResults(reportWith('[infra] HTTP 503: overloaded'))[0]?.status,
+    ).toBe('errored');
+  });
+
+  test('extractCaseResults keeps assertion failures as failed', () => {
+    expect(
+      extractCaseResults(reportWith('expected no tool call'))[0]?.status,
+    ).toBe('failed');
+  });
+
+  test('summarizeCases excludes errored cases from the denominator', () => {
+    expect(
+      summarizeCases([
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'errored', durationMs: 1 },
+      ]),
+    ).toEqual({
+      passRate: 100,
+      totalCases: 1,
+      passedCases: 1,
+      erroredCases: 1,
+    });
+  });
+
+  test('findRegressedCases ignores a passed-to-errored flip', () => {
+    const previous: EvalRunDetail = {
+      date: 'p',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'passed', durationMs: 1 },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'errored', durationMs: 1 },
+        { name: 'b', status: 'failed', durationMs: 1 },
+      ],
+    };
+    expect(findRegressedCases([previous], current)).toEqual(['b']);
+  });
+
+  test('findRegressedCases ignores an errored-to-failed flip', () => {
+    const previous: EvalRunDetail = {
+      date: 'p',
+      commitSha: 'a',
+      cases: [{ name: 'a', status: 'errored', durationMs: 1 }],
+    };
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [{ name: 'a', status: 'failed', durationMs: 1 }],
+    };
+    expect(findRegressedCases([previous], current)).toEqual([]);
+  });
+
+  test('checkEvalHealth does not let errored cases flag or breach the floor', () => {
+    const previous: EvalRunDetail = {
+      date: 'p',
+      commitSha: 'a',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'passed', durationMs: 1 },
+        { name: 'c', status: 'passed', durationMs: 1 },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'errored', durationMs: 1 },
+        { name: 'c', status: 'passed', durationMs: 1 },
+      ],
+    };
+    const result = checkEvalHealth(current, [previous], 70);
+    expect(result.passRate).toBe(100);
+    expect(result.erroredCases).toEqual(['b']);
+    expect(result.flagged).toBe(false);
+  });
+
+  test('checkEvalHealth flags a run where more than half the cases errored as systemic', () => {
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'errored', durationMs: 1 },
+        { name: 'c', status: 'errored', durationMs: 1 },
+      ],
+    };
+    const result = checkEvalHealth(current, [], 70);
+    expect(result.systemicInfra).toBe(true);
+    expect(result.inconclusive).toBe(false);
+    expect(result.flagged).toBe(true);
+  });
+
+  test('checkEvalHealth does not flag exactly half errored', () => {
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 1 },
+        { name: 'b', status: 'errored', durationMs: 1 },
+      ],
+    };
+    expect(checkEvalHealth(current, [], 70).flagged).toBe(false);
+  });
+
+  test('checkEvalHealth treats an all-errored run as inconclusive, not a floor breach', () => {
+    const current: EvalRunDetail = {
+      date: 'c',
+      commitSha: 'b',
+      cases: [{ name: 'a', status: 'errored', durationMs: 1 }],
+    };
+    const result = checkEvalHealth(current, [], 70);
+    expect(result.inconclusive).toBe(true);
+    expect(result.floorBreached).toBe(false);
+    expect(result.systemicInfra).toBe(true);
+    expect(result.flagged).toBe(true);
+  });
+});
+
+describe('baseline across errored runs', () => {
+  const run = (
+    date: string,
+    status: 'passed' | 'failed' | 'errored',
+  ): EvalRunDetail => ({
+    date,
+    commitSha: date,
+    cases: [{ name: 'a', status, durationMs: 1 }],
+  });
+
+  test('passed -> errored -> failed is flagged against the passed run', () => {
+    expect(
+      findRegressions(
+        [run('w1', 'passed'), run('w2', 'errored')],
+        run('w3', 'failed'),
+      ),
+    ).toEqual([{ name: 'a', baselineDate: 'w1' }]);
+  });
+
+  test('passed -> errored -> passed is not flagged', () => {
+    expect(
+      findRegressions(
+        [run('w1', 'passed'), run('w2', 'errored')],
+        run('w3', 'passed'),
+      ),
+    ).toEqual([]);
+  });
+
+  test('a scored failure after a pass resets the baseline', () => {
+    expect(
+      findRegressions(
+        [run('w1', 'passed'), run('w2', 'failed'), run('w3', 'errored')],
+        run('w4', 'failed'),
+      ),
+    ).toEqual([]);
+  });
+
+  test('no prior runs (missing history) flags nothing', () => {
+    expect(findRegressions([], run('w1', 'failed'))).toEqual([]);
+  });
+
+  test('checkEvalHealth reports the baseline date per regressed case', () => {
+    const health = checkEvalHealth(
+      run('w3', 'failed'),
+      [run('w1', 'passed'), run('w2', 'errored')],
+      0,
+    );
+    expect(health.regressedCases).toEqual(['a']);
+    expect(health.baselineDates).toEqual({ a: 'w1' });
   });
 });

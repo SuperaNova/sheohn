@@ -74,7 +74,7 @@ export function validateCandidate(
   return { valid: true };
 }
 
-/** Only 'failed' cases warrant healing — 'skipped' isn't a regression. */
+/** Only 'failed' cases warrant healing — 'skipped' and infra 'errored' aren't prompt problems. */
 export function selectFailingCases(detail: EvalRunDetail): EvalCaseResult[] {
   return detail.cases.filter((c) => c.status === 'failed');
 }
@@ -179,8 +179,9 @@ export type ImprovementResult = {
 
 /**
  * Compares the triggering (failing) run against the candidate branch's
- * re-eval run. "Improved" means strictly better pass rate — an equal rate
- * (even with different cases flipping) does not clear the bar.
+ * re-eval run. "Improved" means strictly better pass rate plus at least one
+ * genuinely recovered case — errored cases leave the denominator, so a rate
+ * bump alone could just be an infra flake.
  */
 export function evaluateImprovement(
   before: EvalRunDetail,
@@ -195,13 +196,15 @@ export function evaluateImprovement(
   const recoveredCases = after.cases
     .filter(
       (c) =>
-        c.status === 'passed' && beforeStatusByName.get(c.name) !== 'passed',
+        c.status === 'passed' &&
+        beforeStatusByName.get(c.name) !== 'passed' &&
+        beforeStatusByName.get(c.name) !== 'errored',
     )
     .map((c) => c.name)
     .sort();
 
   return {
-    improved: afterPassRate > beforePassRate,
+    improved: afterPassRate > beforePassRate && recoveredCases.length > 0,
     beforePassRate,
     afterPassRate,
     recoveredCases,
