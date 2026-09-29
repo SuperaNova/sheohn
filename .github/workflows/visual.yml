@@ -17,7 +17,7 @@ name: Visual Regression
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 # GITHUB_TOKEN default permissions may be read-only depending on repo/org

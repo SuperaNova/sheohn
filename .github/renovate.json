@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard"],
   "labels": ["dependencies"],
+  "baseBranches": ["dev"],
   "minimumReleaseAge": "7 days",
   "versioning": "npm",
   "schedule": ["before 6am on monday"],

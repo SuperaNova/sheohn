@@ -11,7 +11,7 @@ name: Bundle Size
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 # Cancel older runs on the same PR when a new push lands (mirrors ci.yml).
 concurrency:
