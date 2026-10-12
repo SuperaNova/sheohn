@@ -15,3 +15,6 @@ package-lock.json
 
 # Generated content
 public/sitemap-*.xml
+
+# Generated red-team corpus
+redteam/attacks.yaml
