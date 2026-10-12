@@ -8,6 +8,9 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   ping:
     name: Ping production and record to Redis

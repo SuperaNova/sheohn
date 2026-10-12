@@ -10,9 +10,15 @@ on:
         description: 'The safe version to downgrade to (e.g. "4.17.20")'
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   revert:
     runs-on: ubuntu-latest
+    # Pushes the downgrade commit.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

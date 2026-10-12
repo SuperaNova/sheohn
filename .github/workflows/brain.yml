@@ -11,16 +11,17 @@ on:
   pull_request:
     paths: ['scripts/my_facts.json']
 
-# The push job commits scripts/brain-manifest.json back to main.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   sync:
     name: Sync facts into Upstash Vector, commit manifest
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    # Commits scripts/brain-manifest.json back to main.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -57,6 +58,9 @@ jobs:
     name: Dry-run diff, comment on PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

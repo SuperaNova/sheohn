@@ -48,6 +48,9 @@ on:
       - '.secretlintrc.json'
       - '.github/workflows/ci.yml'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

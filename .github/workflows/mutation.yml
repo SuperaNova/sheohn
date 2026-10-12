@@ -7,14 +7,16 @@ on:
     - cron: '0 8 * * 1'
   workflow_dispatch:
 
-# This job commits data/mutation-score.json back to main.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   mutation:
     name: Run Stryker, record mutation score history
     runs-on: ubuntu-latest
+    # Commits data/mutation-score.json back to main.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
