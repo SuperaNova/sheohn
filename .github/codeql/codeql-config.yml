@@ -1,0 +1,8 @@
+name: sheohn CodeQL config
+paths-ignore:
+  - dist
+  - coverage
+  - reports
+  - playwright-report
+  - test-results
+  - node_modules
