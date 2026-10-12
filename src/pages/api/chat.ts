@@ -25,10 +25,17 @@ import {
 } from '../../lib/rag';
 import {
   recordAgentCacheEvent,
+  recordAgentModelFallback,
   recordAgentRequest,
   recordAgentTurn,
 } from '../../lib/agent-redis';
 import { collectToolNames } from '../../lib/agent-metrics';
+import {
+  CHAT_MODEL_FALLBACK,
+  CHAT_MODEL_PRIMARY,
+  FIRST_CHUNK_TIMEOUT_MS,
+} from '../../lib/chat-model';
+import { withModelFallback } from '../../lib/model-fallback';
 
 /**
  * AI Chatbot API Endpoint (/api/chat)
@@ -208,7 +215,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
 
   const result = streamText({
-    model: google('gemini-3.1-flash-lite'),
+    model: withModelFallback(
+      google(CHAT_MODEL_PRIMARY),
+      google(CHAT_MODEL_FALLBACK),
+      {
+        firstChunkTimeoutMs: FIRST_CHUNK_TIMEOUT_MS,
+        onFallback: () => waitUntil(recordAgentModelFallback()),
+      },
+    ),
     system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
     messages,
     stopWhen: stepCountIs(5),

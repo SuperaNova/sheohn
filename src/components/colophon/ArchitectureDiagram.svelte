@@ -44,7 +44,7 @@
       w: 200,
       h: 64,
       detail:
-        'POST /api/chat streams responses from Gemini (gemini-3.1-flash-lite) via the Vercel AI SDK. Six tools are exposed to the model — open_case_study, open_resume, focus_section, set_theme, trigger_ui_state, query_jared_memory — capped at 5 tool-call steps and a 25s total timeout.',
+        'POST /api/chat streams responses from Gemini (gemini-3.5-flash-lite, falling back to 3.1) via the Vercel AI SDK. Six tools are exposed to the model — open_case_study, open_resume, focus_section, set_theme, trigger_ui_state, query_jared_memory — capped at 5 tool-call steps and a 25s total timeout.',
     },
     {
       id: 'rag',
