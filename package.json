@@ -21,6 +21,7 @@
     "secretlint": "secretlint --secretlintignore .gitignore \"**/*\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:smoke": "playwright test --config=playwright.smoke.config.ts",
     "eval:agent": "playwright test --config=playwright.eval.config.ts",
     "redteam:generate": "npx --yes promptfoo@0.123.1 redteam generate --env-file redteam/flags.env -c redteam/promptfooconfig.yaml -o redteam/attacks.yaml --force",
     "redteam:run": "npx --yes promptfoo@0.123.1 eval --env-file redteam/flags.env -c redteam/attacks.yaml -j 1 --delay 6500 --no-cache --no-share -o reports/redteam/results.json",
