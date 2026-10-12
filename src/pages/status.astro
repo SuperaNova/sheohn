@@ -185,6 +185,14 @@ const latestLighthouse = lighthouseHistory.latest;
                   cases, {latestEval.date})
                 </span>
               </p>
+              {latestEval.adversarial && (
+                <p class="mt-2 font-mono text-xl text-[var(--color-console-signal)]">
+                  {latestEval.adversarial.passRate}%{' '}
+                  <span class="text-sm text-[var(--color-console-text-dim)]">
+                    {`injection resistance (${latestEval.adversarial.passedCases}/${latestEval.adversarial.totalCases})`}
+                  </span>
+                </p>
+              )}
               <div class="mt-4">
                 <Sparkline
                   values={evalPassRateValues}
