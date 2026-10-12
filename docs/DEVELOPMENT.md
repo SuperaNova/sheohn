@@ -97,6 +97,22 @@ The integrated AI assistant allows visitors to query your portfolio and triggers
 5. **State Bridge (`src/store.ts`)**:
    Houses the Svelte stores (`agentQuery`, `sceneCommand`, `routeCommand`) that act as the message bus between the UI and the AI components.
 
+## Chat kill switch
+
+`/api/chat` checks the Redis key `agent:killswitch` before anything else. Flip it from the Upstash console or CLI:
+
+```
+SET agent:killswitch 1   # chat returns 503 "offline"; the shell still works
+DEL agent:killswitch     # back online
+```
+
+Any value except empty, `0` or `false` turns it on. A Redis outage reads as "off", so the switch can never take chat down by itself.
+
+After the switch, chat applies a per-IP limit (10/min), then two shared guards that reject with 503 "busy". Both constants live in `src/lib/chat-guard.ts` and sit under Gemini's free-tier 15 RPM / 500 RPD:
+
+- `CHAT_GLOBAL_PER_MINUTE = 12` requests per minute across all callers
+- `CHAT_DAILY_BUDGET = 400` requests per UTC day
+
 ## Project layout
 
 ```

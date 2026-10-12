@@ -184,4 +184,53 @@ test.describe('Command deck', () => {
       deck(page).getByRole('button', { name: 'show me his resume' }),
     ).toBeVisible();
   });
+
+  const rejections = [
+    {
+      status: 429,
+      reason: 'rate_limited',
+      message: /too many messages too fast/i,
+    },
+    { status: 503, reason: 'busy', message: /swamped right now/i },
+    { status: 503, reason: 'offline', message: /offline for maintenance/i },
+  ];
+
+  for (const { status, reason, message } of rejections) {
+    test(`shows the ${reason} line when the agent answers ${status}`, async ({
+      page,
+    }) => {
+      await page.route('**/api/chat', (route) =>
+        route.fulfill({
+          status,
+          contentType: 'application/json',
+          headers: { 'Retry-After': '30' },
+          body: JSON.stringify({ reason, retryAfterSeconds: 30 }),
+        }),
+      );
+      await page.goto('/');
+      await waitForDeck(page);
+
+      await deckInput(page).fill('What is his tech stack?');
+      await deckInput(page).press('Enter');
+
+      await expect(deck(page).getByRole('status')).toHaveText(message);
+    });
+  }
+
+  test('shows the generic line for an unrecognised failure', async ({
+    page,
+  }) => {
+    await page.route('**/api/chat', (route) =>
+      route.fulfill({ status: 500, body: 'Internal Server Error' }),
+    );
+    await page.goto('/');
+    await waitForDeck(page);
+
+    await deckInput(page).fill('What is his tech stack?');
+    await deckInput(page).press('Enter');
+
+    await expect(deck(page).getByRole('status')).toHaveText(
+      /couldn't reach the agent/i,
+    );
+  });
 });

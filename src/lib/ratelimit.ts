@@ -12,18 +12,35 @@ const redis = new Redis({
     process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
+const KILL_SWITCH_KEY = 'agent:killswitch';
+
 // Sliding-window limiter on the shared client; each route passes its own prefix and window.
+// `fixed` aligns windows to the clock (a '1 d' window resets at UTC midnight).
 export function createRateLimiter(
   prefix: string,
   tokens: number,
   window: Parameters<typeof Ratelimit.slidingWindow>[1],
+  algorithm: 'sliding' | 'fixed' = 'sliding',
 ): Ratelimit {
   return new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(tokens, window),
+    limiter:
+      algorithm === 'fixed'
+        ? Ratelimit.fixedWindow(tokens, window)
+        : Ratelimit.slidingWindow(tokens, window),
     analytics: true,
     prefix,
   });
+}
+
+// One GET; fails OPEN (reads as unset) so a Redis outage can't take chat down.
+export async function readKillSwitch(): Promise<unknown> {
+  try {
+    return await redis.get(KILL_SWITCH_KEY);
+  } catch (err) {
+    console.error('[ratelimit] kill-switch read failed — failing open:', err);
+    return null;
+  }
 }
 
 // Fails OPEN on infrastructure errors: throttling is a guard, not a dependency.
