@@ -35,6 +35,7 @@
   import type { BootInfo } from '../../lib/boot-info';
   import { formatRagTrace, type RagQueryResult } from '../../lib/rag';
   import { prefersReducedMotion } from '../../lib/motion';
+  import { chatErrorNotice } from '../../lib/chat-guard';
 
   const SCENE_TARGETS = ['hero', 'about', 'stack', 'projects', 'contact'];
 
@@ -100,6 +101,8 @@
     starters.filter((s) => !s.hideWhenDark || $theme !== 'dark'),
   );
   let chatError = $state('');
+  // In-persona line for a failed agent request; cleared on the next send.
+  let agentNotice = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
   let pending = $state<string | null>(null);
   // Platform-correct shortcut label; SSR-safe default, corrected on mount.
@@ -214,7 +217,10 @@
           {}) as ToolCallArgs;
         toolCallHandlers[payload.toolName]?.(args);
       },
-      onError: (err) => console.error('[CommandDeck] agent error:', err),
+      onError: (err) => {
+        console.error('[CommandDeck] agent error:', err);
+        agentNotice = chatErrorNotice(err);
+      },
     });
   } catch (err) {
     chatError = String(err);
@@ -355,6 +361,7 @@
     const trimmed = text.trim();
     if (!trimmed || !chat) return;
     open();
+    agentNotice = '';
     // Queue input while a reply streams; send when the agent is free.
     if (isLoading) {
       pending = trimmed;
@@ -616,6 +623,7 @@
           </div>
         {:else if messages.length}
           <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
+          {@render noticeLine('px-4 pb-3')}
           <!-- Recommended commands stay reachable after chatting. -->
           {@render starterChips(
             'border-t border-[var(--color-console-line)] p-3',
@@ -627,12 +635,25 @@
               ask about Jared, or type
               <span class="text-[var(--color-console-signal)]">/</span> for commands.
             </p>
+            {@render noticeLine('mt-3')}
             {@render starterChips('mt-3')}
           </div>
         {/if}
       {/if}
     </div>
   {/if}
+
+  {#snippet noticeLine(wrapperClass: string)}
+    {#if agentNotice}
+      <p
+        role="status"
+        class="{wrapperClass} font-mono text-[13px] text-[var(--color-console-text-dim)]"
+      >
+        <span class="text-[var(--color-console-signal)]">system:</span>
+        {agentNotice}
+      </p>
+    {/if}
+  {/snippet}
 
   {#snippet starterChips(wrapperClass: string)}
     <div class={wrapperClass}>
