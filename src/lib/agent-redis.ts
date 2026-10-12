@@ -99,6 +99,27 @@ export async function recordAgentCacheEvent(
   }
 }
 
+function fallbackKey(date: string): string {
+  return `agent:fallback:${date}`;
+}
+
+/** One turn where the primary chat model failed over to the fallback. */
+export async function recordAgentModelFallback(): Promise<void> {
+  try {
+    const key = fallbackKey(utcDateString());
+    await redis
+      .pipeline()
+      .hincrby(key, 'count', 1)
+      .expire(key, TTL_SECONDS)
+      .exec();
+  } catch (err) {
+    console.error(
+      '[agent-redis] recordAgentModelFallback failed — dropping:',
+      err,
+    );
+  }
+}
+
 /** Merges all metrics over the trailing STATS_WINDOW_DAYS; fails open to zeroed stats. */
 export async function getAgentStats(): Promise<AgentStats> {
   try {
@@ -109,6 +130,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       pipeline.hgetall(toolsKey(date));
       pipeline.hgetall(latencyKey(date));
       pipeline.hgetall(cacheKey(date));
+      pipeline.hgetall(fallbackKey(date));
     }
     const results = await pipeline.exec<unknown[]>();
 
@@ -118,12 +140,14 @@ export async function getAgentStats(): Promise<AgentStats> {
     const latencyBuckets: Record<string, number> = {};
     let cacheHits = 0;
     let cacheMisses = 0;
+    let modelFallbacks = 0;
 
     for (let i = 0; i < dates.length; i++) {
-      const requests = results[i * 4] as Record<string, unknown> | null;
-      const tools = results[i * 4 + 1] as Record<string, unknown> | null;
-      const latency = results[i * 4 + 2] as Record<string, unknown> | null;
-      const cache = results[i * 4 + 3] as Record<string, unknown> | null;
+      const requests = results[i * 5] as Record<string, unknown> | null;
+      const tools = results[i * 5 + 1] as Record<string, unknown> | null;
+      const latency = results[i * 5 + 2] as Record<string, unknown> | null;
+      const cache = results[i * 5 + 3] as Record<string, unknown> | null;
+      const fallbacks = results[i * 5 + 4] as Record<string, unknown> | null;
 
       if (requests) {
         totalRequests += Number(requests.total ?? 0);
@@ -144,6 +168,7 @@ export async function getAgentStats(): Promise<AgentStats> {
         cacheHits += Number(cache.hit ?? 0);
         cacheMisses += Number(cache.miss ?? 0);
       }
+      if (fallbacks) modelFallbacks += Number(fallbacks.count ?? 0);
     }
 
     return buildAgentStats({
@@ -153,6 +178,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       latencyBuckets,
       cacheHits,
       cacheMisses,
+      modelFallbacks,
     });
   } catch (err) {
     console.error('[agent-redis] getAgentStats failed — failing open:', err);

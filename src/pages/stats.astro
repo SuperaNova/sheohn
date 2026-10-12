@@ -198,6 +198,8 @@ function fmtCls(n: number): string {
                   <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
                     p50 {fmtMs(agentStats.latency.p50)} · p95{' '}
                     {fmtMs(agentStats.latency.p95)}
+                    {agentStats.modelFallbacks > 0 &&
+                      ` · ${agentStats.modelFallbacks} fallbacks`}
                   </p>
                 </div>
                 <div>
