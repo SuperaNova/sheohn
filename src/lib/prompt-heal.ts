@@ -70,16 +70,21 @@ export function validateCandidate(
   return { valid: true };
 }
 
-/** Only 'failed' cases warrant healing — 'skipped' and infra 'errored' aren't prompt problems. */
+/**
+ * Only 'failed' cases warrant healing — 'skipped' and infra 'errored' aren't prompt problems.
+ * Adversarial cases are excluded: their attack text would flow verbatim into the healer's prompt.
+ */
 export function selectFailingCases(detail: EvalRunDetail): EvalCaseResult[] {
-  return detail.cases.filter((c) => c.status === 'failed');
+  return detail.cases.filter(
+    (c) => c.status === 'failed' && c.category !== 'adversarial',
+  );
 }
 
 /** Minimal shape of tests/eval/cases.ts's EvalCase, kept local to avoid a src/ -> tests/ import. */
 export type EvalCaseSource = {
   name: string;
   prompt: string;
-  expectedTool: string | null;
+  expectedTool?: string | null;
   expectedFactsContain?: string[];
 };
 

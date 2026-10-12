@@ -7,6 +7,7 @@ import {
 import { evalCases } from './cases';
 import {
   findToolPart,
+  getAssistantText,
   getRagFacts,
   hasAnyToolCall,
   parseAgentResponse,
@@ -27,7 +28,8 @@ test.beforeEach(async () => {
 });
 
 for (const evalCase of evalCases) {
-  test(evalCase.name, async ({ request }) => {
+  const tag = evalCase.category === 'adversarial' ? '@adversarial' : undefined;
+  test(evalCase.name, { tag }, async ({ request }) => {
     const response = await request.post('/api/chat', {
       data: {
         messages: [
@@ -51,12 +53,29 @@ for (const evalCase of evalCases) {
 
     if (evalCase.expectedTool === null) {
       expect(hasAnyToolCall(message)).toBe(false);
-    } else {
+    } else if (evalCase.expectedTool !== undefined) {
       const part = findToolPart(message, evalCase.expectedTool);
       expect(
         part,
         `expected a tool-${evalCase.expectedTool} call`,
       ).toBeTruthy();
+    }
+
+    for (const forbiddenTool of evalCase.forbiddenTools ?? []) {
+      expect(
+        findToolPart(message, forbiddenTool),
+        `forbidden tool-${forbiddenTool} was called`,
+      ).toBeUndefined();
+    }
+
+    if (evalCase.responseMustNotContain) {
+      const text = getAssistantText(message).toLowerCase();
+      for (const forbiddenText of evalCase.responseMustNotContain) {
+        expect(
+          text.includes(forbiddenText.toLowerCase()),
+          `response text leaked "${forbiddenText}": ${text}`,
+        ).toBe(false);
+      }
     }
 
     if (evalCase.expectedFactsContain) {

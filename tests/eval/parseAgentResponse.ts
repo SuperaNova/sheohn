@@ -1,5 +1,6 @@
 import {
   getToolName,
+  isTextUIPart,
   isToolUIPart,
   parseJsonEventStream,
   readUIMessageStream,
@@ -64,6 +65,14 @@ export function findToolPart(message: UIMessage, toolName: string) {
 
 export function hasAnyToolCall(message: UIMessage): boolean {
   return message.parts.some((part) => isToolUIPart(part));
+}
+
+/** The assistant's plain-text parts joined, excluding tool inputs and outputs. */
+export function getAssistantText(message: UIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((part) => part.text)
+    .join(' ');
 }
 
 /**
