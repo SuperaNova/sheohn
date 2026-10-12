@@ -6,6 +6,7 @@ Live at [sheohn.dev](https://sheohn.dev).
 
 [![Eval pass rate](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FSuperaNova%2Fsheohn%2Fmain%2Fdata%2Feval-history%2Findex.json&query=%24.latest.passRate&suffix=%25&label=eval%20pass%20rate&color=informational)](https://github.com/SuperaNova/sheohn/actions/workflows/eval.yml)
 [![Mutation score](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FSuperaNova%2Fsheohn%2Fmain%2Fdata%2Fmutation-score.json&query=%24.latest.mutationScore&suffix=%25&label=mutation%20score&color=informational)](https://github.com/SuperaNova/sheohn/actions/workflows/mutation.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/SuperaNova/sheohn/badge)](https://scorecard.dev/viewer/?uri=github.com/SuperaNova/sheohn)
 
 > The badge reads `latest.passRate` from [`data/eval-history/index.json`](data/eval-history/index.json)
 > (see `.github/workflows/eval.yml`, weekly + `workflow_dispatch`). Before the
