@@ -21,7 +21,7 @@ This repository uses a hybrid architecture blending **Astro's static site genera
 ├── .github/workflows/    # 9 workflows: ci, eval, brain, mutation, visual, uptime,
 │                         #   bundle-size, emergency-revert, heal-prompt
 ├── data/                 # Committed history JSON: eval-history/, lighthouse-history/,
-│                         #   mutation-score.json — read by /status and README badges
+│                         #   mutation-score.json — read by /status and the DEVELOPMENT.md badges
 ├── docs/                 # Project documentation (You are here)
 ├── scripts/              # update-brain.ts (RAG sync), transform-eval-results.ts,
 │                         #   lh-history.ts, mutation-summary.ts, ping-uptime.ts, ...

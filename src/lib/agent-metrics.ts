@@ -89,6 +89,11 @@ export function buildCacheStats(hits: number, misses: number): CacheStats {
   };
 }
 
+interface GuardrailStats {
+  safety: number;
+  outputFilter: number;
+}
+
 export interface ToolCallCount {
   name: AgentToolName;
   count: number;
@@ -113,6 +118,7 @@ export interface AgentStats {
   toolCalls: ToolCallCount[];
   latency: LatencyPercentiles;
   cache: CacheStats;
+  guardrail: GuardrailStats;
   /** Turns where the primary model failed and the fallback model answered. */
   modelFallbacks: number;
 }
@@ -122,6 +128,7 @@ export const EMPTY_AGENT_STATS: AgentStats = {
   toolCalls: buildToolCallDistribution({}),
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
+  guardrail: { safety: 0, outputFilter: 0 },
   modelFallbacks: 0,
 };
 
@@ -133,6 +140,8 @@ export function buildAgentStats(input: {
   latencyBuckets: Record<string, number>;
   cacheHits: number;
   cacheMisses: number;
+  guardrailSafety: number;
+  guardrailOutputFilter: number;
   modelFallbacks: number;
 }): AgentStats {
   return {
@@ -140,6 +149,10 @@ export function buildAgentStats(input: {
     toolCalls: buildToolCallDistribution(input.toolCounts),
     latency: estimateLatencyPercentiles(input.latencyBuckets),
     cache: buildCacheStats(input.cacheHits, input.cacheMisses),
+    guardrail: {
+      safety: input.guardrailSafety,
+      outputFilter: input.guardrailOutputFilter,
+    },
     modelFallbacks: input.modelFallbacks,
   };
 }

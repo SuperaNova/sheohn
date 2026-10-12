@@ -9,6 +9,7 @@ import {
   latencyBucketFor,
   type AgentStats,
 } from './agent-metrics';
+import type { GuardrailTripKind } from './output-guard';
 
 const redis = new Redis({
   url:
@@ -36,6 +37,10 @@ function latencyKey(date: string): string {
 
 function cacheKey(date: string): string {
   return `agent:cache:${date}`;
+}
+
+function guardrailKey(date: string): string {
+  return `agent:guardrail:${date}`;
 }
 
 /** One request to the route, and whether the rate limiter throttled it. */
@@ -99,6 +104,22 @@ export async function recordAgentCacheEvent(
   }
 }
 
+/** One output guardrail trip: Gemini safety block or the stream filter. */
+export async function recordGuardrailTrip(
+  kind: GuardrailTripKind,
+): Promise<void> {
+  try {
+    const key = guardrailKey(utcDateString());
+    await redis
+      .pipeline()
+      .hincrby(key, kind, 1)
+      .expire(key, TTL_SECONDS)
+      .exec();
+  } catch (err) {
+    console.error('[agent-redis] recordGuardrailTrip failed — dropping:', err);
+  }
+}
+
 function fallbackKey(date: string): string {
   return `agent:fallback:${date}`;
 }
@@ -130,6 +151,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       pipeline.hgetall(toolsKey(date));
       pipeline.hgetall(latencyKey(date));
       pipeline.hgetall(cacheKey(date));
+      pipeline.hgetall(guardrailKey(date));
       pipeline.hgetall(fallbackKey(date));
     }
     const results = await pipeline.exec<unknown[]>();
@@ -140,14 +162,17 @@ export async function getAgentStats(): Promise<AgentStats> {
     const latencyBuckets: Record<string, number> = {};
     let cacheHits = 0;
     let cacheMisses = 0;
+    let guardrailSafety = 0;
+    let guardrailOutputFilter = 0;
     let modelFallbacks = 0;
 
     for (let i = 0; i < dates.length; i++) {
-      const requests = results[i * 5] as Record<string, unknown> | null;
-      const tools = results[i * 5 + 1] as Record<string, unknown> | null;
-      const latency = results[i * 5 + 2] as Record<string, unknown> | null;
-      const cache = results[i * 5 + 3] as Record<string, unknown> | null;
-      const fallbacks = results[i * 5 + 4] as Record<string, unknown> | null;
+      const requests = results[i * 6] as Record<string, unknown> | null;
+      const tools = results[i * 6 + 1] as Record<string, unknown> | null;
+      const latency = results[i * 6 + 2] as Record<string, unknown> | null;
+      const cache = results[i * 6 + 3] as Record<string, unknown> | null;
+      const guardrail = results[i * 6 + 4] as Record<string, unknown> | null;
+      const fallbacks = results[i * 6 + 5] as Record<string, unknown> | null;
 
       if (requests) {
         totalRequests += Number(requests.total ?? 0);
@@ -168,6 +193,10 @@ export async function getAgentStats(): Promise<AgentStats> {
         cacheHits += Number(cache.hit ?? 0);
         cacheMisses += Number(cache.miss ?? 0);
       }
+      if (guardrail) {
+        guardrailSafety += Number(guardrail.safety ?? 0);
+        guardrailOutputFilter += Number(guardrail['output-filter'] ?? 0);
+      }
       if (fallbacks) modelFallbacks += Number(fallbacks.count ?? 0);
     }
 
@@ -178,6 +207,8 @@ export async function getAgentStats(): Promise<AgentStats> {
       latencyBuckets,
       cacheHits,
       cacheMisses,
+      guardrailSafety,
+      guardrailOutputFilter,
       modelFallbacks,
     });
   } catch (err) {

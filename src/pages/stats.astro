@@ -180,7 +180,7 @@ function fmtCls(n: number): string {
             </div>
           ) : (
             <div class="bg-[var(--color-console-surface)] p-6">
-              <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <div>
                   <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
                     Requests
@@ -210,6 +210,18 @@ function fmtCls(n: number): string {
                     {agentStats.cache.hits + agentStats.cache.misses === 0
                       ? '—'
                       : `${fmtPercent(agentStats.cache.hitRate)} hit · ${agentStats.cache.hits}/${agentStats.cache.hits + agentStats.cache.misses}`}
+                  </p>
+                </div>
+                <div>
+                  <p class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase">
+                    Guardrail
+                  </p>
+                  <p class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]">
+                    {agentStats.guardrail.safety +
+                      agentStats.guardrail.outputFilter ===
+                    0
+                      ? '0 trips'
+                      : `${agentStats.guardrail.safety} safety · ${agentStats.guardrail.outputFilter} filter`}
                   </p>
                 </div>
               </div>

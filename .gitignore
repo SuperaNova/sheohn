@@ -60,3 +60,4 @@ blob-report/
 # Stryker mutation testing
 stryker-tmp/
 reports/mutation/
+reports/redteam/

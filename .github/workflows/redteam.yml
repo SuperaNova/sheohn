@@ -1,0 +1,94 @@
+name: Monthly Red Team
+
+# Standard cron ORs day-of-month with day-of-week, so this fires every Monday
+# and the first step skips all but the first Monday of the month.
+# Not a gate: attack failures are recorded, only infra problems fail the job.
+on:
+  schedule:
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  redteam:
+    name: Run promptfoo red team, record history
+    runs-on: ubuntu-latest
+    # Commits data/redteam-history/** back to main.
+    permissions:
+      contents: write
+    env:
+      GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+      UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+      UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+    steps:
+      - name: Skip unless first Monday of the month
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$(date -u +%d)" -gt 7 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: npm ci --legacy-peer-deps
+
+      - name: Start dev server
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          npm run dev -- --port 4397 > "$RUNNER_TEMP/dev-server.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:4397/; then exit 0; fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/dev-server.log"
+          echo "dev server did not boot"
+          exit 1
+
+      - name: Run red team
+        if: steps.gate.outputs.run == 'true'
+        run: npm run redteam:run
+
+      - name: Upload raw promptfoo results
+        if: steps.gate.outputs.run == 'true' && always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: redteam-report
+          path: reports/redteam/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Record red team history
+        if: steps.gate.outputs.run == 'true'
+        run: npx tsx scripts/redteam-history.ts
+
+      - name: Commit red team history back to main
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/redteam-history
+          if git diff --cached --quiet; then
+            echo "No redteam-history changes to commit."
+          else
+            git commit -m "chore(redteam): monthly red-team run $(date -u +%Y-%m-%d)"
+            git push
+          fi
