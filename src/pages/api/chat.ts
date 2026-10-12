@@ -11,7 +11,16 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
+import {
+  createRateLimiter,
+  readKillSwitch,
+  safeLimit,
+} from '../../lib/ratelimit';
+import {
+  CHAT_DAILY_BUDGET,
+  CHAT_GLOBAL_PER_MINUTE,
+  decideChatAdmission,
+} from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
 import {
@@ -46,7 +55,7 @@ import { withModelFallback } from '../../lib/model-fallback';
  * Google Gemini via the Vercel AI SDK, and streams the text and tool-calls back.
  *
  * Architecture Flow:
- * 1. Rate Limiting: IP-based throttling using Upstash Redis.
+ * 1. Admission: kill switch, per-IP limit, global limit and daily budget (Upstash Redis).
  * 2. Validation: Strict Zod parsing of the incoming message shape to prevent abuse.
  * 3. LLM Invocation: Sends context, user messages, and tool definitions to Gemini.
  * 4. RAG Integration: One of the tools (`query_jared_memory`) queries an Upstash Vector DB
@@ -58,6 +67,17 @@ import { withModelFallback } from '../../lib/model-fallback';
 export const prerender = false;
 
 const ratelimit = createRateLimiter('ratelimit_chat', 10, '1 m');
+const globalRatelimit = createRateLimiter(
+  'ratelimit_chat_global',
+  CHAT_GLOBAL_PER_MINUTE,
+  '1 m',
+);
+const dailyRatelimit = createRateLimiter(
+  'ratelimit_chat_daily',
+  CHAT_DAILY_BUDGET,
+  '1 d',
+  'fixed',
+);
 
 // Explicitly pass the API key; Astro SSR may not expose process.env to the SDK auto-detector
 const google = createGoogleGenerativeAI({
@@ -156,20 +176,35 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   // client-spoofable and would let a caller rotate identities to slip the
   // rate limiter.
   const ip = clientAddress ?? '127.0.0.1';
-  const limitResult = await safeLimit(ratelimit, `ratelimit_chat_${ip}`);
+  const admission = await decideChatAdmission({
+    readKillSwitch,
+    limitIp: () => safeLimit(ratelimit, `ratelimit_chat_${ip}`),
+    limitGlobal: () => safeLimit(globalRatelimit, 'global'),
+    limitDaily: () => safeLimit(dailyRatelimit, 'global'),
+  });
   // waitUntil keeps telemetry alive past the response without blocking it.
-  waitUntil(recordAgentRequest(!!(limitResult && !limitResult.success)));
+  waitUntil(recordAgentRequest(admission.admit ? undefined : admission.reason));
 
-  if (limitResult && !limitResult.success) {
-    const { limit, reset, remaining } = limitResult;
-    return new Response('Too Many Requests', {
-      status: 429,
-      headers: {
-        'X-RateLimit-Limit': limit.toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': reset.toString(),
-      },
-    });
+  if (!admission.admit) {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (admission.retryAfterSeconds !== undefined) {
+      headers['Retry-After'] = admission.retryAfterSeconds.toString();
+    }
+    if (admission.ipLimit) {
+      const { limit, reset, remaining } = admission.ipLimit;
+      headers['X-RateLimit-Limit'] = limit.toString();
+      headers['X-RateLimit-Remaining'] = remaining.toString();
+      headers['X-RateLimit-Reset'] = reset.toString();
+    }
+    return new Response(
+      JSON.stringify({
+        reason: admission.reason,
+        retryAfterSeconds: admission.retryAfterSeconds,
+      }),
+      { status: admission.status, headers },
+    );
   }
 
   let payload: unknown;
