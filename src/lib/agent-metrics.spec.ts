@@ -119,6 +119,7 @@ describe('buildAgentStats', () => {
       latencyBuckets: { '1000-3000': 2, '3000-8000': 2 },
       cacheHits: 8,
       cacheMisses: 2,
+      modelFallbacks: 3,
     });
 
     expect(stats.requests).toEqual({
@@ -131,5 +132,6 @@ describe('buildAgentStats', () => {
       stats.toolCalls.find((t) => t.name === 'open_case_study')?.count,
     ).toBe(3);
     expect(stats.latency.p50).toBeGreaterThan(0);
+    expect(stats.modelFallbacks).toBe(3);
   });
 });
