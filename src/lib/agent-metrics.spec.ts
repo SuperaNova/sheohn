@@ -119,6 +119,8 @@ describe('buildAgentStats', () => {
       latencyBuckets: { '1000-3000': 2, '3000-8000': 2 },
       cacheHits: 8,
       cacheMisses: 2,
+      guardrailSafety: 2,
+      guardrailOutputFilter: 1,
     });
 
     expect(stats.requests).toEqual({
@@ -127,6 +129,7 @@ describe('buildAgentStats', () => {
       rejectionRate: 10,
     });
     expect(stats.cache).toEqual({ hits: 8, misses: 2, hitRate: 80 });
+    expect(stats.guardrail).toEqual({ safety: 2, outputFilter: 1 });
     expect(
       stats.toolCalls.find((t) => t.name === 'open_case_study')?.count,
     ).toBe(3);

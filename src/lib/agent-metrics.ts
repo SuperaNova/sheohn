@@ -89,6 +89,11 @@ export function buildCacheStats(hits: number, misses: number): CacheStats {
   };
 }
 
+interface GuardrailStats {
+  safety: number;
+  outputFilter: number;
+}
+
 export interface ToolCallCount {
   name: AgentToolName;
   count: number;
@@ -113,6 +118,7 @@ export interface AgentStats {
   toolCalls: ToolCallCount[];
   latency: LatencyPercentiles;
   cache: CacheStats;
+  guardrail: GuardrailStats;
 }
 
 export const EMPTY_AGENT_STATS: AgentStats = {
@@ -120,6 +126,7 @@ export const EMPTY_AGENT_STATS: AgentStats = {
   toolCalls: buildToolCallDistribution({}),
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
+  guardrail: { safety: 0, outputFilter: 0 },
 };
 
 /** Assembles the full /stats panel shape from merged multi-day Redis hash reads. */
@@ -130,11 +137,17 @@ export function buildAgentStats(input: {
   latencyBuckets: Record<string, number>;
   cacheHits: number;
   cacheMisses: number;
+  guardrailSafety: number;
+  guardrailOutputFilter: number;
 }): AgentStats {
   return {
     requests: buildRequestStats(input.totalRequests, input.rejectedRequests),
     toolCalls: buildToolCallDistribution(input.toolCounts),
     latency: estimateLatencyPercentiles(input.latencyBuckets),
     cache: buildCacheStats(input.cacheHits, input.cacheMisses),
+    guardrail: {
+      safety: input.guardrailSafety,
+      outputFilter: input.guardrailOutputFilter,
+    },
   };
 }
