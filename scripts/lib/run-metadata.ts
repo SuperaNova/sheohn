@@ -1,7 +1,5 @@
-// Shared helpers for the data/*-history CLI scripts (lh-history,
-// mutation-summary, transform-eval-results, check-eval-regression):
-// commit/date resolution, JSON read/write with a trailing newline, and
-// $GITHUB_OUTPUT writes.
+// Shared helpers for the data/*-history CLI scripts: commit/date resolution, JSON read/write
+// with a trailing newline, and $GITHUB_OUTPUT writes.
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,8 +13,7 @@ export function resolveCommitSha(): string {
   }
 }
 
-// envVar names the script-specific override (e.g. "EVAL_DATE"); falls back
-// to today (UTC, YYYY-MM-DD).
+// envVar is the script-specific override (e.g. "EVAL_DATE"); falls back to today (UTC).
 export function resolveDate(envVar: string): string {
   return process.env[envVar] ?? new Date().toISOString().slice(0, 10);
 }

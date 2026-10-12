@@ -1,6 +1,4 @@
-// Redis persistence for CSP violation reports. Same env-var-fallback client
-// pattern as src/lib/ratelimit.ts; a second client instance here keeps that
-// module's exports untouched.
+// Redis persistence for CSP violation reports; own client, same env-var fallback as ratelimit.ts.
 import { createHash } from 'node:crypto';
 import { Redis } from '@upstash/redis';
 import type { NormalizedViolation } from './csp-report-shape';
@@ -18,17 +16,14 @@ const VIOLATION_KEY_PREFIX = 'csp:violation:';
 const INDEX_KEY = 'csp:violations:index';
 const UNKNOWN = 'unknown';
 
-// Caps the number of DISTINCT directive+blockedUri pairs tracked at once —
-// repeat reports of an already-tracked pair only bump its count, they never
-// grow this total. When a genuinely new pair arrives at the cap, the
-// least-recently-seen entry (lowest score in the index) is evicted first.
+// Caps distinct directive+blockedUri pairs; repeats only bump a count, and a new pair at the
+// cap evicts the least-recently-seen entry.
 const MAX_DISTINCT_VIOLATIONS = 200;
 
-// TTL refreshes on every repeat occurrence, so an actively-recurring
-// violation stays visible; a one-off report ages out after 30 days.
+// TTL refreshes on repeats; a one-off report ages out after 30 days.
 const VIOLATION_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-/** Deterministic dedup key for a directive+blockedUri pair. Pure — no IO. */
+/** Deterministic dedup key for a directive+blockedUri pair. */
 export function buildViolationKey(
   directive: string,
   blockedUri: string,
@@ -46,12 +41,7 @@ export interface ViolationEntry {
   lastSeen: number;
 }
 
-/**
- * Records one violation occurrence, deduped by directive+blockedUri into a
- * single Redis hash with an incrementing count. Propagates Redis errors —
- * the caller (the API route) decides how to respond; CSP reporting never
- * inspects the response body either way.
- */
+/** Records a violation, deduped into one Redis hash with a count. Propagates Redis errors. */
 export async function recordViolation(
   entry: NormalizedViolation,
 ): Promise<void> {
@@ -85,11 +75,7 @@ export async function recordViolation(
     .exec();
 }
 
-/**
- * Reads the most recently active violations (newest last-seen first). Fails
- * open — returns [] on any Redis error — so /status renders its empty state
- * instead of crashing.
- */
+/** Newest-first recent violations; returns [] on any Redis error so /status shows its empty state. */
 export async function getRecentViolations(
   limit = 20,
 ): Promise<ViolationEntry[]> {

@@ -3,11 +3,8 @@
   import type { BootInfo } from '../../lib/boot-info';
   import { buildDeckBootLines } from '../../lib/dmesg';
 
-  // Plays once per browser session, the first time the command deck opens
-  // (gated by CommandDeck.svelte via sessionStorage['deck-boot-played']).
-  // `bootInfo` is computed at build time in Astro frontmatter — see
-  // src/lib/boot-data.ts for why this component never imports that module
-  // directly (it pulls in node:child_process).
+  // Plays once per session on first deck open (gated in CommandDeck).
+  // bootInfo arrives as a prop: boot-data.ts pulls in node:child_process, so never import it here.
   let { bootInfo, onComplete }: { bootInfo: BootInfo; onComplete: () => void } =
     $props();
 
@@ -28,8 +25,7 @@
     onComplete();
   }
 
-  // Skippable on any key/click — instantly reveals every remaining line
-  // rather than requiring one keypress per line.
+  // Any key/click reveals all remaining lines.
   function skip() {
     if (finished) return;
     lineCount = lines.length;
@@ -42,11 +38,8 @@
     ).matches;
 
     if (reduceMotion) {
-      // Same end state, no motion: render the full log immediately — but
-      // hold it on screen long enough to read before handing off. Calling
-      // finish() synchronously here would unmount the component before a
-      // frame ever painted, so reduced-motion users would never see the log
-      // at all. A static hold isn't motion; any key/click still skips sooner.
+      // Reduced motion: show the full log statically, held long enough to read;
+      // finishing synchronously would unmount before first paint.
       lineCount = lines.length;
       const t = setTimeout(finish, 1500);
       return () => clearTimeout(t);
@@ -56,8 +49,7 @@
       lineCount += 1;
       if (lineCount >= lines.length) {
         clearInterval(id);
-        // Brief pause so the last line is legible before handing off —
-        // mirrors Loader.svelte's finish() delay.
+        // Brief pause so the last line is legible.
         setTimeout(finish, 200);
       }
     }, 140);
@@ -66,8 +58,7 @@
   });
 
   function handleKeydown(e: KeyboardEvent) {
-    // "Press any key to continue" — don't let the keystroke also land in
-    // the (already-focused) command input behind this panel.
+    // Swallow the keystroke so it doesn't reach the focused command input.
     e.preventDefault();
     skip();
   }

@@ -1,14 +1,9 @@
-// Thin CLI wrapper around src/lib/mutation-summary.ts's pure transform
-// logic. Reads Stryker's JSON reporter output (reports/mutation/mutation.json
-// by default, see stryker.config.json's jsonReporter) and appends a summary
-// entry to data/mutation-score.json, alongside data/eval-history's
-// commit-back pattern.
-//
+// CLI wrapper over src/lib/mutation-summary.ts: reads Stryker's JSON report and appends a summary
+// entry to data/mutation-score.json.
 // Usage: npx tsx scripts/mutation-summary.ts [path-to-mutation.json]
 //   - Report path defaults to reports/mutation/mutation.json.
-//   - Date defaults to today (UTC, YYYY-MM-DD); override with $MUTATION_DATE.
-//   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then
-//     the literal string "unknown".
+//   - Date defaults to today (UTC); override with $MUTATION_DATE.
+//   - Commit SHA defaults to $GITHUB_SHA, then `git rev-parse HEAD`, then "unknown".
 import fs from 'node:fs';
 import path from 'node:path';
 import {

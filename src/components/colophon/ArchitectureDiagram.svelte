@@ -1,8 +1,6 @@
 <script lang="ts">
-  // Hand-drawn inline SVG — no chart/diagram library. Node selection state
-  // drives SVG presentation attributes directly ($derived below) rather than
-  // toggling CSS classes, so there's no scoped-CSS-pruning risk; the detail
-  // panel itself is a plain {#if} block for the same reason.
+  // Hand-drawn inline SVG. Node selection drives SVG attributes ($derived) and a plain {#if}
+  // panel, avoiding scoped-CSS pruning risk.
   interface DiagramNode {
     id: string;
     title: string;

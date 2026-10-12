@@ -1,9 +1,6 @@
 /**
- * Svelte action: magnetic hover.
- * The node is gently pulled toward the cursor while hovered, then springs
- * back on leave. Pointer-fine devices only, and disabled for users who
- * prefer reduced motion. Pairs with a CSS transition on `transform` for the
- * settle; the pull itself is applied directly for 1:1 cursor tracking.
+ * Svelte action: magnetic hover. Pulls the node toward the cursor and springs back on leave;
+ * pointer-fine devices only, off under reduced motion. Pair with a CSS `transform` transition.
  */
 export function magnetic(
   node: HTMLElement,

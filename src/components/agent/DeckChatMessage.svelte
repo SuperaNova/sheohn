@@ -5,11 +5,8 @@
 
   let { message }: { message: UIMessage } = $props();
 
-  // Correlate this message's query_jared_memory tool output with footnote
-  // markers on its final text part. Positional (sentence-level) citation
-  // would require guessing which chunk backs which sentence in freeform LLM
-  // text, so all kept facts are attached
-  // to the LAST text part instead, rendered as an appended footnote list.
+  // Footnotes attach to the LAST text part: sentence-level citation would mean guessing
+  // which chunk backs which sentence.
   const ragFacts: RagFact[] = $derived.by(() => {
     if (!message.parts) return [];
     const part = message.parts.find(

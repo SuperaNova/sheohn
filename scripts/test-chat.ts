@@ -1,7 +1,6 @@
 /**
- * Test Script on the api before i integrate site working part
- * Usage: npx tsx scripts/test-chat.ts
- * Make sure `npm run dev` is running first (on port 4321).
+ * Manual smoke test for /api/chat. Usage: npx tsx scripts/test-chat.ts
+ * Requires `npm run dev` on port 4321.
  */
 import 'dotenv/config';
 

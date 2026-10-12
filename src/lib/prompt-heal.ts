@@ -1,19 +1,15 @@
-// Pure logic for the self-healing prompt bot; scripts/heal-prompt.ts and
-// scripts/compare-eval-runs.ts wrap it. Lives under src/ so vitest's
-// `src/**` include glob covers it. The Gemini call itself stays in the
-// script — not unit-testable here without mocking the SDK.
+// Pure logic for the self-healing prompt bot (wrapped by scripts/heal-prompt.ts and
+// scripts/compare-eval-runs.ts); under src/ so vitest's include glob covers it.
 import type { EvalCaseResult, EvalRunDetail } from './eval-history';
 import { summarizeCases } from './eval-history';
 
 const REQUIRED_EXPORT = 'export const SYSTEM_PROMPT';
 const REQUIRED_IMPORT = "import { personalInfo } from '../data/personalInfo';";
 
-// The real file's body is well over 1KB; anything drastically shorter is
-// almost certainly a truncated or empty model response.
+// The real file is well over 1KB; much shorter is likely a truncated or empty response.
 const MIN_CANDIDATE_LENGTH = 400;
 
-// Phrases that indicate the model refused or emitted a placeholder instead
-// of a real replacement file.
+// Phrases indicating a refusal or placeholder instead of a real replacement file.
 const REFUSAL_PATTERNS = [
   /\bi cannot\b/i,
   /\bi can.?t (help|assist|comply)/i,
@@ -74,7 +70,7 @@ export function validateCandidate(
   return { valid: true };
 }
 
-/** Only 'failed' cases warrant healing — 'skipped' isn't a regression. */
+/** Only 'failed' cases warrant healing — 'skipped' and infra 'errored' aren't prompt problems. */
 export function selectFailingCases(detail: EvalRunDetail): EvalCaseResult[] {
   return detail.cases.filter((c) => c.status === 'failed');
 }
@@ -113,11 +109,7 @@ export function enrichFailingCases(
   });
 }
 
-/**
- * Builds the healing prompt sent to Gemini: explains SYSTEM_PROMPT's
- * section structure, shows each failing case's visitor prompt / expected
- * behavior / actual failure, and asks for a complete replacement file.
- */
+/** Builds the healing prompt sent to Gemini: failing cases plus a request for a complete replacement file. */
 export function buildHealPrompt(
   promptsSource: string,
   failingCases: FailingCaseContext[],
@@ -178,9 +170,8 @@ export type ImprovementResult = {
 };
 
 /**
- * Compares the triggering (failing) run against the candidate branch's
- * re-eval run. "Improved" means strictly better pass rate — an equal rate
- * (even with different cases flipping) does not clear the bar.
+ * "Improved" means strictly better pass rate plus at least one recovered case;
+ * errored cases leave the denominator, so a rate bump alone could be an infra flake.
  */
 export function evaluateImprovement(
   before: EvalRunDetail,
@@ -195,13 +186,15 @@ export function evaluateImprovement(
   const recoveredCases = after.cases
     .filter(
       (c) =>
-        c.status === 'passed' && beforeStatusByName.get(c.name) !== 'passed',
+        c.status === 'passed' &&
+        beforeStatusByName.get(c.name) !== 'passed' &&
+        beforeStatusByName.get(c.name) !== 'errored',
     )
     .map((c) => c.name)
     .sort();
 
   return {
-    improved: afterPassRate > beforePassRate,
+    improved: afterPassRate > beforePassRate && recoveredCases.length > 0,
     beforePassRate,
     afterPassRate,
     recoveredCases,

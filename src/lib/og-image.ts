@@ -1,7 +1,4 @@
-// Build-time-only module: renders a per-page/case-study social card with
-// satori (layout + SVG) and @resvg/resvg-js (SVG -> PNG). Pure local
-// rendering — no network calls, no client bundle exposure. Call this only
-// from an Astro endpoint's frontmatter/handler (see src/pages/og/[...slug].png.ts).
+// Build-time-only OG card renderer (satori layout + resvg PNG); call from an Astro endpoint.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import satori from 'satori';
@@ -11,9 +8,7 @@ import { personalInfo } from '../data/personalInfo';
 export const OG_CARD_WIDTH = 1200;
 export const OG_CARD_HEIGHT = 630;
 
-// Dark-hero pastel-phosphor scene palette, hardcoded from
-// src/styles/global.css's --color-scene-*/--color-console-* tokens — satori
-// renders server-side and cannot read CSS custom properties.
+// Mirrors global.css's --color-scene-*/--color-console-* tokens; satori can't read CSS variables.
 const SCENE = {
   sky0: '#05080a',
   sky1: '#0a1410',
@@ -26,8 +21,7 @@ const SCENE = {
   sunMid: '#dceade',
   sunBottom: '#b9d9c6',
   vignette: 'rgba(3, 6, 5, 0.55)',
-  // --color-on-cta-accent (dark theme value) at ~40% for the specimen-plate
-  // frame border, matching HeroSection's .hero-frame treatment.
+  // --color-on-cta-accent (dark) at ~40%, matching HeroSection's .hero-frame.
   frame: 'rgba(142, 214, 164, 0.4)',
 } as const;
 
@@ -37,17 +31,13 @@ const CONSOLE = {
   signal: '#4ade80',
 } as const;
 
-// Resolved against process.cwd() (always the project root for `astro build`
-// and vitest), not import.meta.dirname/url — Astro relocates the compiled
-// endpoint chunk into dist/server/.prerender/, which breaks any path built
-// relative to the bundled module's own location.
+// process.cwd(), not import.meta.dirname: Astro relocates the compiled endpoint chunk.
 const FONT_DIR = join(process.cwd(), 'src/assets/fonts');
 
 function loadFont(file: string): Buffer {
   return readFileSync(join(FONT_DIR, file));
 }
 
-// Read once at module scope so every getStaticPaths call reuses the buffers.
 const FONTS = [
   {
     name: 'Inter',
@@ -97,15 +87,13 @@ export interface OgCardInput {
   title: string;
   summary?: string;
   kind: 'site' | 'project';
-  // Index signature so this satisfies Astro's getStaticPaths Props type
-  // (Record<string, unknown>).
+  // Satisfies Astro's getStaticPaths Props type.
   [key: string]: unknown;
 }
 
 type Style = Record<string, string | number>;
 
-// satori accepts a React-like element tree; authored as plain object
-// literals since no JSX pragma is configured in this Astro+Svelte project.
+// satori takes a React-like element tree; built as plain objects (no JSX pragma).
 interface SatoriNode {
   type: string;
   props: { style?: Style; children?: SatoriNode | SatoriNode[] | string };
@@ -142,7 +130,7 @@ function sunSlatColor(f: number): string {
     : mixHex(SCENE.sunMid, SCENE.sunBottom, (f - 0.65) / 0.35);
 }
 
-// Sun geometry: a half-set disc, its widest chord resting on the horizon.
+// Half-set disc, widest chord on the horizon.
 const SUN_R = 120;
 const SUN_RIGHT = 120;
 const SUN_BOTTOM = 262; // horizon top edge
@@ -150,11 +138,8 @@ const SLAT_H = 10;
 const SLAT_GAP = 4;
 
 /**
- * The hero's slatted paper sun, as satori-safe plain rects: a vertical stack
- * of centered horizontal bars whose widths follow the disc's chord lengths
- * (narrow at the top, full diameter at the horizon), with sky gaps between —
- * no masks, no clipping, no box-shadow, so resvg never needs clip/filter
- * handling for it.
+ * The hero's slatted sun as plain rects (no masks, clipping, or box-shadow), keeping
+ * resvg off its clip/filter paths.
  */
 function buildSunSlats(): SatoriNode[] {
   const bars: SatoriNode[] = [];
@@ -179,7 +164,6 @@ function buildSunSlats(): SatoriNode[] {
 
 /** Builds the satori element tree for a single card. */
 function buildCard({ title, summary, kind }: OgCardInput): SatoriNode {
-  // Grid floor below the horizon.
   const grid = el('div', {
     position: 'absolute',
     left: 0,
@@ -192,8 +176,7 @@ function buildCard({ title, summary, kind }: OgCardInput): SatoriNode {
     backgroundSize: '48px 48px',
   });
 
-  // Slatted paper sun: the visible top half of the disc, ending at the
-  // horizon like the hero's half-set sun.
+  // Slatted sun: the visible top half of the disc.
   const sun = el(
     'div',
     {
@@ -210,9 +193,7 @@ function buildCard({ title, summary, kind }: OgCardInput): SatoriNode {
     buildSunSlats(),
   );
 
-  // Soft bloom behind the sun — a gradient sibling, not a box-shadow, so no
-  // element needs resvg clip/filter handling. Centered slightly above the
-  // horizon so it halos the visible disc instead of pooling on the floor.
+  // Bloom as a gradient sibling, not a box-shadow, to avoid resvg clip/filter handling.
   const sunGlow = el('div', {
     position: 'absolute',
     right: SUN_RIGHT - 50,
@@ -367,14 +348,11 @@ function buildCard({ title, summary, kind }: OgCardInput): SatoriNode {
       height: OG_CARD_HEIGHT,
       display: 'flex',
       position: 'relative',
-      // No overflow:hidden here — combined with a boxShadow-bearing
-      // descendant (the horizon line), it panics resvg's native clip/filter
-      // code. Every child stays within the 1200x630 canvas anyway.
+      // No overflow:hidden: with the boxShadow horizon line it panics resvg's clip code.
       backgroundImage: `linear-gradient(to bottom, ${SCENE.sky0} 0%, ${SCENE.sky1} 55%, ${SCENE.sky2} 100%)`,
       fontFamily: 'Inter',
     },
-    // Vignette first: it darkens the sky/corners but must never mute the
-    // sun, which paints above it.
+    // Vignette first so it never mutes the sun.
     [vignette, sunGlow, sun, horizonLine, grid, frame, content],
   );
 }

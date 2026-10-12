@@ -1,8 +1,4 @@
-/**
- * Svelte action: Intersection Observer trigger.
- * Replaces Framer Motion's `whileInView` — adds `.in-view` class
- * and dispatches an `inview` event when the element enters the viewport.
- */
+/** Svelte action: adds `.in-view` and dispatches `inview` when the element enters the viewport. */
 export function inview(
   node: HTMLElement,
   params?: { once?: boolean; amount?: number },

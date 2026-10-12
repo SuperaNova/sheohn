@@ -12,9 +12,7 @@ function readPngDimensions(png: Buffer): { width: number; height: number } {
   };
 }
 
-// Real satori+resvg rendering (no meaningful way to mock it) — under the
-// full suite's parallel worker load this occasionally exceeds vitest's
-// default 5s test timeout, so give it more headroom.
+// Real satori+resvg rendering; under parallel load it can exceed the default 5s timeout.
 const RENDER_TIMEOUT = 15_000;
 
 test(

@@ -1,0 +1,44 @@
+name: Sync main into dev
+
+# Bot pushes made with GITHUB_TOKEN don't fire `push` events, so the data-committing
+# workflows are hooked via workflow_run; `push` covers human merges into main.
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows:
+      - Weekly Eval Scoreboard
+      - Weekly Mutation Score
+      - Brain sync
+      - Emergency Security Revert
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-dev
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Merge main into dev
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "dev already contains main"
+            exit 0
+          fi
+          git merge --no-edit origin/main
+          git push origin HEAD:dev

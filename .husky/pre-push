@@ -1,2 +1,10 @@
+base=$(git rev-parse --verify -q '@{u}' || git merge-base HEAD origin/dev 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null)
+if [ -n "$base" ] && changed=$(git diff --name-only "$base"...HEAD 2>/dev/null); then
+  if ! echo "$changed" | grep -Eq '^(src/|tests/|scripts/|public/|\.husky/|package(-lock)?\.json$|tsconfig[^/]*\.json$|astro\.config\.|svelte\.config\.|eslint\.config\.|knip\.json$|vitest\.config\.|playwright[^/]*\.config\.ts$|\.size-limit\.js$|\.prettierrc)'; then
+    echo "→ pre-push: no code changes, skipping checks"
+    exit 0
+  fi
+fi
+
 echo "→ pre-push: lint + type-check + svelte-check + knip + unit tests"
 npm run lint && npm run check && npm run check:svelte && npm run knip && npm run test:unit:coverage

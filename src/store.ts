@@ -22,9 +22,7 @@ export function clearFocus() {
 // Whether the unified command deck (palette + agent) is expanded.
 export const commandDeckOpen = writable<boolean>(false);
 
-// A query pushed into the agent from elsewhere (hero starter chips, etc.).
-// CommandDeck owns the Chat instance and listens here; `ts` forces re-fire
-// even when the same text is sent twice.
+// A query pushed into the agent from elsewhere; `ts` re-fires repeated identical text.
 interface AgentQuery {
   text: string;
   ts: number;
@@ -35,8 +33,7 @@ export function dispatchAgentQuery(text: string) {
   agentQuery.set({ text, ts: ++agentSeq });
 }
 
-// Scene control: the agent emits a command (focus_section tool) and
-// ScenePilot.svelte pans to that section and spotlights it.
+// Scene control: the agent's focus_section command, consumed by ScenePilot.
 export type SceneTarget = 'hero' | 'about' | 'stack' | 'projects' | 'contact';
 
 // Which section element id is currently spotlit (null = none).
@@ -57,18 +54,15 @@ export function clearSpotlight() {
   spotlight.set(null);
 }
 
-// Direct route navigation requested by the agent (e.g. open a case study page).
+// Direct route navigation requested by the agent.
 export const routeCommand = writable<{ path: string; ts: number } | null>(null);
 let routeSeq = 0;
 export function dispatchRoute(path: string) {
   routeCommand.set({ path, ts: ++routeSeq });
 }
 
-// BaseLayout's pre-paint inline script has already resolved the theme
-// (localhost ?theme= override, else localStorage, else light) and applied
-// the .dark class before any module code runs on the client — read it here
-// instead of defaulting to 'light', or that override gets silently reverted
-// the moment a component reads/hydrates this store.
+// BaseLayout's pre-paint script already applied the theme (?theme= override, storage, else
+// light) and the .dark class; read it here or that override is reverted on hydration.
 const initialTheme: 'light' | 'dark' =
   typeof document !== 'undefined' &&
   document.documentElement.classList.contains('dark')
@@ -77,8 +71,7 @@ const initialTheme: 'light' | 'dark' =
 
 export const theme = writable<'light' | 'dark'>(initialTheme);
 
-// True while ≥50% of the home hero is on screen (set by HeroSection, false
-// once it unmounts) — drives the command deck's perched state.
+// True while >=50% of the home hero is on screen; drives the deck's perched state.
 export const heroInView = writable(false);
 
 const THEME_COLOR: Record<'light' | 'dark', string> = {
@@ -101,9 +94,7 @@ export function initTheme() {
   });
 }
 
-// Finds the visible theme-toggle button (desktop vs. mobile-header markup
-// both render one, only one has layout at a time) and returns its center,
-// falling back to the viewport's top-right corner if none is on-screen.
+// Center of the visible theme-toggle (desktop or mobile markup); falls back to top-right.
 function getToggleOrigin() {
   const rects = Array.from(
     document.querySelectorAll<HTMLElement>('[data-theme-toggle]'),
@@ -116,11 +107,8 @@ function getToggleOrigin() {
 
 let whooshBusy = false;
 
-// Drives both the manual toggle and the agent's set_theme tool: a circular
-// View Transitions reveal from the toggle button, with an instant class
-// swap for browsers without the API and for prefers-reduced-motion. Ignores
-// calls while a transition is already in flight so double-clicks/rapid
-// set_theme calls can't corrupt the busy/attribute state.
+// Shared by the toggle and set_theme: circular View Transitions reveal, instant swap without
+// the API or under prefers-reduced-motion. Ignores calls while one is in flight.
 function runThemeWhoosh(next: 'light' | 'dark') {
   if (whooshBusy) return;
 
@@ -143,8 +131,7 @@ function runThemeWhoosh(next: 'light' | 'dark') {
   const viewport = { width: window.innerWidth, height: window.innerHeight };
   const endRadius = whooshEndRadius(origin, viewport);
 
-  // Scopes the whoosh's crossfade-neutralizing CSS (global.css) so it never
-  // leaks into ClientRouter's page-navigation view-transition rules.
+  // Scopes the whoosh's crossfade CSS so it doesn't leak into ClientRouter transitions.
   root.setAttribute('data-theme-whoosh', '');
 
   const transition = document.startViewTransition(() => theme.set(next));
@@ -178,14 +165,11 @@ export function toggleTheme() {
   runThemeWhoosh(get(theme) === 'dark' ? 'light' : 'dark');
 }
 
-// Set the theme directly (used by the agent's set_theme tool).
+// Set the theme directly (used by set_theme).
 export function setTheme(mode: 'light' | 'dark') {
   if (get(theme) === mode) return;
   runThemeWhoosh(mode);
 }
 
-// Most recent query_jared_memory retrieval trace (query + kept facts +
-// filtered-out candidates), captured by CommandDeck's tool-output effect and
-// replayed by the `/trace` command/shell builtin. null until the visitor
-// asks something that triggers a RAG lookup this session.
+// Latest query_jared_memory retrieval trace, replayed by `/trace`; null until a RAG lookup runs.
 export const lastRagTrace = writable<RagQueryResult | null>(null);

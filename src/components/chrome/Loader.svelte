@@ -5,10 +5,7 @@
   import type { BootInfo } from '../../lib/boot-info';
   import { buildLoaderLines } from '../../lib/dmesg';
 
-  // bootInfo is computed at build time (src/lib/boot-data.ts, Astro
-  // frontmatter only) and handed down as a plain prop — see
-  // CommandDeck.svelte for the same plumbing. Defaulted defensively so this
-  // never breaks if ever rendered without it.
+  // bootInfo is a build-time prop (see CommandDeck); defaulted so rendering without it is safe.
   let {
     bootInfo = {
       commitSha: 'dev',
@@ -19,11 +16,8 @@
 
   const lines = $derived.by(() => buildLoaderLines(bootInfo));
 
-  // Non-linear reveal cadence: fast bursts (~15-50ms) with a few longer
-  // beats at cluster boundaries, deterministic (no Math.random) so this
-  // stays screenshot- and e2e-stable. Total ≈1.5s + hold. Distinct from
-  // each line's displayed dmesg timestamp — a separate fake kernel clock
-  // (see dmesg.ts).
+  // Non-linear reveal cadence (bursts plus longer beats), deterministic for stable screenshots/e2e;
+  // separate from each line's fake dmesg timestamp.
   const LINE_DELAYS_MS = [
     30, 20, 15, 20, 25, 60, 15, 20, 15, 50, 20, 40, 15, 40, 15, 110, 20, 15, 45,
     15, 120, 15, 15, 20, 15, 90, 15, 15, 15, 15, 15, 15, 15, 60, 15, 70, 15, 15,
@@ -96,13 +90,10 @@
   });
 
   function handleKeydown(e: KeyboardEvent) {
-    // Loader itself never unmounts (persistent client:load island) so this
-    // listener can't be scoped to <svelte:window> inside {#if isLoading} —
-    // it must no-op itself once finished, or it would swallow every
-    // keystroke on the page forever (e.g. Enter in the command deck).
+    // Loader never unmounts (client:load), so this listener must no-op once finished or it would
+    // swallow every keystroke (e.g. Enter in the deck).
     if (finished) return;
-    // Any key skips — don't let it also scroll the page or trigger a
-    // browser default (space, "/", arrows) while the overlay is up.
+    // Prevent scroll and browser defaults (space, /, arrows) while the overlay is up.
     e.preventDefault();
     skip();
   }

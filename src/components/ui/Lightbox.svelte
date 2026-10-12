@@ -2,26 +2,20 @@
   import { onMount, onDestroy } from 'svelte';
   import { fade, scale } from 'svelte/transition';
 
-  // Zero-config image zoom: this single island scans the case-study article for
-  // <img> elements (hero + MDX diagrams), marks them zoomable, and opens a
-  // click-to-zoom overlay. No per-image markup needed, so it covers every
-  // current and future case-study image automatically.
+  // Zero-config image zoom: scans the case-study article for <img>s and opens a click-to-zoom overlay.
 
   let open = $state(false);
   let src = $state('');
   let alt = $state('');
   let bound: HTMLImageElement[] = [];
   let closeBtn = $state<HTMLButtonElement | null>(null);
-  // The element focused right before the lightbox opened, so focus can
-  // return there once it closes instead of being lost to <body>.
+  // Element focused before opening, so focus returns there on close.
   let lastFocused: HTMLElement | null = null;
 
   function handleClick(e: Event) {
     e.preventDefault();
     const img = e.currentTarget as HTMLImageElement;
-    // Same in-page overlay on touch devices too — the viewport meta tag never
-    // locks scale, so native pinch-zoom still works over the overlay without
-    // needing to navigate to a separate tab just to view the image.
+    // Same overlay on touch: pinch-zoom still works since the viewport meta never locks scale.
     const activeElement = document.activeElement as HTMLElement | null;
     lastFocused = activeElement;
     src = img.currentSrc || img.src;
@@ -39,8 +33,7 @@
     }
   }
 
-  // Moves focus onto the close button the moment the dialog opens, so
-  // keyboard/AT users land inside the dialog rather than on the page behind it.
+  // Move focus to the close button on open so keyboard/AT users land inside the dialog.
   $effect(() => {
     if (open) closeBtn?.focus();
   });
@@ -50,8 +43,7 @@
       close();
       return;
     }
-    // The close button is the dialog's only focusable element, so trapping
-    // Tab on it is a complete focus trap.
+    // The close button is the only focusable element, so trapping Tab on it is a full trap.
     if (open && e.key === 'Tab') {
       e.preventDefault();
       closeBtn?.focus();

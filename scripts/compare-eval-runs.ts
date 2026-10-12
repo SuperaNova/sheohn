@@ -1,13 +1,8 @@
-// Thin CLI wrapping src/lib/prompt-heal.ts's evaluateImprovement. Used by
-// heal-prompt.yml to decide whether a candidate prompts.ts patch's re-eval
-// run genuinely improved on the triggering failure before opening a PR.
-//
+// Compares two eval runs (evaluateImprovement in src/lib/prompt-heal.ts) for heal-prompt.yml.
 // Usage: npx tsx scripts/compare-eval-runs.ts <before.json> <after.json>
-//   - Exits 0 always (a report, not a gate) but writes `improved`,
-//     `before_pass_rate`, `after_pass_rate`, `recovered_count`, and
-//     `recovered_cases` to $GITHUB_OUTPUT when running in GitHub Actions.
-//   - Prints a markdown-formatted before/after body to stdout, meant for
-//     the PR description.
+//   - Always exits 0; writes `improved`, `before_pass_rate`, `after_pass_rate`, `recovered_count`,
+//     `recovered_cases` to $GITHUB_OUTPUT under GitHub Actions.
+//   - Prints a markdown before/after body to stdout for the PR description.
 import fs from 'node:fs';
 import { evaluateImprovement } from '../src/lib/prompt-heal';
 import type { EvalRunDetail } from '../src/lib/eval-history';

@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import {
+  InfraError,
+  describeResponse,
+  isInfraStatus,
+} from '../../src/lib/eval-infra';
 import { evalCases } from './cases';
 import {
   findToolPart,
@@ -37,9 +42,12 @@ for (const evalCase of evalCases) {
 
     const status = response.status();
     const sseText = await response.text();
+    if (isInfraStatus(status)) {
+      throw new InfraError(describeResponse(status, sseText));
+    }
     expect(status, sseText).toBe(200);
 
-    const message = await parseAgentResponse(sseText);
+    const message = await parseAgentResponse(sseText, status);
 
     if (evalCase.expectedTool === null) {
       expect(hasAnyToolCall(message)).toBe(false);

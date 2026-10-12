@@ -53,16 +53,22 @@ function scaleValue(metric: MetricKind, value: number): number {
   return metric === 'cls' ? value * 1000 : value;
 }
 
-/** Maps a raw metric value (ms for lcp/inp, unitless score for cls) to its bucket label. */
-export function bucketFor(metric: MetricKind, value: number): string {
-  const scaled = scaleValue(metric, value);
-  const boundaries = boundariesFor(metric);
+/** Maps a value to the label of the boundary range it falls in (last label if none match). */
+export function bucketForBoundaries(
+  boundaries: BucketBoundary[],
+  value: number,
+): string {
   let lastLabel = '';
   for (const b of boundaries) {
     lastLabel = b.label;
-    if (scaled >= b.min && scaled < b.max) return b.label;
+    if (value >= b.min && value < b.max) return b.label;
   }
   return lastLabel;
+}
+
+/** Maps a raw metric value (ms for lcp/inp, unitless score for cls) to its bucket label. */
+export function bucketFor(metric: MetricKind, value: number): string {
+  return bucketForBoundaries(boundariesFor(metric), scaleValue(metric, value));
 }
 
 /**

@@ -2,21 +2,13 @@
   import { linkify } from './linkify';
   import type { RagFact } from '../../lib/rag';
 
-  // `facts`: the kept (>= RAG_MIN_SCORE) query_jared_memory results that
-  // grounded this reply, if any. Correlating footnote numbers to specific
-  // sentences in freeform LLM text is inherently heuristic, so — per spec
-  // #03's locked design — all cited facts are appended as a numbered
-  // footnote list after the text rather than positioned inline. Each marker
-  // is a hover/click target that reveals that citation's fact text + score.
+  // `facts`: kept (>= RAG_MIN_SCORE) query_jared_memory results, appended as a numbered
+  // footnote list; each marker reveals its fact text + score on hover/click.
   let { text, facts = [] }: { text: string; facts?: RagFact[] } = $props();
 
-  // Hover and click track SEPARATE state (hover vs. pinned) so the two
-  // gestures can't fight: a pointer click fires mouseenter before click, and
-  // a touch tap synthesizes mouseenter+click with no mouseleave ever coming —
-  // a single openIndex toggled by both would open-then-instantly-close on
-  // click and never open at all on touch. The panel shows when its marker is
-  // hovered OR pinned; click/tap toggles the pin (clearing hover on unpin so
-  // a second tap actually closes it on touch); Escape and focus loss unpin.
+  // Hover and pin are separate state: a click fires mouseenter first and touch never fires
+  // mouseleave, so a single toggle misbehaves. Panel shows on hover OR pin; unpin clears hover
+  // so a second tap closes; Escape and focus loss unpin.
   let hoveredIndex = $state<number | null>(null);
   let pinnedIndex = $state<number | null>(null);
 

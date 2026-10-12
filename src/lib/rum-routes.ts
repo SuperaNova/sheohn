@@ -1,7 +1,5 @@
-// Known-route allowlist shared by /api/vitals (reject anything else before a
-// Redis write) and /stats (same list, so it reads back exactly what could
-// have been written). Pure — no astro:content import — so callers pass in
-// already-fetched project entries instead of this module fetching them.
+// Known-route allowlist shared by /api/vitals (rejects others before a Redis write) and /stats.
+// Pure: callers pass in already-fetched project entries.
 
 export const STATIC_ROUTES = ['/', '/about', '/projects'] as const;
 

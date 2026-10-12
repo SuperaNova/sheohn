@@ -54,8 +54,7 @@
     }
   }
 
-  // Shared by both paddles: reverse X, pin the ball to the paddle face
-  // (prevents sticking), and steer the return angle by where it was hit.
+  // Shared by both paddles: reverse X, pin the ball to the paddle face, steer by hit position.
   function bounceOffPaddle(paddleY: number, clampedBallX: number) {
     ballSpeedX = -ballSpeedX;
     ballX = clampedBallX;
@@ -108,7 +107,6 @@
   function draw() {
     if (!ctx) return;
 
-    // Transparent clear so the div background shows through.
     ctx.clearRect(0, 0, width, height);
 
     ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
@@ -157,7 +155,6 @@
   function handleMouseMove(e: MouseEvent) {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    // Scale coordinates if canvas style width doesn't match attribute width
     const scaleY = canvas.height / rect.height;
     const mouseY = (e.clientY - rect.top) * scaleY;
     playerY = Math.max(
@@ -185,17 +182,14 @@
     if (!canvas) return;
     ctx = canvas.getContext('2d');
 
-    // Set internal resolution strictly
     canvas.width = width;
     canvas.height = height;
 
-    // Svelte 5 removed event modifiers; register touchmove manually so
-    // preventDefault() works (replaces the old `on:touchmove|nonpassive`).
+    // Svelte 5 has no event modifiers; register touchmove manually so preventDefault() works.
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     resetBall();
-    // Hold the serve under reduced motion; mouse/touch movement still starts
-    // the game. Also keeps visual-regression screenshots deterministic.
+    // Hold the serve under reduced motion (input still starts the game); keeps screenshots deterministic.
     playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     gameLoop();
 

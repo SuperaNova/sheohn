@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { buildViolationKey } from './csp-redis';
 
-// Pure key-building/dedup logic only — recordViolation/getRecentViolations
-// need a live Redis and are exercised manually (see the spec's acceptance
-// steps), not here.
+// Pure key-building/dedup logic only; recordViolation/getRecentViolations need a live Redis.
 describe('buildViolationKey', () => {
   test('is deterministic for the same directive+blockedUri pair', () => {
     const a = buildViolationKey('script-src', 'https://evil.example.com/x.js');
@@ -28,8 +26,7 @@ describe('buildViolationKey', () => {
   });
 
   test('does not collide on naive concatenation across the delimiter', () => {
-    // Without a delimiter, ("script-src", "Xy") and ("script-sr", "cXy")
-    // would concatenate identically. Confirms the two are still distinct.
+    // Without a delimiter ("script-src", "Xy") and ("script-sr", "cXy") would collide.
     expect(buildViolationKey('script-src', 'Xy')).not.toBe(
       buildViolationKey('script-sr', 'cXy'),
     );

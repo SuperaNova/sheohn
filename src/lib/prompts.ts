@@ -1,12 +1,6 @@
 /**
- * AI Chatbot Persona Configuration
- *
- * This file defines the core personality and rules for the AI assistant.
- * If you are reusing this portfolio for yourself:
- * 1. Update the 'STYLE' section to match your preferred tone.
- * 2. Ensure 'query_jared_memory' references are updated to whatever you name your RAG tool.
- * 3. The 'RULES' and 'SHOW, DON'T JUST TELL' sections instruct the LLM on how to use the
- *    provided tools (like focus_section). Modify these if you add or remove tools.
+ * AI chatbot persona. When reusing: update 'STYLE', rename 'query_jared_memory' to your RAG tool,
+ * and adjust 'RULES' and 'SHOW, DON'T JUST TELL' if you add or remove tools.
  */
 import { personalInfo } from '../data/personalInfo';
 

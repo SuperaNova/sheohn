@@ -7,17 +7,13 @@ export const prerender = false;
 
 const MAX_BODY_BYTES = 16_000;
 
-// Legacy `report-uri` reports arrive as application/csp-report; Reporting
-// API `report-to` batches arrive as application/reports+json. vercel.json
-// sends both directives, so either can show up here.
+// `report-uri` sends application/csp-report; `report-to` sends application/reports+json; vercel.json sets both.
 const ALLOWED_CONTENT_TYPES = [
   'application/csp-report',
   'application/reports+json',
 ];
 
-// A broken deploy can make one browser fire the same handful of violations
-// repeatedly on every resource load; dedup collapses that into one Redis
-// entry with a rising count, but this still bounds the request volume itself.
+// Dedup collapses repeated violations into one Redis entry; this still bounds request volume.
 const ratelimit = createRateLimiter('ratelimit_csp_report', 20, '10 s');
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
@@ -45,13 +41,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   const violations = normalizeCspReportBody(payload);
 
-  // Sequential, not Promise.all: recordViolation reads-then-writes the
-  // distinct-entry cap, so concurrent calls within one batch could race it.
+  // Sequential: recordViolation reads-then-writes the entry cap, so concurrent calls could race.
   for (const violation of violations) {
     try {
       await recordViolation(violation);
     } catch (err) {
-      // Browsers never inspect the CSP report response — log and keep 204ing.
+      // Browsers ignore the report response; log and keep 204ing.
       console.error('[csp-report] recordViolation failed:', err);
     }
   }

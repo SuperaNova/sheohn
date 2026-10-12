@@ -1,16 +1,11 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 
-// The command deck is the spine of the site: a docked bar that runs deterministic
-// `/`-commands offline and proxies free text to the AI agent. These tests cover
-// the keyboard-driven flows a visitor actually uses. The agent endpoint is
-// mocked (see mockAgent) so the suite is deterministic, free, and CI-safe — it
-// never touches Gemini/Upstash.
+// Covers the deck's keyboard-driven flows. The agent endpoint is mocked (see mockAgent) so the
+// suite is deterministic and never touches Gemini/Upstash.
 
-// Mirror of the AI SDK UI message stream wire format (captured from a real
-// /api/chat response). Each event is a `data: {json}` line, double-newline
-// separated. The reply includes a markdown link so we can assert the deck's
-// safe linkifier turns it into a real anchor.
+// AI SDK UI message stream wire format; the reply includes a markdown link to assert the
+// linkifier renders a real anchor.
 const sse = (obj: unknown) => `data: ${JSON.stringify(obj)}\n\n`;
 const RESUME_LINK = 'https://sheohn.dev/resume.pdf';
 const MOCK_REPLY_BODY =
@@ -46,17 +41,12 @@ const deckInput = (page: Page) =>
   page.locator('input[aria-label^="Command deck"]');
 const deck = (page: Page) => page.locator('aside[aria-label="Command Deck"]');
 
-// The deck is a `client:idle` island, so on a freshly loaded page its handlers
-// aren't attached yet — focusing the input before hydration does nothing, and
-// pressing Enter would fall through to a native submit. Poll focus until the
-// panel actually opens (proof the island is interactive), then reset to a
-// clean, closed state for the test body.
+// The deck is a `client:idle` island: before hydration Enter would fall through to a native
+// submit. Poll until the panel opens, then reset to a closed state.
 async function waitForDeck(page: Page) {
   await expect(deckInput(page)).toBeVisible();
 
-  // Use toPass() to retry interactions until hydration finishes.
-  // We look for a suggestion chip button because it's only rendered when expanded,
-  // bypassing any Svelte 5 multiline text node regex matching bugs.
+  // toPass() retries until hydration finishes; a suggestion chip only renders when expanded.
   await expect(async () => {
     await deckInput(page).blur();
     await deckInput(page).focus();
@@ -80,11 +70,8 @@ test.describe('Command deck', () => {
     await expect(
       deck(page).getByRole('button', { name: /show me his resume/i }),
     ).toBeVisible();
-    // (The handler also focuses the input so a keyboard user can type right
-    // away — verified manually. We don't assert focus here because the app's
-    // programmatic element.focus() is a no-op in a headless, system-unfocused
-    // document, which would make the assertion flaky without reflecting a real
-    // regression.)
+    // Focus isn't asserted: programmatic focus() is a no-op in a headless, unfocused document,
+    // which would flake without signaling a regression.
 
     await page.keyboard.press('Escape');
     await expect(
@@ -109,8 +96,7 @@ test.describe('Command deck', () => {
   }) => {
     await page.goto('/');
     await waitForDeck(page);
-    // Focus (not click) — focus is the keyboard-only entry point this whole
-    // feature is about.
+    // Focus (not click): the keyboard-only entry point.
     await deckInput(page).focus();
 
     const current = deck(page).locator('button[aria-current="true"]');
@@ -137,7 +123,6 @@ test.describe('Command deck', () => {
     await deckInput(page).press('ArrowRight');
     await deckInput(page).press('Enter');
 
-    // The agent's markdown link is rendered as a real, safe anchor.
     const link = deck(page).getByRole('link', {
       name: 'Click here to view resume',
     });
@@ -178,8 +163,7 @@ test.describe('Command deck', () => {
     for (const [i, prompt] of prompts.entries()) {
       await deckInput(page).fill(prompt);
       await deckInput(page).press('Enter');
-      // The guest message lands and a fresh reply (with its link) renders before
-      // we send the next one — this also proves the queue drains in order.
+      // The guest message and a fresh reply land before the next send, proving the queue drains in order.
       await expect(deck(page).getByText(prompt)).toBeVisible();
       await expect(replyLink).toHaveCount(i + 1);
     }
@@ -196,7 +180,6 @@ test.describe('Command deck', () => {
     await deckInput(page).press('Enter');
     await expect(deck(page).getByText(/Opening Jared's resume/i)).toBeVisible();
 
-    // Chips are still reachable in the footer after chatting.
     await expect(
       deck(page).getByRole('button', { name: 'show me his resume' }),
     ).toBeVisible();

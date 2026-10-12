@@ -156,7 +156,7 @@ jobs:
         run: |
           gh pr create \
             --repo "${{ github.repository }}" \
-            --base main \
+            --base dev \
             --head "${{ steps.branch.outputs.name }}" \
             --label prompt-heal \
             --title "prompt-heal: recover ${{ steps.compare.outputs.recovered_count }} failing eval case(s)" \

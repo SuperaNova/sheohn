@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard"],
   "labels": ["dependencies"],
+  "baseBranches": ["dev"],
   "minimumReleaseAge": "7 days",
   "versioning": "npm",
   "schedule": ["before 6am on monday"],
@@ -20,6 +21,12 @@
       "description": "Hold TypeScript below typescript-eslint's supported ceiling",
       "matchPackageNames": ["typescript"],
       "allowedVersions": "<6.1"
+    },
+
+    {
+      "description": "Hold zod below 4.5: ai's client stream parsing bundles it and 4.6 adds ~7.5 kB to CommandDeck",
+      "matchPackageNames": ["zod"],
+      "allowedVersions": "<4.5"
     },
 
     {

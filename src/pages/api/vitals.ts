@@ -17,17 +17,14 @@ export const prerender = false;
 
 const MAX_BODY_BYTES = 2_000;
 
-// Anonymous by construction: route/metric/value only. No ip/userAgent/cookie
-// field exists on this schema, so none can ever reach Redis from here.
+// Anonymous by construction: the schema has no ip/userAgent/cookie field.
 const VitalsSchema = z.object({
   route: z.string().min(1).max(200),
   metric: z.enum(['lcp', 'cls', 'inp', 'pageview']),
   value: z.number().nonnegative().optional(),
 });
 
-// A per-visitor key would need an IP (or another correlating id) baked into
-// the limiter, which conflicts with the anonymity requirement — so this is
-// one global per-minute cap on total ingestion instead of a per-caller one.
+// Per-visitor limiting would need an IP, conflicting with anonymity; so one global per-minute cap.
 const ratelimit = createRateLimiter('ratelimit_vitals', 120, '1 m');
 
 export const POST: APIRoute = async ({ request }) => {
@@ -63,8 +60,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  // Known-route allowlist BEFORE any Redis write — an arbitrary posted route
-  // string would otherwise mint an unbounded number of Redis keys.
+  // Route allowlist before any Redis write; arbitrary routes would mint unbounded keys.
   let knownRoutes: string[];
   try {
     const projects = await getCollection('projects');
@@ -88,8 +84,7 @@ export const POST: APIRoute = async ({ request }) => {
       await recordVital({ route, metric, value: value as number, date });
     }
   } catch (err) {
-    // sendBeacon never inspects the response — log and still return 204 so
-    // the browser doesn't retry a beacon over a storage-layer hiccup.
+    // sendBeacon ignores the response; log and return 204 so the browser doesn't retry.
     console.error('[vitals] record failed:', err);
   }
 

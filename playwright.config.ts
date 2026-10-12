@@ -1,8 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Dedicated e2e port so the suite always boots a fresh dev server on the
-// current source — never reusing whatever happens to be on the normal dev
-// port (4321). Isolated + deterministic locally and in CI.
+// Dedicated e2e port so the suite always boots a fresh dev server, never reusing one on 4321.
 const PORT = 4399;
 const HOST = `http://localhost:${PORT}`;
 
@@ -32,10 +30,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // `astro preview` 404s every route under the @astrojs/vercel adapter;
-    // serve the adapter's static output directly instead (same workaround
-    // as playwright.visual.config.ts and Lighthouse's staticDistDir).
-    // /api/chat is stubbed in-page by the tests, so no SSR is needed.
+    // `astro preview` 404s every route under the @astrojs/vercel adapter, so serve its static
+    // output; /api/chat is stubbed in-page, so no SSR is needed.
     command: `npm run build && node scripts/serve-static.mjs .vercel/output/static ${PORT}`,
     url: HOST,
     timeout: 120_000,

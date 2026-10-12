@@ -111,6 +111,7 @@ describe('selectFailingCases', () => {
         { name: 'a', status: 'passed', durationMs: 10 },
         { name: 'b', status: 'failed', durationMs: 20, error: 'boom' },
         { name: 'c', status: 'skipped', durationMs: 0 },
+        { name: 'd', status: 'errored', durationMs: 0 },
       ],
     };
     expect(selectFailingCases(detail).map((c) => c.name)).toEqual(['b']);
@@ -216,6 +217,29 @@ describe('evaluateImprovement', () => {
     expect(result.beforePassRate).toBeCloseTo(33.3, 1);
     expect(result.afterPassRate).toBeCloseTo(66.7, 1);
     expect(result.recoveredCases).toEqual(['b']);
+  });
+
+  test('ignores errored cases when counting recovered cases and rate gains', () => {
+    const erroredBefore: EvalRunDetail = {
+      ...before,
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'errored', durationMs: 20 },
+        { name: 'c', status: 'failed', durationMs: 20 },
+      ],
+    };
+    const after: EvalRunDetail = {
+      date: 'candidate',
+      commitSha: 'after-sha',
+      cases: [
+        { name: 'a', status: 'passed', durationMs: 10 },
+        { name: 'b', status: 'passed', durationMs: 15 },
+        { name: 'c', status: 'errored', durationMs: 20 },
+      ],
+    };
+    const result = evaluateImprovement(erroredBefore, after);
+    expect(result.recoveredCases).toEqual([]);
+    expect(result.improved).toBe(false);
   });
 
   test('reports improved: false when the pass rate does not strictly increase', () => {

@@ -1,6 +1,4 @@
-// Pure normalizer for the two shapes a browser can POST to /api/csp-report:
-// the legacy `report-uri` single-object shape, and the Reporting API's
-// `report-to` batch-array shape. No IO — colocated spec covers both shapes.
+// Pure normalizer for the legacy `report-uri` object and Reporting API `report-to` array shapes.
 import { z } from 'zod';
 
 export interface NormalizedViolation {
@@ -10,9 +8,7 @@ export interface NormalizedViolation {
 
 const UNKNOWN = 'unknown';
 
-// Bounds a hostile report's strings before they're dedup-keyed and stored —
-// an attacker-controlled directive/blockedUri otherwise flows straight into
-// Redis and the /status panel with no size limit of its own.
+// Bounds hostile report strings before they are dedup-keyed and stored.
 const MAX_DIRECTIVE_LENGTH = 200;
 const MAX_BLOCKED_URI_LENGTH = 500;
 
@@ -29,9 +25,7 @@ const LegacyReportSchema = z.object({
   }),
 });
 
-// Reporting API shape (`report-to`): an array of reports, one per violation.
-// Field names are camelCase per the spec (blockedURL); some older
-// implementations sent blockedURI, so both are checked.
+// Reporting API shape (`report-to`): an array of reports; blockedURL, with older blockedURI also checked.
 const ReportingApiEntrySchema = z.looseObject({
   type: z.string().optional(),
   body: z
@@ -45,11 +39,7 @@ const ReportingApiEntrySchema = z.looseObject({
 
 const ReportingApiBatchSchema = z.array(ReportingApiEntrySchema).max(50);
 
-/**
- * Normalizes either shape into a flat list of {directive, blockedUri} pairs.
- * Returns [] for a payload matching neither — callers should treat that as
- * "nothing to record", not an error (CSP reporting never expects a body back).
- */
+/** Normalizes either shape to {directive, blockedUri} pairs; [] for anything else (not an error). */
 export function normalizeCspReportBody(
   payload: unknown,
 ): NormalizedViolation[] {

@@ -9,12 +9,7 @@
     type SceneTarget,
   } from '../../store';
 
-  // ── Agent Action Engine (Scene Controller) ──────────────────────────────────
-  // ScenePilot is an invisible component that acts as the "hands" of the AI agent.
-  // When the agent decides to pan the page (via the focus_section tool), it updates
-  // the `sceneCommand` store. ScenePilot listens to that store and performs the
-  // cinematic scroll and highlight animations.
-  //
+  // Scroll + highlight animations driven by the `sceneCommand` store (focus_section tool).
   // Maps an agent scene target to a DOM element id + the route it lives on.
   const MAP: Record<SceneTarget, { id: string; route: string }> = {
     hero: { id: 'home', route: '/' },
@@ -80,9 +75,7 @@
     if (!el) return false;
     spotlight.set(id); // dim + flash begin as the camera starts moving
     clearTimeout(clearTimer);
-    // Lift the dim/blur as soon as the pan settles (plus a short dwell) rather
-    // than after a fixed window — so a slow agent reply never leaves the rest
-    // of the page blurred while you wait for text to stream in.
+    // Lift the dim once the pan settles plus a dwell, so slow replies never leave the page blurred.
     cinematicScrollTo(el, () => {
       clearTimeout(clearTimer);
       clearTimer = window.setTimeout(clearSpotlight, DWELL_MS);
@@ -98,11 +91,8 @@
   function run(target: SceneTarget) {
     const entry = MAP[target];
     if (!entry) return;
-    // Honor each target's canonical route. If we're already on that page,
-    // spotlight in place; otherwise navigate there first, then pan down after
-    // the swap (a visible scroll, not an instant anchor jump). This is what
-    // makes "show me his projects" open the full /projects page instead of
-    // spotlighting the lone featured teaser that also lives on the homepage.
+    // Spotlight in place if already on the target's route; otherwise navigate, then pan
+    // (a visible scroll, not an anchor jump).
     if (currentPath() === entry.route) {
       spotlightId(entry.id);
     } else {
@@ -138,8 +128,8 @@
       }
     });
 
-    // 3. After a cross-page navigation, finish the pending spotlight + pan.
-    //    astro:page-load fires on first load AND after every view transition.
+    // After cross-page navigation, finish the pending spotlight; astro:page-load fires on
+    // first load and after every view transition.
     const onPageLoad = () => {
       const pending = sessionStorage.getItem('scene-pending');
       if (pending) {
@@ -161,5 +151,3 @@
     };
   });
 </script>
-
-<!-- Invisible controller; renders nothing. -->

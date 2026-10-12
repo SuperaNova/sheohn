@@ -1,8 +1,5 @@
-// Pure type definitions shared between the build-time boot-data module
-// (src/lib/boot-data.ts, which pulls in node:child_process and must never be
-// imported by client-shipped code) and the client-side deck boot-log UI
-// (DeckBootLog.svelte / CommandDeck.svelte). This file has zero runtime code
-// and zero Node-only imports, so it's safe to import from anywhere.
+// Type-only module shared by build-time boot-data.ts (node imports) and the client boot-log UI;
+// safe to import anywhere.
 
 /** Real build/deploy facts streamed as the deck's boot log. */
 export interface BootInfo {
@@ -12,10 +9,6 @@ export interface BootInfo {
   buildTimestamp: string;
   /** `dependencies` + `devDependencies` key count from package.json. */
   dependencyCount: number;
-  /**
-   * Vector count from the Upstash index — intentionally omitted for v1 (see
-   * src/lib/boot-data.ts for why). Left optional/typed so a future spec can
-   * wire a real request-time count without changing this shape.
-   */
+  /** Upstash vector count; intentionally omitted (see boot-data.ts), optional for a future request-time count. */
   vectorCount?: number;
 }

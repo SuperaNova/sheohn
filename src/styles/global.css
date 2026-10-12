@@ -16,31 +16,21 @@
   --color-tertiary-container: #23452d;
   --color-outline-variant: #c4c8c0;
 
-  /* Validation error voice. Deliberately darker than Tailwind red-500
-     (#ef4444 lands at ~3.3:1 on the warm paper — fails AA 1.4.3 for the 14px
-     error copy). #b91c1c clears 4.5:1 on both the page surface (~5.6:1) and the
-     input container (~4.9:1), and stays ≥3:1 as an aria-invalid border. */
+  /* Validation error voice: darker than red-500 (~3.3:1 fails AA on the paper); #b91c1c gives
+       >=4.5:1 on the page and input surfaces and >=3:1 as an aria-invalid border. */
   --color-error: #b91c1c;
 
-  /* Primary CTA gradient (radial: cta-from → cta-to). Split out from
-     primary/primary-container so the dark theme can darken the button enough
-     for slate-100 label text to clear WCAG AA (4.5:1) without dragging down
-     the primary tokens that also colour timeline text and the hard-offset
-     shadow. Light values equal primary-container/primary — no visible change. */
+  /* CTA radial gradient (cta-from -> cta-to), split from primary so dark can darken the button for
+       slate-100 labels to clear AA without dragging the shared primary tokens. */
   --color-cta-from: #2d3b2d;
   --color-cta-to: #182519;
 
-  /* Foreground on the dark CTA gradient. on-cta is the light label (the value
-     that the cta-from/to split was tuned to clear AA against). on-cta-accent is
-     the leading › marker — the brand's own light forest rather than Tailwind's
-     mint emerald-300, keeping the one-accent rule intact on the content layer.
-     ~5:1 on the light-theme button's lightest stop; lifted in dark below. */
+  /* Foreground on the dark CTA gradient: on-cta is the light label; on-cta-accent is the leading
+       marker in brand forest (one-accent rule), ~5:1 on the light button's lightest stop. */
   --color-on-cta: #f1f5f9;
   --color-on-cta-accent: #6fbf86;
 
-  /* Console treatment — the system "chrome" language. Theme-independent on
-     purpose: control surfaces (command deck, status line, boot) always read
-     as an instrument panel framing the warm content, regardless of light/dark. */
+  /* Console treatment: theme-independent so control surfaces always read as an instrument panel. */
   --color-console-surface: #161616;
   --color-console-elev: #1f1f1f;
   --color-console-line: rgba(74, 222, 128, 0.22);
@@ -50,9 +40,7 @@
   --color-console-text: #e6ece6;
   --color-console-text-dim: #9aa69a;
 
-  /* Dark-hero pastel-phosphor scene tokens — sage/seafoam/cream only, no
-     new hue. Hardcoded hex/rgba lives ONLY inside this token block;
-     everything that paints the scene references var(--color-scene-*). */
+  /* Dark-hero scene tokens (sage/seafoam/cream); hardcoded values live only in this block. */
   --color-scene-sky-0: #05080a;
   --color-scene-sky-1: #0a1410;
   --color-scene-sky-2: #142a1e;
@@ -94,24 +82,18 @@ html.dark {
   --color-primary-container: #49825b;
   --color-tertiary: #5fba82;
   --color-tertiary-container: #49825b;
-  /* Darker forest than primary-container so slate-100 label text clears AA on
-     the lightest (top-left) stop of the radial: ~5.3:1 vs the old ~4.2:1. */
+  /* Darker forest so slate-100 labels clear AA on the radial's lightest stop (~5.3:1). */
   --color-cta-from: #3f7150;
   --color-cta-to: #234032;
-  /* Dark dividers/borders: a subtle warm line on near-black, not the light
-     #c4c8c0 used in light mode. */
+  /* Dark borders: a subtle warm line on near-black. */
   --color-outline-variant: #2c2f2a;
-  /* Light red on the near-black surface: #b91c1c is too dark to read here, so
-     lift to red-400 (~7:1 on #050505, ≥4.5:1 on the dark input container). */
+  /* Light red (red-400): #b91c1c is unreadable on near-black; ~7:1 on #050505. */
   --color-error: #f87171;
-  /* The dark-theme CTA gradient is lighter forest, so lift the › marker to keep
-     it crisp on it. on-cta (light label) reads in both themes — no override. */
+  /* Lighter dark-theme CTA gradient: lift the marker to stay crisp; on-cta needs no override. */
   --color-on-cta-accent: #8ed6a4;
 }
 
-/* hero scene composition — hand-tune freely
-   Dimensional/positional knobs for the dark hero scene. Colors are NOT
-   here — see --color-scene-* under @theme above. */
+/* Hero scene composition: positional knobs only; colors are --color-scene-* under @theme. */
 html.dark {
   /* height of the grid floor / where the horizon line sits, from the bottom
      of the hero */
@@ -131,8 +113,7 @@ html.dark {
   --scene-perch-width: 21rem;
 }
 
-/* Poster copy insets are theme-shared: the light hero uses the same column
-   geometry as the dark poster. */
+/* Poster copy insets are shared: the light hero uses the dark poster's column geometry. */
 html {
   /* horizontal inset of the poster text column from the viewport edge */
   --scene-copy-inset-x: clamp(2.9rem, 4vw + 1.4rem, 4.9rem);
@@ -140,8 +121,7 @@ html {
   --scene-copy-inset-top: clamp(1.5rem, 4vw, 3.5rem);
 }
 
-/* Always reserve the scrollbar gutter so the centered header (and content)
-   don't shift horizontally between a scrolling page and a short one. */
+/* Always reserve the scrollbar gutter so centered content doesn't shift between pages. */
 html {
   scrollbar-gutter: stable;
 }
@@ -159,17 +139,14 @@ body {
     color 300ms ease;
 }
 
-/* Global keyboard-focus indicator — every interactive element gets a visible
-   ring when navigated by keyboard. Mouse clicks still suppress it via
-   :focus-visible's intent detection. */
+/* Global keyboard-focus ring; :focus-visible keeps it off mouse clicks. */
 :focus-visible {
   outline: 2px solid var(--color-tertiary);
   outline-offset: 3px;
   border-radius: 4px;
 }
 
-/* Respect users who prefer reduced motion: disable transitions and
-   transform-based parallax, scroll smoothing, etc. */
+/* Respect prefers-reduced-motion: disable transitions, parallax, smooth scroll. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -190,8 +167,7 @@ body {
   @apply mx-auto w-full max-w-[74rem] px-6 md:px-12;
 }
 
-/* Console "readout" — the shared label voice for section eyebrows. Reads like
-   a line printed by the system rather than a heading. */
+/* Console "readout": the shared eyebrow label voice. */
 .readout {
   display: inline-flex;
   align-items: center;
@@ -220,10 +196,7 @@ body {
   backdrop-filter: blur(12px);
 }
 
-/* Static film grain. The texture reads identically at rest, so we don't pay
-   the cost of animating a full-viewport, mix-blended, inverted layer every
-   frame for the life of the page (a permanent compositing / battery drain on
-   laptops and phones). */
+/* Static film grain: animating a full-viewport blended layer would drain battery for no visual gain. */
 .site-noise {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVN3WJP3Fj7f92UPVkLY8LGXbIEAIiOsCMgQWaIQkgBhhBASQMWFiApWFBURnEhVxILVCkidiOKgKLhnQYqIWotVXDjuH9yntX167+3t+9f7vOec5/zOec8PgBESJpHmomoAOVKFPDrYH49PSMTJvYACFUjgBCAQ5svCZwXFAADwA3l4fnSwP/wBr28AAgBw1S4kEsfh/4O6UCZXACCRAOAiEucLAZBSAMguVMgUAMgYALBTs2QKAJQAAGx5fEIiAKoNAOz0ST4FANipk9wXANiiHKkIAI0BAJkoRyQCQLsAYFWBUiwCwMIAoKxAIi4EwK4BgFm2MkcCgL0FAHaOWJAPQGAAgJlCLMwAIDgCAEMeE80DIEwDoDDSv+CpX3CFuEgBAMDLlc2XS9IzFLiV0Bp38vDg4iHiwmyxQmEXKRBmCeQinJebIxNI5wNMzgwAABr50cH+OD+Q5+bk4eZm52zv9MWi/mvwbyI+IfHf/ryMAgQAEE7P79pf5eXWA3DHAbB1v2upWwDaVgBo3/ldM9sJoFoK0Hr5i3k4/EAenqFQyDwdHAoLC+0lYqG9MOOLPv8z4W/gi372/EAe/tt68ABxmkCZrcCjg/1xYW52rlKO58sEQjFu9+cj/seFf/2OKdHiNLFcLBWK8ViJuFAiTcd5uVKRRCHJleIS6X8y8R+W/QmTdw0ArIZPwE62B7XLbMB+7gECiw5Y0nYAQH7zLYwaC5EAEGc0Mnn3AACTv/mPQCsBAM2XpOMAALzoGFyolBdMxggAAESggSqwQQcMwRSswA6cwR28wBcCYQZEQAwkwDwQQgbkgBwKoRiWQRlUwDrYBLWwAxqgEZrhELTBMTgN5+ASXIHrcBcGYBiewhi8hgkEQcgIE2EhOogRYo7YIs4IF5mOBCJhSDSSgKQDKcAEcSwA5fYfgVwBdgR8AKCEIQOD+AgIA');
   background-repeat: repeat;
@@ -251,7 +224,7 @@ body {
   );
 }
 
-/* Instantly hide the loader to prevent flicker on return visits */
+/* Hide the loader instantly on return visits to avoid flicker. */
 html.skip-loader #global-loader {
   display: none !important;
 }
@@ -272,11 +245,9 @@ html.skip-loader #global-loader {
   }
 }
 
-/* Theme whoosh (store.ts's runThemeWhoosh): a JS clip-path animation on
-   ::view-transition-new(root) owns the circular reveal, so neutralize the
-   default crossfade AND the page-nav opacity:0/page-enter rules above —
-   scoped to the [data-theme-whoosh] attribute, which only exists for the
-   transition's duration, so page navigation is untouched. */
+/* Theme whoosh (store.ts's runThemeWhoosh): a JS clip-path animation owns the reveal, so
+   neutralize the default crossfade and page-nav rules. Scoped to [data-theme-whoosh], which
+   exists only during the transition. */
 html[data-theme-whoosh]::view-transition-old(root),
 html[data-theme-whoosh]::view-transition-new(root) {
   animation: none;
@@ -327,17 +298,14 @@ body.scene-dimmed
   }
 }
 
-/* Dark selection — the default blue reads as broken on the dark scene.
-   Placed after Tailwind's generated utilities so it wins on tied
-   specificity; light keeps its existing `selection:` utility. */
+/* Dark selection: the default blue reads as broken. After Tailwind's utilities to win ties. */
 html.dark ::selection {
   background: color-mix(in srgb, var(--color-scene-glow) 55%, transparent);
   color: var(--color-on-surface);
 }
 
-/* Faint static grid echo of the hero scene for dark-mode subpages. A page
-   opts in by rendering .subpage-scene-echo inside an `isolate`d <main>,
-   which scopes the negative z-index. */
+/* Faint static grid echo for dark subpages; render inside an `isolate`d <main> to scope its
+   negative z-index. */
 .subpage-scene-echo {
   display: none;
   pointer-events: none;
@@ -365,9 +333,7 @@ html.dark .subpage-scene-echo {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60%);
 }
 
-/* Dark home page: a full-bleed tinted band behind Selected Work, divided
-   from the hero above by a straight line (contact's border-t below already
-   supplies the bottom division — no second line needed here). */
+/* Dark home: full-bleed tinted band behind Selected Work, divided from the hero by a straight line. */
 html.dark .work-manifest {
   position: relative;
 }

@@ -5,9 +5,7 @@ import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 import { INDEX_UNAVAILABLE_MESSAGE } from '../../src/lib/shell/builtins/search';
 
-// Reads the real, deployed policy from vercel.json instead of hardcoding a
-// copy here — this suite always exercises whatever is actually shipped, and
-// fails loudly if that file's shape ever changes underneath it.
+// Reads the shipped policy from vercel.json instead of a hardcoded copy.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface VercelHeaderEntry {
@@ -31,9 +29,7 @@ function headerValue(key: string): string {
 const CSP = headerValue('Content-Security-Policy');
 const REPORTING_ENDPOINTS = headerValue('Reporting-Endpoints');
 
-// The local webServer never sends vercel.json's headers (Vercel applies
-// them at the edge), so inject the shipped policy on document responses —
-// sub-resources inherit the document's CSP and need no header of their own.
+// The local webServer omits vercel.json's headers, so inject the policy on document responses.
 async function applyTightenedCsp(page: Page) {
   await page.route('**/*', async (route) => {
     if (route.request().resourceType() !== 'document') {
@@ -52,8 +48,7 @@ async function applyTightenedCsp(page: Page) {
   });
 }
 
-// Chromium/Firefox log CSP violations to the console with one of these
-// substrings ("Refused to ..." / "Content Security Policy").
+// Console substrings for CSP violations ("Refused to ..." / "Content Security Policy").
 function isCspViolationMessage(text: string): boolean {
   return /content security policy|refused to (load|execute|connect|apply)/i.test(
     text,
@@ -102,9 +97,7 @@ test.describe('Tightened CSP', () => {
     }).toPass({ timeout: 15000 });
     await page.keyboard.press('Escape');
 
-    // `search` (not `grep`) loads Pagefind's WASM, exercising
-    // 'wasm-unsafe-eval'. A real result line must render — the graceful
-    // "index unavailable" fallback never compiles the module.
+    // `search` loads Pagefind's WASM, exercising 'wasm-unsafe-eval'; the fallback never compiles it.
     await page.keyboard.press('Control+k');
     await deckInput(page).fill('search jared');
     await deckInput(page).press('Enter');

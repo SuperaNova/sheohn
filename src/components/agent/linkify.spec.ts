@@ -19,9 +19,7 @@ test('a javascript: URL in markdown form degrades to text', () => {
 });
 
 test('a bare javascript: URL degrades to text', () => {
-  // The bare-URL branch of the regex only matches http(s), so a bare
-  // javascript: URL is never treated as a URL candidate at all — it stays
-  // as plain text end-to-end.
+  // Bare-URL branch only matches http(s), so a bare javascript: URL stays plain text.
   const input = "javascript:alert('x')";
   expect(linkify(input)).toEqual([{ kind: 'text', value: input }]);
 });

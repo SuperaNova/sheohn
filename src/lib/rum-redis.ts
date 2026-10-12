@@ -33,7 +33,7 @@ export function utcDateString(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
-function recentDates(days: number, from: Date = new Date()): string[] {
+export function recentDates(days: number, from: Date = new Date()): string[] {
   const dates: string[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(from);

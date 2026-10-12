@@ -1,10 +1,8 @@
-// Runs a tokenized pipeline against the command registry, piping each
-// stage's stdout into the next stage's stdin as a single joined string.
+// Runs a tokenized pipeline against the registry, piping each stage's stdout into the next.
 
 import { tokenize } from './lexer';
 import { getCommand, type ShellCtx, type ShellOutput } from './registry';
-// Side-effect import: registers every builtin (ls, cat, grep, the six
-// aliases, ...) into the shared registry the first time this module loads.
+// Side-effect import: registers every builtin into the shared registry.
 import './builtins/index';
 
 export interface ExecutionResult {

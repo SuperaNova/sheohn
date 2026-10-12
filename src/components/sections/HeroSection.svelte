@@ -20,8 +20,7 @@
   import { starters } from '../../data/starters';
   import HeroScene from './HeroScene.svelte';
 
-  // boot-data.ts pulls in node:child_process, so index.astro computes the
-  // commit SHA at build time and passes only the string down.
+  // index.astro computes the commit SHA at build time (boot-data needs node:child_process).
   interface Props {
     bootCommitSha?: string;
   }
@@ -104,8 +103,7 @@
     commandDeckOpen.set(true);
   }
 
-  // Show the platform-correct shortcut. SSR-safe default (non-mac); corrected
-  // client-side so it never visually locks the UI to macOS.
+  // Platform-correct shortcut; SSR-safe non-mac default corrected client-side.
   let shortcut = $state('Ctrl K');
   $effect(() => {
     const mac = /Mac|iPhone|iPad/.test(
@@ -129,9 +127,7 @@
     });
   });
 
-  // Power-on choreography: only when toggling light → dark, never on the
-  // initial value the store already holds (see the entrance effect below
-  // for that case), never under reduced motion.
+  // Power-on choreography: only on light -> dark toggles, not the initial value or reduced motion.
   let powering = $state(false);
   let prevTheme: 'light' | 'dark' = get(theme);
   $effect(() => {
@@ -146,9 +142,7 @@
     return () => clearTimeout(timer);
   });
 
-  // Quiet dark-landing entrance: visitors who land already in dark
-  // (persisted theme or ?theme=dark) get a short once-per-session grid
-  // draw-in + glow bloom — no flash, no whoosh.
+  // Quiet dark-landing entrance: once-per-session grid draw-in and glow bloom for visitors landing dark.
   let entrance = $state(false);
   onMount(() => {
     const played = !!sessionStorage.getItem('dark-entrance-played');
@@ -170,8 +164,7 @@
   });
 </script>
 
-<!-- Both themes share the poster layout (copy column hugging the left
-     inset); the scene, plate frame, and rails remain dark-only. -->
+<!-- Both themes share the poster layout; scene, frame, and rails stay dark-only. -->
 <section
   id="home"
   bind:this={sectionEl}
@@ -187,8 +180,7 @@
 
   <div class="hero-flash" aria-hidden="true"></div>
 
-  <!-- Specimen-plate frame + metadata rails: dark-only, hidden below ~900px,
-       decorative (aria-hidden). -->
+  <!-- Specimen-plate frame and rails: dark-only, hidden below ~900px, decorative. -->
   <div class="hero-frame" aria-hidden="true">
     <span class="hero-rail hero-rail-l">
       FIELD RECORD · CEBU CITY · {CEBU_COORDS}
@@ -213,9 +205,7 @@
         </p>
 
         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-        <!-- kept as a real h1 (name-from-content, unchanged); click-to-copy is
-             a bonus affordance described via aria-describedby, not aria-label,
-             so the heading's accessible name stays the actual name. -->
+        <!-- Real h1 keeps the name as its accessible name; click-to-copy is described via aria-describedby. -->
         <h1
           style:transition-delay="120ms"
           style:animation-delay="470ms"
@@ -329,10 +319,8 @@
     transform: translateY(0);
   }
 
-  /* Power-on choreography (toggling into dark, see HeroSection's `powering`
-     state): a phosphor flash over the poster, then the same .hero-item
-     elements re-rise staggered by their existing animation-delay. Both
-     classes are applied via `class:` directives so Svelte keeps these rules. */
+  /* Power-on: phosphor flash over the poster, then .hero-item elements re-rise staggered.
+       Applied via `class:` so Svelte keeps these rules. */
   .hero-flash {
     position: absolute;
     inset: 0;
@@ -376,16 +364,14 @@
     }
   }
 
-  /* Poster layout — shared by both themes. Only the scene, plate frame,
-     and rails below stay dark-only. */
+  /* Poster layout shared by both themes; scene, frame, and rails stay dark-only. */
 
   /* the light grid overlay fights the scene's perspective grid */
   :global(html.dark) .hero-bg-grid {
     display: none;
   }
 
-  /* Copy column hugs the plate's left edge instead of a centered content
-     column; the stretched column anchors the CTA row toward the bottom. */
+  /* Copy column hugs the plate's left edge; the stretched column anchors the CTA row low. */
   .hero-content {
     padding-inline: var(--scene-copy-inset-x);
     padding-top: var(--scene-copy-inset-top);
@@ -401,8 +387,7 @@
     color: var(--color-on-cta-accent);
   }
 
-  /* Transient copy-to-clipboard confirmation — absolutely positioned so it
-     never shifts the heading's layout. */
+  /* Copy-to-clipboard confirmation; absolute so it never shifts the heading. */
   .hero-name-hint {
     position: absolute;
     right: 0;

@@ -7,6 +7,7 @@ import {
   type UIMessage,
   type UIMessageChunk,
 } from 'ai';
+import { InfraError, describeResponse } from '../../src/lib/eval-infra';
 import type { RagQueryResult } from '../../src/lib/rag';
 
 /**
@@ -15,7 +16,10 @@ import type { RagQueryResult } from '../../src/lib/rag';
  * a single-chunk ReadableStream to feed the AI SDK's own SSE parsing —
  * the same pipeline DefaultChatTransport uses for real streaming responses.
  */
-export async function parseAgentResponse(sseText: string): Promise<UIMessage> {
+export async function parseAgentResponse(
+  sseText: string,
+  status = 200,
+): Promise<UIMessage> {
   const bytes = new TextEncoder().encode(sseText);
   const rawStream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -44,8 +48,8 @@ export async function parseAgentResponse(sseText: string): Promise<UIMessage> {
   }
 
   if (!finalMessage) {
-    throw new Error(
-      'parseAgentResponse: no UIMessage chunks were parsed from the SSE response',
+    throw new InfraError(
+      `no UIMessage chunks were parsed from the SSE response (${describeResponse(status, sseText)})`,
     );
   }
 

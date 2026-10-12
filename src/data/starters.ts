@@ -7,10 +7,8 @@ export interface Starter {
   hideWhenDark?: boolean;
 }
 
-// Starter prompts shown in the hero and the command deck's empty state.
-// Each chip sends a real query to the agent, which then physically drives the
-// page (pan / spotlight / open a case study). Single source of truth so the two
-// surfaces never drift apart.
+// Starter prompts for the hero and the deck's empty state; each chip sends a real agent query.
+// Single source of truth for both surfaces.
 export const starters: Starter[] = [
   {
     label: 'show me what he built',

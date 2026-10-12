@@ -1,5 +1,4 @@
-// The command registry: a name → handler map that builtins register
-// themselves into, plus the shared types every builtin/executor speaks.
+// Command registry (name -> handler) plus the shared builtin/executor types.
 
 import type { VfsDirNode } from './vfs';
 import type { RagQueryResult } from '../rag';
@@ -10,18 +9,14 @@ export interface ShellOutput {
   error?: boolean;
 }
 
-/** One entry in CommandDeck's shell output log — a submitted command and
- * the lines it produced. */
+/** One entry of the deck's shell output log: a command and its output lines. */
 export interface ShellLogEntry {
   command: string;
   lines: string[];
   error: boolean;
 }
 
-/**
- * Everything a builtin needs, injected rather than imported, so builtins
- * stay pure-ish and testable with a fake ctx (no real store.ts/DOM needed).
- */
+/** Everything a builtin needs, injected so builtins are testable with a fake ctx. */
 export interface ShellCtx {
   /** Current working directory (absolute vfs path). */
   cwd: string;
@@ -31,7 +26,7 @@ export interface ShellCtx {
   history: string[];
   /** Update the shell's cwd (used by `cd`). */
   setCwd: (path: string) => void;
-  /** Navigate the site to a route, closing the deck (mirrors the old `goto`). */
+  /** Navigate to a route, closing the deck. */
   navigate: (path: string) => void;
   /** Toggle light/dark theme. */
   toggleTheme: () => void;
@@ -41,9 +36,7 @@ export interface ShellCtx {
   closeDeck: () => void;
   /** Clear the shell output log (used by `clear`). */
   clearOutput: () => void;
-  /** Most recent query_jared_memory retrieval trace (used by `trace`).
-   * Optional so existing ShellCtx literals elsewhere don't need updating —
-   * builtins that use it should fall back to `null` when absent. */
+  /** Latest query_jared_memory retrieval trace (for `trace`); optional, fall back to `null`. */
   getLastRagTrace?: () => RagQueryResult | null;
 }
 

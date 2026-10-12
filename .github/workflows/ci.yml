@@ -2,11 +2,52 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'astro.config.*'
+      - 'svelte.config.*'
+      - 'eslint.config.*'
+      - 'knip.json'
+      - 'vitest.config.*'
+      - 'vitest.setup.*'
+      - 'playwright*.config.ts'
+      - 'lighthouserc*.json'
+      - '.size-limit.js'
+      - '.prettierrc*'
+      - '.prettierignore'
+      - '.secretlintrc.json'
+      - '.github/workflows/ci.yml'
   pull_request:
-    branches: [main]
+    branches: [main, dev]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'astro.config.*'
+      - 'svelte.config.*'
+      - 'eslint.config.*'
+      - 'knip.json'
+      - 'vitest.config.*'
+      - 'vitest.setup.*'
+      - 'playwright*.config.ts'
+      - 'lighthouserc*.json'
+      - '.size-limit.js'
+      - '.prettierrc*'
+      - '.prettierignore'
+      - '.secretlintrc.json'
+      - '.github/workflows/ci.yml'
 
-# Cancel older runs on the same branch when a new push lands.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -49,8 +90,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Stub secrets so the build doesn't fail importing API routes.
-          # No external calls happen during the static build.
+          # Stubs so the build can import API routes; no external calls are made.
           GOOGLE_GENERATIVE_AI_API_KEY: stub
           UPSTASH_VECTOR_REST_URL: https://stub.upstash.io
           UPSTASH_VECTOR_REST_TOKEN: stub

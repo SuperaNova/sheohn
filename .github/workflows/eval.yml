@@ -97,7 +97,7 @@ jobs:
           else
             echo "Opening a new eval-regression issue"
             gh issue create \
-              --title "Eval regression: ${{ steps.regression.outputs.regressed_count }} case(s) failed ($(date -u +%Y-%m-%d))" \
+              --title "${{ steps.regression.outputs.issue_title }} ($(date -u +%Y-%m-%d))" \
               --label eval-regression \
               --body-file "$RUNNER_TEMP/regression-body.md"
           fi
