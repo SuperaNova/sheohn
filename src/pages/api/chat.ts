@@ -27,7 +27,9 @@ import {
   recordAgentCacheEvent,
   recordAgentRequest,
   recordAgentTurn,
+  recordGuardrailTrip,
 } from '../../lib/agent-redis';
+import { createOutputGuard } from '../../lib/output-guard';
 import { collectToolNames } from '../../lib/agent-metrics';
 
 /**
@@ -212,6 +214,30 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
     messages,
     stopWhen: stepCountIs(5),
+    providerOptions: {
+      google: {
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_LOW_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_LOW_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'BLOCK_LOW_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'BLOCK_LOW_AND_ABOVE',
+          },
+        ],
+      },
+    },
+    experimental_transform: () =>
+      createOutputGuard((kind) => waitUntil(recordGuardrailTrip(kind))),
     // Bounds the whole multi-step tool loop so a hung Gemini call can't hang
     // the request indefinitely.
     timeout: { totalMs: 25_000 },
