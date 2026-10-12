@@ -116,6 +116,42 @@ describe('selectFailingCases', () => {
     };
     expect(selectFailingCases(detail).map((c) => c.name)).toEqual(['b']);
   });
+
+  test('excludes failed adversarial cases', () => {
+    const detail: EvalRunDetail = {
+      date: '2026-07-13',
+      commitSha: 'abc123',
+      cases: [
+        { name: 'functional', status: 'failed', durationMs: 20 },
+        {
+          name: 'attack',
+          status: 'failed',
+          durationMs: 20,
+          category: 'adversarial',
+        },
+      ],
+    };
+    expect(selectFailingCases(detail).map((c) => c.name)).toEqual([
+      'functional',
+    ]);
+  });
+
+  test('returns nothing when only adversarial cases failed', () => {
+    const detail: EvalRunDetail = {
+      date: '2026-07-13',
+      commitSha: 'abc123',
+      cases: [
+        { name: 'ok', status: 'passed', durationMs: 10 },
+        {
+          name: 'attack',
+          status: 'failed',
+          durationMs: 20,
+          category: 'adversarial',
+        },
+      ],
+    };
+    expect(selectFailingCases(detail)).toEqual([]);
+  });
 });
 
 describe('enrichFailingCases', () => {
