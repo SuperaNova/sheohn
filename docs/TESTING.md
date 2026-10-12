@@ -56,11 +56,20 @@ Visual regression is a **separate suite**, not part of `npm run test:e2e`. It li
 
 ## 4. The Eval Harness (Playwright vs. a live Gemini)
 
-`npm run eval:agent` runs `tests/eval/agent.eval.ts` against `playwright.eval.config.ts`, which boots `astro dev` (not build+preview — the SSR `/api/chat` route needs a real dev server) and drives the Command Deck against a **live** Gemini + Upstash Vector backend. It needs real credentials (`GOOGLE_GENERATIVE_AI_API_KEY`, `UPSTASH_VECTOR_REST_*`), so it's manual-only locally and runs weekly in CI (`.github/workflows/eval.yml`, Monday 06:00 UTC, plus `workflow_dispatch`). Each case in `tests/eval/cases.ts` checks the agent's tool-calling and RAG grounding — e.g. that a background question triggers `query_jared_memory` and the reply cites a retrieved fact. Results feed `data/eval-history/` (see the eval pass-rate badge in the README) and a regression flags an open GitHub issue via `scripts/check-eval-regression.ts`.
+`npm run eval:agent` runs `tests/eval/agent.eval.ts` against `playwright.eval.config.ts`, which boots `astro dev` (not build+preview — the SSR `/api/chat` route needs a real dev server) and drives the Command Deck against a **live** Gemini + Upstash Vector backend. It needs real credentials (`GOOGLE_GENERATIVE_AI_API_KEY`, `UPSTASH_VECTOR_REST_*`), so it's manual-only locally and runs weekly in CI (`.github/workflows/eval.yml`, Monday 06:00 UTC, plus `workflow_dispatch`). Each case in `tests/eval/cases.ts` checks the agent's tool-calling and RAG grounding — e.g. that a background question triggers `query_jared_memory` and the reply cites a retrieved fact. Results feed `data/eval-history/` (see the eval pass-rate badge in `docs/DEVELOPMENT.md`) and a regression flags an open GitHub issue via `scripts/check-eval-regression.ts`.
 
 ## 5. Mutation Testing (Stryker)
 
-`npm run mutation` runs Stryker over `src/lib` + `src/data` (see `stryker.config.json`), mutating logic and re-running the unit suite to check it actually catches the mutation. It's slow, so it isn't a PR gate — it runs weekly (`.github/workflows/mutation.yml`, Monday 08:00 UTC, plus `workflow_dispatch`) and the score feeds `data/mutation-score.json` (the mutation-score badge in the README) via `scripts/mutation-summary.ts`.
+`npm run mutation` runs Stryker over `src/lib` + `src/data` (see `stryker.config.json`), mutating logic and re-running the unit suite to check it actually catches the mutation. It's slow, so it isn't a PR gate — it runs weekly (`.github/workflows/mutation.yml`, Monday 08:00 UTC, plus `workflow_dispatch`) and the score feeds `data/mutation-score.json` (the mutation-score badge in `docs/DEVELOPMENT.md`) via `scripts/mutation-summary.ts`.
+
+## 5a. Red Team (promptfoo)
+
+A fixed corpus of generic attacks in `redteam/attacks.yaml` runs against `/api/chat` monthly (`.github/workflows/redteam.yml`, first Monday, plus `workflow_dispatch`) and is graded by an LLM (Gemini via promptfoo's `google:` provider). It complements the bespoke `@adversarial` eval cases and never gates anything: attack failures are recorded, only infra problems fail the job. Results feed `data/redteam-history/` (the red-team pass-rate badge in `docs/DEVELOPMENT.md`) via `scripts/redteam-history.ts`; only the summary is committed, not per-case attack text or replies.
+
+promptfoo is not a dependency: the `redteam:*` scripts run it through `npx` at an exact pinned version, so nothing lands in the root install or lockfile. It needs Node >= 22.22 locally (CI uses 24). Remote generation, telemetry, and sharing are disabled in `redteam/flags.env`, so only Gemini is contacted. Plugins that promptfoo only generates remotely (for example `hijacking` and the `harmful:*` set) can't be used.
+
+- Run locally: start `npm run dev -- --port 4397`, then `npm run redteam:run` (needs `GOOGLE_GENERATIVE_AI_API_KEY` exported; paced under the chat rate limiter). `REDTEAM_TARGET_URL` overrides the target.
+- Regenerate the corpus (manual, rare): `npm run redteam:generate`.
 
 ## 6. Performance & SEO Testing (Lighthouse CI)
 
