@@ -80,6 +80,7 @@ jobs:
       - name: Comment the added/removed fact diff on the PR
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           {
             echo "### Brain sync dry-run"
@@ -88,5 +89,5 @@ jobs:
             cat "$RUNNER_TEMP/brain-dry-run.json"
             echo '```'
           } > "$RUNNER_TEMP/brain-dry-run-comment.md"
-          gh pr comment "${{ github.event.pull_request.number }}" \
+          gh pr comment "$PR_NUMBER" \
             --body-file "$RUNNER_TEMP/brain-dry-run-comment.md"
