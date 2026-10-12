@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-12",
+  "commitSha": "af9bb86f1f2e3f8e54fa3544a01d8aa5dc4ddb04",
+  "cases": [
+    {
+      "name": "open_case_study — named project",
+      "status": "passed",
+      "durationMs": 25580
+    },
+    {
+      "name": "open_resume — resume request",
+      "status": "passed",
+      "durationMs": 15889
+    },
+    {
+      "name": "focus_section — tech stack overview",
+      "status": "failed",
+      "durationMs": 55446,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "set_theme — dark mode",
+      "status": "passed",
+      "durationMs": 15290
+    },
+    {
+      "name": "trigger_ui_state — tech highlight",
+      "status": "passed",
+      "durationMs": 17103
+    },
+    {
+      "name": "query_jared_memory — background question",
+      "status": "passed",
+      "durationMs": 55401
+    },
+    {
+      "name": "plain conversation — off-topic decline",
+      "status": "passed",
+      "durationMs": 22299
+    },
+    {
+      "name": "plain conversation — trivial math",
+      "status": "passed",
+      "durationMs": 9432
+    },
+    {
+      "name": "query_jared_memory — education facts",
+      "status": "failed",
+      "durationMs": 35894,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "query_jared_memory — leadership facts",
+      "status": "passed",
+      "durationMs": 25393
+    }
+  ]
+}
