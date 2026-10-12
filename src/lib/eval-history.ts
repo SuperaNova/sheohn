@@ -11,6 +11,8 @@ export type EvalCaseResult = {
   status: EvalCaseStatus;
   durationMs: number;
   error?: string;
+  /** Set for adversarial cases only; absent means functional (and in history written before it existed). */
+  category?: 'adversarial';
 };
 
 /** Full per-case detail for one run, written to `data/eval-history/<date>.json`. */
@@ -20,15 +22,23 @@ export type EvalRunDetail = {
   cases: EvalCaseResult[];
 };
 
-/** Per-run rollup; `passRate` is a 0-100 percentage rounded to 1 decimal (shields.io badge). */
-export type EvalSummaryEntry = {
-  date: string;
-  commitSha: string;
+type EvalCaseTotals = {
   passRate: number;
   totalCases: number;
   passedCases: number;
   /** Infra-errored cases, excluded from `totalCases`/`passRate`; omitted when zero. */
   erroredCases?: number;
+};
+
+/**
+ * Per-run rollup; `passRate` is a 0-100 percentage rounded to 1 decimal (shields.io badge).
+ * The top-level totals cover functional cases only; `adversarial` scores the injection cases.
+ */
+export type EvalSummaryEntry = EvalCaseTotals & {
+  date: string;
+  commitSha: string;
+  /** Omitted when the run had no adversarial cases. */
+  adversarial?: EvalCaseTotals;
 };
 
 /**
@@ -52,12 +62,7 @@ function round1(n: number): number {
  * Derives the summary rollup (pass rate etc.) from a run's per-case results.
  * Errored cases are left out of the denominator: they say nothing about the agent.
  */
-export function summarizeCases(
-  cases: EvalCaseResult[],
-): Pick<
-  EvalSummaryEntry,
-  'passRate' | 'totalCases' | 'passedCases' | 'erroredCases'
-> {
+export function summarizeCases(cases: EvalCaseResult[]): EvalCaseTotals {
   const erroredCases = cases.filter((c) => c.status === 'errored').length;
   const totalCases = cases.length - erroredCases;
   const passedCases = cases.filter((c) => c.status === 'passed').length;
@@ -73,10 +78,19 @@ export function summarizeCases(
 
 /** Builds the summary entry appended to `index.json` for a completed run. */
 export function summarizeRun(detail: EvalRunDetail): EvalSummaryEntry {
+  const adversarialCases = detail.cases.filter(
+    (c) => c.category === 'adversarial',
+  );
+  const functionalCases = detail.cases.filter(
+    (c) => c.category !== 'adversarial',
+  );
   return {
     date: detail.date,
     commitSha: detail.commitSha,
-    ...summarizeCases(detail.cases),
+    ...summarizeCases(functionalCases),
+    ...(adversarialCases.length > 0
+      ? { adversarial: summarizeCases(adversarialCases) }
+      : {}),
   };
 }
 
@@ -107,6 +121,8 @@ type PlaywrightJsonTest = {
 
 type PlaywrightJsonSpec = {
   title: string;
+  /** Tag names without the leading "@". */
+  tags?: string[];
   tests: PlaywrightJsonTest[];
 };
 
@@ -171,6 +187,9 @@ export function extractCaseResults(
         status,
         durationMs,
         ...(error ? { error } : {}),
+        ...(spec.tags?.includes('adversarial')
+          ? { category: 'adversarial' as const }
+          : {}),
       });
     }
   }
@@ -257,14 +276,18 @@ export function checkEvalHealth(
 ): EvalHealthCheck {
   const regressions = findRegressions(priorRuns, current);
   const regressedCases = regressions.map((r) => r.name);
-  const {
-    passRate,
-    totalCases,
-    erroredCases: erroredCount = 0,
-  } = summarizeCases(current.cases);
+  const { totalCases, erroredCases: erroredCount = 0 } = summarizeCases(
+    current.cases,
+  );
+  const functional = summarizeCases(
+    current.cases.filter((c) => c.category !== 'adversarial'),
+  );
+  const passRate = functional.passRate;
   const inconclusive = totalCases === 0 && current.cases.length > 0;
   const systemicInfra = erroredCount * 2 > current.cases.length;
-  const floorBreached = !inconclusive && passRate < floor;
+  const functionalUnscored =
+    functional.totalCases === 0 && current.cases.length > 0;
+  const floorBreached = !functionalUnscored && passRate < floor;
   const erroredCases = current.cases
     .filter((c) => c.status === 'errored')
     .map((c) => c.name)

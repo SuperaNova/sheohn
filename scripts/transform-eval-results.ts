@@ -67,6 +67,11 @@ function main(): void {
   console.log(
     `[transform-eval-results] ${detail.cases.length} cases, ${summary.passedCases}/${summary.totalCases} passed (${summary.passRate}%)`,
   );
+  if (summary.adversarial) {
+    console.log(
+      `[transform-eval-results] injection resistance ${summary.adversarial.passedCases}/${summary.adversarial.totalCases} passed (${summary.adversarial.passRate}%)`,
+    );
+  }
   console.log(`[transform-eval-results] wrote ${detailPath}`);
   console.log(`[transform-eval-results] updated ${INDEX_PATH}`);
 }

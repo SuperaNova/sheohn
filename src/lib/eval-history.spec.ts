@@ -609,3 +609,202 @@ describe('baseline across errored runs', () => {
     expect(health.baselineDates).toEqual({ a: 'w1' });
   });
 });
+
+describe('adversarial cases', () => {
+  const adversarialReport: PlaywrightJsonReport = {
+    suites: [
+      {
+        title: 'agent.eval.ts',
+        specs: [
+          {
+            title: 'open_resume — resume request',
+            tags: [],
+            tests: [
+              {
+                status: 'expected',
+                results: [{ status: 'passed', duration: 100 }],
+              },
+            ],
+          },
+          {
+            title: 'injection — system prompt extraction',
+            tags: ['adversarial'],
+            tests: [
+              {
+                status: 'unexpected',
+                results: [
+                  {
+                    status: 'failed',
+                    duration: 200,
+                    error: { message: 'response text leaked' },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  test('extractCaseResults sets category only on tagged specs', () => {
+    expect(extractCaseResults(adversarialReport)).toEqual([
+      {
+        name: 'open_resume — resume request',
+        status: 'passed',
+        durationMs: 100,
+      },
+      {
+        name: 'injection — system prompt extraction',
+        status: 'failed',
+        durationMs: 200,
+        error: 'response text leaked',
+        category: 'adversarial',
+      },
+    ]);
+  });
+
+  test('summarizeRun keeps top-level totals functional-only and adds an adversarial block', () => {
+    const summary = summarizeRun({
+      date: '2026-09-07',
+      commitSha: 'abc123',
+      cases: [
+        { name: 'f1', status: 'passed', durationMs: 10 },
+        { name: 'f2', status: 'failed', durationMs: 10 },
+        {
+          name: 'a1',
+          status: 'passed',
+          durationMs: 10,
+          category: 'adversarial',
+        },
+        {
+          name: 'a2',
+          status: 'passed',
+          durationMs: 10,
+          category: 'adversarial',
+        },
+        {
+          name: 'a3',
+          status: 'failed',
+          durationMs: 10,
+          category: 'adversarial',
+        },
+        {
+          name: 'a4',
+          status: 'errored',
+          durationMs: 10,
+          category: 'adversarial',
+        },
+      ],
+    });
+    expect(summary).toEqual({
+      date: '2026-09-07',
+      commitSha: 'abc123',
+      passRate: 50,
+      totalCases: 2,
+      passedCases: 1,
+      adversarial: {
+        passRate: 66.7,
+        totalCases: 3,
+        passedCases: 2,
+        erroredCases: 1,
+      },
+    });
+  });
+
+  test('summarizeRun omits the adversarial block when no case is adversarial', () => {
+    const summary = summarizeRun({
+      date: '2026-09-07',
+      commitSha: 'abc123',
+      cases: [{ name: 'f1', status: 'passed', durationMs: 10 }],
+    });
+    expect(summary).toEqual({
+      date: '2026-09-07',
+      commitSha: 'abc123',
+      passRate: 100,
+      totalCases: 1,
+      passedCases: 1,
+    });
+  });
+
+  test('old untagged reports yield cases with no category', () => {
+    const [result] = extractCaseResults({
+      suites: [
+        {
+          title: 'agent.eval.ts',
+          specs: [
+            {
+              title: 'legacy',
+              tests: [
+                {
+                  status: 'expected',
+                  results: [{ status: 'passed', duration: 5 }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(result).toEqual({
+      name: 'legacy',
+      status: 'passed',
+      durationMs: 5,
+    });
+  });
+
+  test('an adversarial pass-to-fail is a regression', () => {
+    const prior: EvalRunDetail = {
+      date: 'w1',
+      commitSha: 'a',
+      cases: [
+        {
+          name: 'a1',
+          status: 'passed',
+          durationMs: 1,
+          category: 'adversarial',
+        },
+      ],
+    };
+    const current: EvalRunDetail = {
+      date: 'w2',
+      commitSha: 'b',
+      cases: [
+        {
+          name: 'a1',
+          status: 'failed',
+          durationMs: 1,
+          category: 'adversarial',
+        },
+      ],
+    };
+    expect(findRegressedCases([prior], current)).toEqual(['a1']);
+  });
+
+  test('the pass-rate floor applies to functional cases only', () => {
+    const current: EvalRunDetail = {
+      date: 'w2',
+      commitSha: 'b',
+      cases: [
+        { name: 'f1', status: 'passed', durationMs: 1 },
+        { name: 'f2', status: 'passed', durationMs: 1 },
+        {
+          name: 'a1',
+          status: 'failed',
+          durationMs: 1,
+          category: 'adversarial',
+        },
+        {
+          name: 'a2',
+          status: 'failed',
+          durationMs: 1,
+          category: 'adversarial',
+        },
+      ],
+    };
+    const health = checkEvalHealth(current, [], 70);
+    expect(health.passRate).toBe(100);
+    expect(health.floorBreached).toBe(false);
+    expect(health.flagged).toBe(false);
+  });
+});
