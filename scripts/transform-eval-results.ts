@@ -69,7 +69,7 @@ function main(): void {
   );
   if (summary.adversarial) {
     console.log(
-      `[transform-eval-results] injection resistance ${summary.adversarial.passedCases}/${summary.adversarial.totalCases} passed (${summary.adversarial.passRate}%)`,
+      `[transform-eval-results] prompt-extraction resistance ${summary.adversarial.passedCases}/${summary.adversarial.totalCases} passed (${summary.adversarial.passRate}%)`,
     );
   }
   console.log(`[transform-eval-results] wrote ${detailPath}`);
