@@ -116,7 +116,7 @@ export function buildLoaderLines(bootInfo: BootInfo): DmesgLine[] {
     { tag: 'scene', text: 'grid horizon locked' },
     { tag: 'deck', text: 'command palette + agent chat mounted' },
     { tag: 'deck', text: 'perch/dock glide calibrated' },
-    { tag: 'agent-core', text: 'llm transport linked (gemini-3.1-flash-lite)' },
+    { tag: 'agent-core', text: 'llm transport linked (gemini-3.5-flash-lite)' },
     { tag: 'agent-core', text: '6 tools registered' },
     { text: 'all subsystems nominal' },
     { text: 'sheohn.os: boot complete' },

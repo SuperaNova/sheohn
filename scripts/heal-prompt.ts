@@ -27,6 +27,7 @@ import {
   stripCodeFence,
   validateCandidate,
 } from '../src/lib/prompt-heal';
+import { CHAT_MODEL_PRIMARY } from '../src/lib/chat-model';
 import type { EvalHistoryIndex, EvalRunDetail } from '../src/lib/eval-history';
 import { evalCases } from '../tests/eval/cases';
 import { writeGithubOutput } from './lib/run-metadata';
@@ -76,7 +77,7 @@ async function main(): Promise<void> {
   const google = createGoogleGenerativeAI({ apiKey });
 
   const { text } = await generateText({
-    model: google('gemini-3.1-flash-lite'),
+    model: google(CHAT_MODEL_PRIMARY),
     prompt: healPrompt,
   });
 

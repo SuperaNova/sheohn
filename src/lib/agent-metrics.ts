@@ -119,6 +119,8 @@ export interface AgentStats {
   latency: LatencyPercentiles;
   cache: CacheStats;
   guardrail: GuardrailStats;
+  /** Turns where the primary model failed and the fallback model answered. */
+  modelFallbacks: number;
 }
 
 export const EMPTY_AGENT_STATS: AgentStats = {
@@ -127,6 +129,7 @@ export const EMPTY_AGENT_STATS: AgentStats = {
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
   guardrail: { safety: 0, outputFilter: 0 },
+  modelFallbacks: 0,
 };
 
 /** Assembles the full /stats panel shape from merged multi-day Redis hash reads. */
@@ -139,6 +142,7 @@ export function buildAgentStats(input: {
   cacheMisses: number;
   guardrailSafety: number;
   guardrailOutputFilter: number;
+  modelFallbacks: number;
 }): AgentStats {
   return {
     requests: buildRequestStats(input.totalRequests, input.rejectedRequests),
@@ -149,5 +153,6 @@ export function buildAgentStats(input: {
       safety: input.guardrailSafety,
       outputFilter: input.guardrailOutputFilter,
     },
+    modelFallbacks: input.modelFallbacks,
   };
 }

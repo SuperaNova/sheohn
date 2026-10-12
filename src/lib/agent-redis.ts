@@ -116,7 +116,28 @@ export async function recordGuardrailTrip(
       .expire(key, TTL_SECONDS)
       .exec();
   } catch (err) {
-    console.error('[agent-redis] recordGuardrailTrip failed � dropping:', err);
+    console.error('[agent-redis] recordGuardrailTrip failed — dropping:', err);
+  }
+}
+
+function fallbackKey(date: string): string {
+  return `agent:fallback:${date}`;
+}
+
+/** One turn where the primary chat model failed over to the fallback. */
+export async function recordAgentModelFallback(): Promise<void> {
+  try {
+    const key = fallbackKey(utcDateString());
+    await redis
+      .pipeline()
+      .hincrby(key, 'count', 1)
+      .expire(key, TTL_SECONDS)
+      .exec();
+  } catch (err) {
+    console.error(
+      '[agent-redis] recordAgentModelFallback failed — dropping:',
+      err,
+    );
   }
 }
 
@@ -131,6 +152,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       pipeline.hgetall(latencyKey(date));
       pipeline.hgetall(cacheKey(date));
       pipeline.hgetall(guardrailKey(date));
+      pipeline.hgetall(fallbackKey(date));
     }
     const results = await pipeline.exec<unknown[]>();
 
@@ -142,13 +164,15 @@ export async function getAgentStats(): Promise<AgentStats> {
     let cacheMisses = 0;
     let guardrailSafety = 0;
     let guardrailOutputFilter = 0;
+    let modelFallbacks = 0;
 
     for (let i = 0; i < dates.length; i++) {
-      const requests = results[i * 5] as Record<string, unknown> | null;
-      const tools = results[i * 5 + 1] as Record<string, unknown> | null;
-      const latency = results[i * 5 + 2] as Record<string, unknown> | null;
-      const cache = results[i * 5 + 3] as Record<string, unknown> | null;
-      const guardrail = results[i * 5 + 4] as Record<string, unknown> | null;
+      const requests = results[i * 6] as Record<string, unknown> | null;
+      const tools = results[i * 6 + 1] as Record<string, unknown> | null;
+      const latency = results[i * 6 + 2] as Record<string, unknown> | null;
+      const cache = results[i * 6 + 3] as Record<string, unknown> | null;
+      const guardrail = results[i * 6 + 4] as Record<string, unknown> | null;
+      const fallbacks = results[i * 6 + 5] as Record<string, unknown> | null;
 
       if (requests) {
         totalRequests += Number(requests.total ?? 0);
@@ -173,6 +197,7 @@ export async function getAgentStats(): Promise<AgentStats> {
         guardrailSafety += Number(guardrail.safety ?? 0);
         guardrailOutputFilter += Number(guardrail['output-filter'] ?? 0);
       }
+      if (fallbacks) modelFallbacks += Number(fallbacks.count ?? 0);
     }
 
     return buildAgentStats({
@@ -184,6 +209,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       cacheMisses,
       guardrailSafety,
       guardrailOutputFilter,
+      modelFallbacks,
     });
   } catch (err) {
     console.error('[agent-redis] getAgentStats failed — failing open:', err);
