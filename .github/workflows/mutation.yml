@@ -7,20 +7,22 @@ on:
     - cron: '0 8 * * 1'
   workflow_dispatch:
 
-# This job commits data/mutation-score.json back to main.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   mutation:
     name: Run Stryker, record mutation score history
     runs-on: ubuntu-latest
+    # Commits data/mutation-score.json back to main.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: 'npm'
@@ -33,7 +35,7 @@ jobs:
 
       - name: Upload Stryker HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mutation-report
           path: reports/mutation/

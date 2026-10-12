@@ -10,23 +10,32 @@ on:
         description: 'The safe version to downgrade to (e.g. "4.17.20")'
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   revert:
     runs-on: ubuntu-latest
+    # Pushes the downgrade commit.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
 
       - name: Downgrade package
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION: ${{ inputs.version }}
         run: |
-          npm install ${{ github.event.inputs.package_name }}@${{ github.event.inputs.version }}
+          npm install "$PACKAGE_NAME@$VERSION"
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add package.json package-lock.json
-          git commit -m "security(emergency): downgrade ${{ github.event.inputs.package_name }} to ${{ github.event.inputs.version }} due to reported issues"
+          git commit -m "security(emergency): downgrade $PACKAGE_NAME to $VERSION due to reported issues"
           git push

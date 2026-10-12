@@ -11,22 +11,23 @@ on:
   pull_request:
     paths: ['scripts/my_facts.json']
 
-# The push job commits scripts/brain-manifest.json back to main.
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   sync:
     name: Sync facts into Upstash Vector, commit manifest
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    # Commits scripts/brain-manifest.json back to main.
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: 'npm'
@@ -57,12 +58,15 @@ jobs:
     name: Dry-run diff, comment on PR
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: 'npm'
@@ -76,6 +80,7 @@ jobs:
       - name: Comment the added/removed fact diff on the PR
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           {
             echo "### Brain sync dry-run"
@@ -84,5 +89,5 @@ jobs:
             cat "$RUNNER_TEMP/brain-dry-run.json"
             echo '```'
           } > "$RUNNER_TEMP/brain-dry-run-comment.md"
-          gh pr comment "${{ github.event.pull_request.number }}" \
+          gh pr comment "$PR_NUMBER" \
             --body-file "$RUNNER_TEMP/brain-dry-run-comment.md"

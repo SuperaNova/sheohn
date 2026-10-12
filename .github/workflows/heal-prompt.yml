@@ -10,6 +10,9 @@ on:
     workflows: ['Weekly Eval Scoreboard']
     types: [completed]
 
+permissions:
+  contents: read
+
 jobs:
   guardrail:
     name: Check for an existing open prompt-heal PR
@@ -44,12 +47,12 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: main
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           cache: 'npm'
@@ -72,8 +75,10 @@ jobs:
 
       - name: Create healing branch
         id: branch
+        env:
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
-          name="prompt-heal/${{ github.event.workflow_run.id }}-$(date -u +%Y%m%d%H%M%S)"
+          name="prompt-heal/${TRIGGER_RUN_ID}-$(date -u +%Y%m%d%H%M%S)"
           git checkout -b "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
