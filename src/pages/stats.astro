@@ -165,7 +165,7 @@ function fmtCls(n: number): string {
         {agentStats.requests.total} chat requests, {
           agentStats.requests.rejected
         }
-        rejected by the rate limiter.
+        rejected by the chat guards.
       </p>
 
       <div
@@ -189,6 +189,10 @@ function fmtCls(n: number): string {
                     {agentStats.requests.total} total ·{' '}
                     {agentStats.requests.rejected} rejected ·{' '}
                     {fmtPercent(agentStats.requests.rejectionRate)}
+                    {agentStats.requests.busy > 0 &&
+                      ` · ${agentStats.requests.busy} busy`}
+                    {agentStats.requests.offline > 0 &&
+                      ` · ${agentStats.requests.offline} offline`}
                   </p>
                 </div>
                 <div>

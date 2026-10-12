@@ -10,6 +10,7 @@ import {
   type AgentStats,
 } from './agent-metrics';
 import type { GuardrailTripKind } from './output-guard';
+import type { ChatRejectionReason } from './chat-guard';
 
 const redis = new Redis({
   url:
@@ -43,12 +44,17 @@ function guardrailKey(date: string): string {
   return `agent:guardrail:${date}`;
 }
 
-/** One request to the route, and whether the rate limiter throttled it. */
-export async function recordAgentRequest(rejected: boolean): Promise<void> {
+/** One request to the route, and which guard (if any) rejected it. */
+export async function recordAgentRequest(
+  rejection?: ChatRejectionReason,
+): Promise<void> {
   try {
     const key = requestsKey(utcDateString());
     const pipeline = redis.pipeline().hincrby(key, 'total', 1);
-    if (rejected) pipeline.hincrby(key, 'rejected', 1);
+    if (rejection) {
+      pipeline.hincrby(key, 'rejected', 1);
+      pipeline.hincrby(key, rejection, 1);
+    }
     pipeline.expire(key, TTL_SECONDS);
     await pipeline.exec();
   } catch (err) {
@@ -158,6 +164,8 @@ export async function getAgentStats(): Promise<AgentStats> {
 
     let totalRequests = 0;
     let rejectedRequests = 0;
+    let busyRequests = 0;
+    let offlineRequests = 0;
     const toolCounts: Record<string, number> = {};
     const latencyBuckets: Record<string, number> = {};
     let cacheHits = 0;
@@ -177,6 +185,8 @@ export async function getAgentStats(): Promise<AgentStats> {
       if (requests) {
         totalRequests += Number(requests.total ?? 0);
         rejectedRequests += Number(requests.rejected ?? 0);
+        busyRequests += Number(requests.busy ?? 0);
+        offlineRequests += Number(requests.offline ?? 0);
       }
       if (tools) {
         for (const [name, count] of Object.entries(tools)) {
@@ -203,6 +213,8 @@ export async function getAgentStats(): Promise<AgentStats> {
     return buildAgentStats({
       totalRequests,
       rejectedRequests,
+      busyRequests,
+      offlineRequests,
       toolCounts,
       latencyBuckets,
       cacheHits,

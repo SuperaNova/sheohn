@@ -57,18 +57,27 @@ function round1(n: number): number {
 
 export interface RequestStats {
   total: number;
+  /** Requests turned away by any guard: per-IP limit, global limit/daily budget, kill switch. */
   rejected: number;
-  /** Percentage (0-100) of total requests throttled by the rate limiter. */
+  /** Subset of `rejected` turned away by the global limit or daily budget. */
+  busy: number;
+  /** Subset of `rejected` turned away by the kill switch. */
+  offline: number;
+  /** Percentage (0-100) of total requests rejected by a guard. */
   rejectionRate: number;
 }
 
 export function buildRequestStats(
   total: number,
   rejected: number,
+  busy = 0,
+  offline = 0,
 ): RequestStats {
   return {
     total,
     rejected,
+    busy,
+    offline,
     rejectionRate: total === 0 ? 0 : round1((rejected / total) * 100),
   };
 }
@@ -124,7 +133,7 @@ export interface AgentStats {
 }
 
 export const EMPTY_AGENT_STATS: AgentStats = {
-  requests: { total: 0, rejected: 0, rejectionRate: 0 },
+  requests: { total: 0, rejected: 0, busy: 0, offline: 0, rejectionRate: 0 },
   toolCalls: buildToolCallDistribution({}),
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
@@ -136,6 +145,8 @@ export const EMPTY_AGENT_STATS: AgentStats = {
 export function buildAgentStats(input: {
   totalRequests: number;
   rejectedRequests: number;
+  busyRequests: number;
+  offlineRequests: number;
   toolCounts: Record<string, number>;
   latencyBuckets: Record<string, number>;
   cacheHits: number;
@@ -145,7 +156,12 @@ export function buildAgentStats(input: {
   modelFallbacks: number;
 }): AgentStats {
   return {
-    requests: buildRequestStats(input.totalRequests, input.rejectedRequests),
+    requests: buildRequestStats(
+      input.totalRequests,
+      input.rejectedRequests,
+      input.busyRequests,
+      input.offlineRequests,
+    ),
     toolCalls: buildToolCallDistribution(input.toolCounts),
     latency: estimateLatencyPercentiles(input.latencyBuckets),
     cache: buildCacheStats(input.cacheHits, input.cacheMisses),
