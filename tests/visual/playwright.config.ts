@@ -1,18 +1,21 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
 // Dedicated port (e2e uses 4399, eval 4398) so suites can run concurrently.
 const PORT = 4397;
 const HOST = `http://localhost:${PORT}`;
+const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 export default defineConfig({
-  testDir: './tests/visual',
+  testDir: '.',
+  outputDir: `${REPO_ROOT}/test-results`,
   // Default snapshotPathTemplate already namespaces by project and platform, so a non-ubuntu
   // local run can't be mistaken for a CI baseline.
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['html', { outputFolder: `${REPO_ROOT}/playwright-report` }]],
   use: {
     baseURL: HOST,
     // Pin timezone and locale for parity between local runs and the CI runner; the header clock's
@@ -39,6 +42,7 @@ export default defineConfig({
     },
   ],
   webServer: {
+    cwd: REPO_ROOT,
     // Serves the static build via scripts/serve-static.mjs: `astro preview` 404s every route with
     // the @astrojs/vercel adapter. This suite never hits /api/chat, so static rendering suffices.
     command: `npm run build && node scripts/serve-static.mjs .vercel/output/static ${PORT}`,

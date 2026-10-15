@@ -105,7 +105,7 @@ jobs:
           UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+          PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report/results.json
 
       - name: Transform candidate results into a scratch dir
         # EVAL_HISTORY_DIR redirects output away from data/eval-history so

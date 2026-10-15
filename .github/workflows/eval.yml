@@ -32,13 +32,13 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers (Chromium only)
-        # playwright.eval.config.ts doesn't define `projects`, so it uses
+        # tests/eval/playwright.config.ts doesn't define `projects`, so it uses
         # Playwright's default project, which is Chromium-only.
         run: npx playwright install --with-deps chromium
 
       - name: Run eval:agent
         id: eval
-        # Runs the EXISTING playwright.eval.config.ts unmodified: its
+        # Runs the EXISTING tests/eval/playwright.config.ts unmodified: its
         # webServer boots `astro dev` (not build+preview, see the config's
         # comment — the Vercel adapter's SSR output isn't servable by
         # `astro preview`), so real secrets are injected here as env vars
@@ -58,7 +58,7 @@ jobs:
           UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+          PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report/results.json
 
       - name: Upload raw Playwright JSON report
         if: always()

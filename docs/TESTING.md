@@ -41,11 +41,11 @@ expect(results.violations).toEqual([]);
 
 ## 3. Visual Regression Testing
 
-Visual regression is a **separate suite**, not part of `npm run test:e2e`. It lives in `tests/visual/` with its own config (`playwright.visual.config.ts`) and its own workflow (`.github/workflows/visual.yml`).
+Visual regression is a **separate suite**, not part of `npm run test:e2e`. It lives in `tests/visual/` with its own config (`tests/visual/playwright.config.ts`) and its own workflow (`.github/workflows/visual.yml`).
 
 - **Run it locally (compare only, no writes):**
   ```bash
-  npx playwright test --config=playwright.visual.config.ts
+  npx playwright test --config=tests/visual/playwright.config.ts
   ```
 - **Baselines are generated ONLY on ubuntu CI.** Font rendering and anti-aliasing differ across OSes, so a baseline generated on Windows or macOS will not match what CI produces and must never be committed. To refresh baselines:
   1. Run the `visual.yml` workflow manually (`workflow_dispatch`) on GitHub.
@@ -56,7 +56,7 @@ Visual regression is a **separate suite**, not part of `npm run test:e2e`. It li
 
 ## 4. The Eval Harness (Playwright vs. a live Gemini)
 
-`npm run eval:agent` runs `tests/eval/agent.eval.ts` against `playwright.eval.config.ts`, which boots `astro dev` (not build+preview — the SSR `/api/chat` route needs a real dev server) and drives the Command Deck against a **live** Gemini + Upstash Vector backend. It needs real credentials (`GOOGLE_GENERATIVE_AI_API_KEY`, `UPSTASH_VECTOR_REST_*`), so it's manual-only locally and runs weekly in CI (`.github/workflows/eval.yml`, Monday 06:00 UTC, plus `workflow_dispatch`). Each case in `tests/eval/cases.ts` checks the agent's tool-calling and RAG grounding — e.g. that a background question triggers `query_jared_memory` and the reply cites a retrieved fact. Results feed `data/eval-history/` (see the eval pass-rate badge in `docs/DEVELOPMENT.md`) and a regression flags an open GitHub issue via `scripts/check-eval-regression.ts`.
+`npm run eval:agent` runs `tests/eval/agent.eval.ts` against `tests/eval/playwright.config.ts`, which boots `astro dev` (not build+preview — the SSR `/api/chat` route needs a real dev server) and drives the Command Deck against a **live** Gemini + Upstash Vector backend. It needs real credentials (`GOOGLE_GENERATIVE_AI_API_KEY`, `UPSTASH_VECTOR_REST_*`), so it's manual-only locally and runs weekly in CI (`.github/workflows/eval.yml`, Monday 06:00 UTC, plus `workflow_dispatch`). Each case in `tests/eval/cases.ts` checks the agent's tool-calling and RAG grounding — e.g. that a background question triggers `query_jared_memory` and the reply cites a retrieved fact. Results feed `data/eval-history/` (see the eval pass-rate badge in `docs/DEVELOPMENT.md`) and a regression flags an open GitHub issue via `scripts/check-eval-regression.ts`.
 
 ## 4a. Deployed Smoke (Playwright vs. a real deployment)
 
