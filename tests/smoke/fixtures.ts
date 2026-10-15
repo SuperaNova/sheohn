@@ -6,10 +6,15 @@ import { test as base, expect } from '../e2e/fixtures';
 
 const BYPASS_HEADER = 'x-vercel-protection-bypass';
 
-/** Headers that get a request past Vercel Deployment Protection; empty when no secret is set. */
+/**
+ * Headers that get a request past Vercel Deployment Protection; empty when no secret is set.
+ * Also skips the preview toolbar, whose vercel.live iframe the site's CSP blocks.
+ */
 export function bypassHeaders(): Record<string, string> {
   const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-  return secret ? { [BYPASS_HEADER]: secret } : {};
+  return secret
+    ? { [BYPASS_HEADER]: secret, 'x-vercel-skip-toolbar': '1' }
+    : {};
 }
 
 /**
