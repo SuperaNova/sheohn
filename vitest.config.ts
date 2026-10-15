@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [svelte({ hot: !process.env.VITEST })],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./vitest.setup.ts'],
+    setupFiles: ['./tests/vitest.setup.ts'],
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
     coverage: {
