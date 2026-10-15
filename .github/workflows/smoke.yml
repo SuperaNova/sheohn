@@ -1,0 +1,57 @@
+name: Deployed Smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Deployment URL to smoke-test
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke-test the deployment
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.deployment.sha || github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Require the target URL and bypass secret
+        env:
+          TARGET_URL: ${{ inputs.url || github.event.deployment_status.environment_url }}
+          BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          if [ -z "$TARGET_URL" ]; then
+            echo "::error::No deployment URL to test."
+            exit 1
+          fi
+          if [ -z "$BYPASS_SECRET" ]; then
+            echo "::error::VERCEL_AUTOMATION_BYPASS_SECRET is not set. Without it, protected deployments answer 401 to every request."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke suite
+        run: npm run test:smoke
+        env:
+          SMOKE_BASE_URL: ${{ inputs.url || github.event.deployment_status.environment_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
