@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Static file server for playwright.visual.config.ts's webServer. `astro preview` isn't
+// Static file server for tests/visual/playwright.config.ts's webServer. `astro preview` isn't
 // adapter-aware with @astrojs/vercel and 404s every route, so this serves .vercel/output/static.
 // Usage: node scripts/serve-static.mjs <dir> <port>
 

@@ -14,7 +14,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'astro.config.*'
-      - 'playwright.visual.config.ts'
       - '.github/workflows/visual.yml'
   workflow_dispatch:
 
@@ -53,7 +52,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run visual regression suite
-        run: npx playwright test --config=playwright.visual.config.ts
+        run: npx playwright test --config=tests/visual/playwright.config.ts
 
       - name: Upload HTML report + diff images
         if: failure()
@@ -86,7 +85,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Regenerate snapshots
-        run: npx playwright test --config=playwright.visual.config.ts --update-snapshots
+        run: npx playwright test --config=tests/visual/playwright.config.ts --update-snapshots
 
       - name: Upload regenerated snapshots
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
