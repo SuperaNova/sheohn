@@ -228,3 +228,44 @@ export async function getAgentStats(): Promise<AgentStats> {
     return EMPTY_AGENT_STATS;
   }
 }
+
+function mcpToolKey(date: string): string {
+  return `mcp:tool:${date}`;
+}
+
+/** One MCP tool call, counted per tool name for the day. */
+export async function recordMcpToolCall(toolName: string): Promise<void> {
+  try {
+    const key = mcpToolKey(utcDateString());
+    await redis
+      .pipeline()
+      .hincrby(key, toolName, 1)
+      .expire(key, TTL_SECONDS)
+      .exec();
+  } catch (err) {
+    console.error('[agent-redis] recordMcpToolCall failed — dropping:', err);
+  }
+}
+
+/** Per-tool MCP call counts over the trailing STATS_WINDOW_DAYS; fails open to empty. */
+export async function getMcpToolCounts(): Promise<Record<string, number>> {
+  try {
+    const pipeline = redis.pipeline();
+    for (const date of recentDates(STATS_WINDOW_DAYS)) {
+      pipeline.hgetall(mcpToolKey(date));
+    }
+    const results = await pipeline.exec<(Record<string, unknown> | null)[]>();
+
+    const counts: Record<string, number> = {};
+    for (const day of results) {
+      if (!day) continue;
+      for (const [name, count] of Object.entries(day)) {
+        counts[name] = (counts[name] ?? 0) + Number(count);
+      }
+    }
+    return counts;
+  } catch (err) {
+    console.error('[agent-redis] getMcpToolCounts failed — failing open:', err);
+    return {};
+  }
+}

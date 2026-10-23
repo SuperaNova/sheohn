@@ -32,7 +32,7 @@ export function isKillSwitchOn(value: unknown): boolean {
   return normalized !== '' && normalized !== '0' && normalized !== 'false';
 }
 
-function secondsUntil(resetMs: number, nowMs: number): number {
+export function secondsUntil(resetMs: number, nowMs: number): number {
   return Math.max(1, Math.ceil((resetMs - nowMs) / 1000));
 }
 

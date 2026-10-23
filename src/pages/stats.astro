@@ -9,7 +9,7 @@ import SectionReveal from '../components/ui/SectionReveal.svelte';
 import { getCollection } from 'astro:content';
 import { buildKnownRoutes, STATIC_ROUTES } from '../lib/rum-routes';
 import { getRouteStats, type RouteStats } from '../lib/rum-redis';
-import { getAgentStats } from '../lib/agent-redis';
+import { getAgentStats, getMcpToolCounts } from '../lib/agent-redis';
 
 let knownRoutes: string[] = [...STATIC_ROUTES];
 try {
@@ -27,6 +27,9 @@ const routeStats: { route: string; stats: RouteStats }[] = await Promise.all(
 );
 
 const agentStats = await getAgentStats();
+const mcpToolCounts = Object.entries(await getMcpToolCounts()).sort(
+  (a, b) => b[1] - a[1],
+);
 
 const totalPageviews = routeStats.reduce(
   (sum, r) => sum + r.stats.pageviews,
@@ -242,6 +245,24 @@ function fmtCls(n: number): string {
             </div>
           )
         }
+        <div class="bg-[var(--color-console-surface)] p-6">
+          <p
+            class="font-mono text-[11px] tracking-wide text-[var(--color-console-text-dim)] uppercase"
+          >
+            MCP Tool Calls
+          </p>
+          <p
+            class="mt-1 font-mono text-xs text-[var(--color-on-surface-muted)]"
+          >
+            {
+              mcpToolCounts.length === 0
+                ? '—'
+                : mcpToolCounts
+                    .map(([name, count]) => `${name} ${count}`)
+                    .join(' · ')
+            }
+          </p>
+        </div>
       </div>
     </SectionReveal>
   </main>
