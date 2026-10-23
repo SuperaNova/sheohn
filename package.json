@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "astro check",
-    "check:svelte": "svelte-check --tsconfig ./tsconfig.svelte-check.json",
+    "check:svelte": "astro sync && svelte-check --tsconfig ./tsconfig.svelte-check.json",
     "knip": "knip",
     "size": "npm run build && size-limit",
     "secretlint": "secretlint --secretlintignore .gitignore \"**/*\"",
