@@ -173,6 +173,55 @@ test.describe('chat', () => {
   });
 });
 
+test.describe('mcp', () => {
+  const mcpHeaders = {
+    'content-type': 'application/json',
+    accept: 'application/json, text/event-stream',
+  };
+  const initialize = {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'initialize',
+    params: {
+      protocolVersion: '2025-06-18',
+      capabilities: {},
+      clientInfo: { name: 'smoke', version: '0.0.0' },
+    },
+  };
+
+  test('/mcp initializes and lists the four tools', async ({ api }) => {
+    const init = await api.post('/mcp', {
+      headers: mcpHeaders,
+      data: initialize,
+    });
+    expect(init.status(), describe(init)).toBe(200);
+
+    const list = await api.post('/mcp', {
+      headers: mcpHeaders,
+      data: { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+    });
+    expect(list.status(), describe(list)).toBe(200);
+    const body = (await list.json()) as {
+      result?: { tools?: { name: string }[] };
+    };
+    const names = (body.result?.tools ?? []).map((tool) => tool.name).sort();
+    expect(names, describe(list)).toEqual([
+      'get_profile',
+      'get_project',
+      'list_projects',
+      'search_facts',
+    ]);
+  });
+
+  test('/mcp rejects a foreign Origin', async ({ api }) => {
+    const response = await api.post('/mcp', {
+      headers: { ...mcpHeaders, origin: 'https://evil.example' },
+      data: initialize,
+    });
+    expect(response.status(), describe(response)).toBe(403);
+  });
+});
+
 test('home hydrates with no console errors or CSP violation reports', async ({
   page,
   baseURL,

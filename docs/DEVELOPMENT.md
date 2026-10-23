@@ -113,6 +113,35 @@ After the switch, chat applies a per-IP limit (10/min), then two shared guards t
 - `CHAT_GLOBAL_PER_MINUTE = 12` requests per minute across all callers
 - `CHAT_DAILY_BUDGET = 400` requests per UTC day
 
+## MCP server
+
+A public, read-only [MCP](https://modelcontextprotocol.io) server lives at `https://www.sheohn.dev/mcp` (`src/pages/mcp.ts`). It is anonymous and stateless: JSON-RPC over `POST`, no sessions, no SSE (`GET`/`DELETE` return 405).
+
+Tools:
+
+- `list_projects`: every case study with slug, title, summary, stack and URL
+- `get_project`: one case study, including its write-up
+- `search_facts`: the same fact retrieval the chatbot uses (`src/lib/rag-search.ts`)
+- `get_profile`: name, title, location and public links
+
+Connect from Claude Code:
+
+```
+claude mcp add --transport http sheohn https://www.sheohn.dev/mcp
+```
+
+Or add it to any client's MCP config:
+
+```json
+{
+  "mcpServers": {
+    "sheohn": { "type": "http", "url": "https://www.sheohn.dev/mcp" }
+  }
+}
+```
+
+Requests are checked in order by `src/lib/mcp-guard.ts`: `Origin` allowlist, JSON content type, 16 KB body cap, a 30/min per-IP limit, then the chat kill switch above (503 "offline"). `search_facts` has its own limits (10/min per IP, 300/day overall) because each cache miss costs a Gemini embedding call. See [MCP_THREAT_MODEL.md](./MCP_THREAT_MODEL.md).
+
 ## Project layout
 
 ```

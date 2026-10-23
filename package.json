@@ -50,6 +50,7 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.59",
     "@ai-sdk/svelte": "^4.0.191",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@resvg/resvg-js": "^2.6.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",

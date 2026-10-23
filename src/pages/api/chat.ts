@@ -1,6 +1,5 @@
 import {
   streamText,
-  embed,
   tool,
   stepCountIs,
   convertToModelMessages,
@@ -23,15 +22,8 @@ import {
 } from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
-import {
-  RAG_EMBEDDING_DIMENSIONS,
-  RAG_EMBEDDING_MODEL,
-  RAG_MIN_SCORE,
-  RAG_TOP_K,
-  getVectorIndex,
-  type RagFact,
-  type RagQueryResult,
-} from '../../lib/rag';
+import type { RagQueryResult } from '../../lib/rag';
+import { searchFacts } from '../../lib/rag-search';
 import {
   recordAgentCacheEvent,
   recordAgentModelFallback,
@@ -109,59 +101,6 @@ const ChatBodySchema = z.object({
 // Hard cap on the raw request body — a cheap DoS guard so a caller can't
 // inflate the LLM context (and the bill) with a giant payload.
 const MAX_BODY_BYTES = 32_000;
-
-// Retries a transient failure (network blip, brief provider hiccup) with a
-// short backoff before giving up, so the RAG tool doesn't hard-fail on the
-// first blip.
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  attempts = 2,
-  delayMs = 300,
-): Promise<T> {
-  let lastError: unknown;
-  for (let i = 0; i <= attempts; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      if (i < attempts) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
-      }
-    }
-  }
-  throw lastError;
-}
-
-// Caches query_jared_memory results per warm serverless instance, so repeated
-// common questions (e.g. "what's his stack") skip the embed + vector query
-// round-trip. Capped and TTL'd so a long-lived instance can't accumulate
-// unbounded entries from varied caller input.
-const RAG_CACHE_TTL_MS = 10 * 60 * 1000;
-const RAG_CACHE_MAX_ENTRIES = 200;
-const ragCache = new Map<
-  string,
-  { result: RagQueryResult; expiresAt: number }
->();
-
-function getCachedFacts(query: string): RagQueryResult | undefined {
-  const key = query.trim().toLowerCase();
-  const cached = ragCache.get(key);
-  if (!cached) return undefined;
-  if (cached.expiresAt < Date.now()) {
-    ragCache.delete(key);
-    return undefined;
-  }
-  return cached.result;
-}
-
-function setCachedFacts(query: string, result: RagQueryResult): void {
-  const key = query.trim().toLowerCase();
-  if (ragCache.size >= RAG_CACHE_MAX_ENTRIES) {
-    const oldestKey = ragCache.keys().next().value;
-    if (oldestKey !== undefined) ragCache.delete(oldestKey);
-  }
-  ragCache.set(key, { result, expiresAt: Date.now() + RAG_CACHE_TTL_MS });
-}
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const startedAt = Date.now();
@@ -375,49 +314,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             .string()
             .describe("The search query to match against Jared's facts."),
         }),
-        execute: async ({ query }): Promise<RagQueryResult> => {
-          const cached = getCachedFacts(query);
-          waitUntil(recordAgentCacheEvent(cached ? 'hit' : 'miss'));
-          if (cached) return cached;
-
-          try {
-            const { embedding } = await withRetry(() =>
-              embed({
-                model: google.embeddingModel(RAG_EMBEDDING_MODEL),
-                value: query,
-                providerOptions: {
-                  google: {
-                    outputDimensionality: RAG_EMBEDDING_DIMENSIONS,
-                  },
-                },
-              }),
-            );
-
-            const results = await withRetry(() =>
-              getVectorIndex().query({
-                vector: embedding,
-                topK: RAG_TOP_K,
-                includeMetadata: true,
-              }),
-            );
-
-            const hits: RagFact[] = results.map((r) => ({
-              id: String(r.id),
-              text: String(r.metadata?.text ?? 'Unknown fact'),
-              score: r.score,
-            }));
-
-            const facts = hits.filter((h) => h.score >= RAG_MIN_SCORE);
-            const filteredOut = hits.filter((h) => h.score < RAG_MIN_SCORE);
-
-            const result: RagQueryResult = { query, facts, filteredOut };
-            setCachedFacts(query, result);
-            return result;
-          } catch (err) {
-            console.error('[RAG Pipeline] query_jared_memory failed:', err);
-            return { query, facts: [], filteredOut: [] };
-          }
-        },
+        execute: async ({ query }): Promise<RagQueryResult> =>
+          searchFacts(query, {
+            onCacheEvent: (kind) => waitUntil(recordAgentCacheEvent(kind)),
+          }),
       }),
     },
   });

@@ -23,6 +23,8 @@ There's a little terminal docked at the bottom of the site (<kbd>Ctrl</kbd> + <k
 
 Under the hood it's Gemini through the Vercel AI SDK. It pulls from a small memory of facts about me, and its tool calls come back to the page as UI moves.
 
+Prefer your own tooling? There's a read-only MCP server too, so Claude Code, Cursor and friends can ask about me directly: `claude mcp add --transport http sheohn https://www.sheohn.dev/mcp`.
+
 ## find me
 
 [LinkedIn](https://www.linkedin.com/in/jared-sheohn-acebes-316aab297) · [Resume](https://aleda1faaxt35aum.public.blob.vercel-storage.com/Acebes_Jared_Resume.pdf) · or just ask the terminal.
