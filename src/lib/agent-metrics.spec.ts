@@ -48,11 +48,12 @@ describe('estimateLatencyPercentiles', () => {
 
 describe('buildRequestStats', () => {
   test('computes rejection rate as a percentage', () => {
-    expect(buildRequestStats(100, 10, 3, 1)).toEqual({
+    expect(buildRequestStats(100, 10, 3, 1, 2)).toEqual({
       total: 100,
       rejected: 10,
       busy: 3,
       offline: 1,
+      quota: 2,
       rejectionRate: 10,
     });
   });
@@ -63,6 +64,7 @@ describe('buildRequestStats', () => {
       rejected: 0,
       busy: 0,
       offline: 0,
+      quota: 0,
       rejectionRate: 0,
     });
   });
@@ -121,6 +123,7 @@ describe('buildAgentStats', () => {
       rejectedRequests: 5,
       busyRequests: 2,
       offlineRequests: 1,
+      quotaRequests: 4,
       toolCounts: { open_case_study: 3, set_theme: 1 },
       latencyBuckets: { '1000-3000': 2, '3000-8000': 2 },
       cacheHits: 8,
@@ -135,6 +138,7 @@ describe('buildAgentStats', () => {
       rejected: 5,
       busy: 2,
       offline: 1,
+      quota: 4,
       rejectionRate: 10,
     });
     expect(stats.cache).toEqual({ hits: 8, misses: 2, hitRate: 80 });

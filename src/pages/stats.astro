@@ -196,6 +196,8 @@ function fmtCls(n: number): string {
                       ` · ${agentStats.requests.busy} busy`}
                     {agentStats.requests.offline > 0 &&
                       ` · ${agentStats.requests.offline} offline`}
+                    {agentStats.requests.quota > 0 &&
+                      ` · ${agentStats.requests.quota} quota`}
                   </p>
                 </div>
                 <div>

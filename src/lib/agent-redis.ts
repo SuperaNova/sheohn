@@ -168,6 +168,7 @@ export async function getAgentStats(): Promise<AgentStats> {
     let rejectedRequests = 0;
     let busyRequests = 0;
     let offlineRequests = 0;
+    let quotaRequests = 0;
     const toolCounts: Record<string, number> = {};
     const latencyBuckets: Record<string, number> = {};
     let cacheHits = 0;
@@ -189,6 +190,7 @@ export async function getAgentStats(): Promise<AgentStats> {
         rejectedRequests += Number(requests.rejected ?? 0);
         busyRequests += Number(requests.busy ?? 0);
         offlineRequests += Number(requests.offline ?? 0);
+        quotaRequests += Number(requests.quota ?? 0);
       }
       if (tools) {
         for (const [name, count] of Object.entries(tools)) {
@@ -223,6 +225,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       rejectedRequests,
       busyRequests,
       offlineRequests,
+      quotaRequests,
       toolCounts,
       latencyBuckets,
       cacheHits,
