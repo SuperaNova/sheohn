@@ -127,7 +127,7 @@ describe('buildAgentStats', () => {
       cacheMisses: 2,
       guardrailSafety: 2,
       guardrailOutputFilter: 1,
-      modelFallbacks: 3,
+      modelFallbacks: { b: 1, a: 3, c: 0 },
     });
 
     expect(stats.requests).toEqual({
@@ -143,6 +143,9 @@ describe('buildAgentStats', () => {
       stats.toolCalls.find((t) => t.name === 'open_case_study')?.count,
     ).toBe(3);
     expect(stats.latency.p50).toBeGreaterThan(0);
-    expect(stats.modelFallbacks).toBe(3);
+    expect(stats.modelFallbacks).toEqual([
+      { modelId: 'a', count: 3 },
+      { modelId: 'b', count: 1 },
+    ]);
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { withModelFallback } from './model-fallback';
+import { withModelFallbacks } from './model-fallback';
 
-type Model = Parameters<typeof withModelFallback>[0];
+type Model = Parameters<typeof withModelFallbacks>[0][number];
 type CallOptions = Parameters<Model['doStream']>[0];
 type Part =
   Awaited<ReturnType<Model['doStream']>> extends {
@@ -58,7 +58,7 @@ const hangUntilAborted = (options: CallOptions) =>
     );
   });
 
-describe('withModelFallback', () => {
+describe('withModelFallbacks', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
@@ -71,7 +71,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
       onFallback,
     });
@@ -91,7 +91,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
       onFallback,
     });
@@ -109,7 +109,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const { stream } = await model.doStream(callOptions());
@@ -128,7 +128,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
       onFallback,
     });
@@ -160,7 +160,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const pending = model.doStream(callOptions());
@@ -185,7 +185,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const { stream } = await model.doStream(callOptions());
@@ -203,7 +203,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const { stream } = await model.doStream(callOptions());
@@ -220,7 +220,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const { stream } = await model.doStream(callOptions());
@@ -238,7 +238,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
     const { stream } = await model.doStream(callOptions());
@@ -255,7 +255,7 @@ describe('withModelFallback', () => {
       throw new Error('fallback down');
     });
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
 
@@ -274,7 +274,7 @@ describe('withModelFallback', () => {
       stream: streamOf([textPart('x')]),
     }));
 
-    const model = withModelFallback(primary, fallback, {
+    const model = withModelFallbacks([primary, fallback], {
       firstChunkTimeoutMs: 8000,
     });
 
@@ -282,5 +282,209 @@ describe('withModelFallback', () => {
       model.doStream(callOptions(controller.signal)),
     ).rejects.toThrow('aborted');
     expect(fallback.doStream).not.toHaveBeenCalled();
+  });
+
+  describe('three-model chain', () => {
+    const okStream = (text: string) => async () => ({
+      stream: streamOf([textPart(text)]),
+    });
+    const failing = (message: string) => async () => {
+      throw new Error(message);
+    };
+
+    test('uses the first model and reports no fallback', async () => {
+      const onFallback = vi.fn();
+      const [a, b, c] = [
+        mockModel('a', okStream('a')),
+        mockModel('b', okStream('b')),
+        mockModel('c', okStream('c')),
+      ] as [Model, Model, Model];
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+      const { stream } = await model.doStream(callOptions());
+
+      expect(await collect(stream)).toEqual([textPart('a')]);
+      expect(b.doStream).not.toHaveBeenCalled();
+      expect(c.doStream).not.toHaveBeenCalled();
+      expect(onFallback).not.toHaveBeenCalled();
+    });
+
+    test('moves to the second model when the first hangs', async () => {
+      const onFallback = vi.fn();
+      const a = mockModel('a', hangUntilAborted);
+      const b = mockModel('b', okStream('b'));
+      const c = mockModel('c', okStream('c'));
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+      const pending = model.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(6000);
+      const { stream } = await pending;
+
+      expect(await collect(stream)).toEqual([textPart('b')]);
+      expect(c.doStream).not.toHaveBeenCalled();
+      expect(onFallback.mock.calls).toEqual([['b']]);
+    });
+
+    test('reaches the third model when the first throws and the second hangs', async () => {
+      const onFallback = vi.fn();
+      const a = mockModel('a', failing('503'));
+      const b = mockModel('b', hangUntilAborted);
+      const c = mockModel('c', okStream('c'));
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+      const pending = model.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(6000);
+      const { stream } = await pending;
+
+      expect(await collect(stream)).toEqual([textPart('c')]);
+      expect(onFallback.mock.calls).toEqual([['b'], ['c']]);
+    });
+
+    test('reaches the third model when both earlier ones hang', async () => {
+      const onFallback = vi.fn();
+      const a = mockModel('a', hangUntilAborted);
+      const b = mockModel('b', hangUntilAborted);
+      const c = mockModel('c', okStream('c'));
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+      const pending = model.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(12_000);
+      const { stream } = await pending;
+
+      expect(await collect(stream)).toEqual([textPart('c')]);
+      expect(onFallback.mock.calls).toEqual([['b'], ['c']]);
+    });
+
+    test('propagates the last error when every model fails', async () => {
+      const onFallback = vi.fn();
+      const model = withModelFallbacks(
+        [
+          mockModel('a', failing('a down')),
+          mockModel('b', failing('b down')),
+          mockModel('c', failing('c down')),
+        ],
+        { firstChunkTimeoutMs: 6000, onFallback },
+      );
+
+      await expect(model.doStream(callOptions())).rejects.toThrow('c down');
+      expect(onFallback.mock.calls).toEqual([['b'], ['c']]);
+    });
+
+    test('stops the chain when the caller aborts', async () => {
+      const controller = new AbortController();
+      const a = mockModel('a', async () => {
+        controller.abort();
+        throw new Error('aborted');
+      });
+      const b = mockModel('b', okStream('b'));
+      const c = mockModel('c', okStream('c'));
+      const onFallback = vi.fn();
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+
+      await expect(
+        model.doStream(callOptions(controller.signal)),
+      ).rejects.toThrow('aborted');
+      expect(b.doStream).not.toHaveBeenCalled();
+      expect(c.doStream).not.toHaveBeenCalled();
+      expect(onFallback).not.toHaveBeenCalled();
+    });
+
+    test('gives the last model no first-chunk timeout', async () => {
+      const a = mockModel('a', failing('a down'));
+      const b = mockModel('b', failing('b down'));
+      const c = mockModel('c', () => {
+        return new Promise<{ stream: ReadableStream<Part> }>((resolve) =>
+          setTimeout(
+            () => resolve({ stream: streamOf([textPart('c')]) }),
+            20_000,
+          ),
+        );
+      });
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+      });
+      const pending = model.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(20_000);
+      const { stream } = await pending;
+
+      expect(await collect(stream)).toEqual([textPart('c')]);
+    });
+
+    test('doGenerate walks the same chain', async () => {
+      const onFallback = vi.fn();
+      const generateResult = { content: [] };
+      const a = mockModel('a', okStream('a'));
+      const b = mockModel('b', okStream('b'));
+      const c = mockModel('c', okStream('c'));
+      vi.mocked(a.doGenerate).mockRejectedValue(new Error('a down'));
+      vi.mocked(b.doGenerate).mockRejectedValue(new Error('b down'));
+      vi.mocked(c.doGenerate).mockResolvedValue(
+        generateResult as unknown as Awaited<ReturnType<Model['doGenerate']>>,
+      );
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+
+      expect(await model.doGenerate({ prompt: [] })).toBe(generateResult);
+      expect(onFallback.mock.calls).toEqual([['b'], ['c']]);
+    });
+
+    test('later calls on the same wrapper start at the model that worked', async () => {
+      const onFallback = vi.fn();
+      const a = mockModel('a', hangUntilAborted);
+      const b = mockModel('b', okStream('b'));
+      const c = mockModel('c', okStream('c'));
+
+      const model = withModelFallbacks([a, b, c], {
+        firstChunkTimeoutMs: 6000,
+        onFallback,
+      });
+      const first = model.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(6000);
+      await collect((await first).stream);
+      const { stream } = await model.doStream(callOptions());
+
+      expect(await collect(stream)).toEqual([textPart('b')]);
+      expect(a.doStream).toHaveBeenCalledTimes(1);
+      expect(b.doStream).toHaveBeenCalledTimes(2);
+      expect(onFallback.mock.calls).toEqual([['b']]);
+    });
+
+    test('a new wrapper starts from the first model again', async () => {
+      const a = mockModel('a', hangUntilAborted);
+      const b = mockModel('b', okStream('b'));
+      const options = { firstChunkTimeoutMs: 6000 };
+
+      const used = withModelFallbacks([a, b], options);
+      const pending = used.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(6000);
+      await pending;
+
+      const fresh = withModelFallbacks([a, b], options);
+      const next = fresh.doStream(callOptions());
+      await vi.advanceTimersByTimeAsync(6000);
+      await next;
+
+      expect(a.doStream).toHaveBeenCalledTimes(2);
+    });
   });
 });

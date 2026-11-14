@@ -115,6 +115,21 @@ export function buildToolCallDistribution(
   return AGENT_TOOL_NAMES.map((name) => ({ name, count: counts[name] ?? 0 }));
 }
 
+interface ModelFallbackCount {
+  modelId: string;
+  count: number;
+}
+
+/** Fallback counts per target model, most frequent first. */
+function buildModelFallbackCounts(
+  counts: Record<string, number>,
+): ModelFallbackCount[] {
+  return Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .map(([modelId, count]) => ({ modelId, count }))
+    .sort((a, b) => b.count - a.count || a.modelId.localeCompare(b.modelId));
+}
+
 /** Tool names across every step of a turn, in call order. */
 export function collectToolNames(
   steps: readonly { toolCalls: readonly { toolName: string }[] }[],
@@ -128,8 +143,8 @@ export interface AgentStats {
   latency: LatencyPercentiles;
   cache: CacheStats;
   guardrail: GuardrailStats;
-  /** Turns where the primary model failed and the fallback model answered. */
-  modelFallbacks: number;
+  /** Turns where an earlier model failed, counted by the model that took over. */
+  modelFallbacks: ModelFallbackCount[];
 }
 
 export const EMPTY_AGENT_STATS: AgentStats = {
@@ -138,7 +153,7 @@ export const EMPTY_AGENT_STATS: AgentStats = {
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
   guardrail: { safety: 0, outputFilter: 0 },
-  modelFallbacks: 0,
+  modelFallbacks: [],
 };
 
 /** Assembles the full /stats panel shape from merged multi-day Redis hash reads. */
@@ -153,7 +168,7 @@ export function buildAgentStats(input: {
   cacheMisses: number;
   guardrailSafety: number;
   guardrailOutputFilter: number;
-  modelFallbacks: number;
+  modelFallbacks: Record<string, number>;
 }): AgentStats {
   return {
     requests: buildRequestStats(
@@ -169,6 +184,6 @@ export function buildAgentStats(input: {
       safety: input.guardrailSafety,
       outputFilter: input.guardrailOutputFilter,
     },
-    modelFallbacks: input.modelFallbacks,
+    modelFallbacks: buildModelFallbackCounts(input.modelFallbacks),
   };
 }

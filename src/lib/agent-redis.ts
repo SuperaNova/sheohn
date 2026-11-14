@@ -130,13 +130,15 @@ function fallbackKey(date: string): string {
   return `agent:fallback:${date}`;
 }
 
-/** One turn where the primary chat model failed over to the fallback. */
-export async function recordAgentModelFallback(): Promise<void> {
+/** One turn where an earlier chat model failed over to `toModelId`. */
+export async function recordAgentModelFallback(
+  toModelId: string,
+): Promise<void> {
   try {
     const key = fallbackKey(utcDateString());
     await redis
       .pipeline()
-      .hincrby(key, 'count', 1)
+      .hincrby(key, toModelId, 1)
       .expire(key, TTL_SECONDS)
       .exec();
   } catch (err) {
@@ -172,7 +174,7 @@ export async function getAgentStats(): Promise<AgentStats> {
     let cacheMisses = 0;
     let guardrailSafety = 0;
     let guardrailOutputFilter = 0;
-    let modelFallbacks = 0;
+    const modelFallbackCounts: Record<string, number> = {};
 
     for (let i = 0; i < dates.length; i++) {
       const requests = results[i * 6] as Record<string, unknown> | null;
@@ -207,7 +209,13 @@ export async function getAgentStats(): Promise<AgentStats> {
         guardrailSafety += Number(guardrail.safety ?? 0);
         guardrailOutputFilter += Number(guardrail['output-filter'] ?? 0);
       }
-      if (fallbacks) modelFallbacks += Number(fallbacks.count ?? 0);
+      if (fallbacks) {
+        for (const [modelId, count] of Object.entries(fallbacks)) {
+          if (modelId === 'count') continue; // legacy untargeted counter
+          modelFallbackCounts[modelId] =
+            (modelFallbackCounts[modelId] ?? 0) + Number(count);
+        }
+      }
     }
 
     return buildAgentStats({
@@ -221,7 +229,7 @@ export async function getAgentStats(): Promise<AgentStats> {
       cacheMisses,
       guardrailSafety,
       guardrailOutputFilter,
-      modelFallbacks,
+      modelFallbacks: modelFallbackCounts,
     });
   } catch (err) {
     console.error('[agent-redis] getAgentStats failed — failing open:', err);

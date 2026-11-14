@@ -1,6 +1,9 @@
 import type { LanguageModel } from 'ai';
 
-type LanguageModelV3 = Extract<LanguageModel, { specificationVersion: 'v3' }>;
+export type LanguageModelV3 = Extract<
+  LanguageModel,
+  { specificationVersion: 'v3' }
+>;
 type LanguageModelV3CallOptions = Parameters<LanguageModelV3['doStream']>[0];
 type LanguageModelV3StreamResult = Awaited<
   ReturnType<LanguageModelV3['doStream']>
@@ -12,7 +15,7 @@ type LanguageModelV3StreamPart =
 
 interface ModelFallbackOptions {
   firstChunkTimeoutMs: number;
-  onFallback?: () => void;
+  onFallback?: (toModelId: string) => void;
 }
 
 interface OpenedStream {
@@ -107,39 +110,60 @@ function replayStream({
 }
 
 /**
- * Falls back to `fallback` once if `primary` throws or stays silent past the
+ * Walks `models` in order, moving on when one throws or stays silent past the
  * first-chunk timeout. Switches only before any chunk is forwarded, so two
- * models' output is never spliced into one stream.
+ * models' output is never spliced into one stream. The last model runs without
+ * a first-chunk timeout; its failure propagates. Each wrapper remembers the
+ * model that last worked, so build one per request.
  */
-export function withModelFallback(
-  primary: LanguageModelV3,
-  fallback: LanguageModelV3,
+export function withModelFallbacks(
+  models: LanguageModelV3[],
   { firstChunkTimeoutMs, onFallback }: ModelFallbackOptions,
 ): LanguageModelV3 {
+  const [first] = models;
+  if (!first) throw new Error('withModelFallbacks needs at least one model');
+  const lastIndex = models.length - 1;
+  // Later calls (tool-loop steps) resume at the last model that worked.
+  let startIndex = 0;
+
   return {
     specificationVersion: 'v3',
-    provider: primary.provider,
-    modelId: primary.modelId,
-    supportedUrls: primary.supportedUrls,
+    provider: first.provider,
+    modelId: first.modelId,
+    supportedUrls: first.supportedUrls,
     async doGenerate(options) {
-      try {
-        return await primary.doGenerate(options);
-      } catch (e) {
-        if (options.abortSignal?.aborted) throw e;
-        onFallback?.();
-        return fallback.doGenerate(options);
+      for (let i = startIndex; i < lastIndex; i++) {
+        try {
+          const result = await models[i]!.doGenerate(options);
+          startIndex = i;
+          return result;
+        } catch (e) {
+          if (options.abortSignal?.aborted) throw e;
+          onFallback?.(models[i + 1]!.modelId);
+        }
       }
+      const result = await models[lastIndex]!.doGenerate(options);
+      startIndex = lastIndex;
+      return result;
     },
     async doStream(options) {
-      try {
-        return replayStream(
-          await openStream(primary, options, firstChunkTimeoutMs),
-        );
-      } catch (e) {
-        if (options.abortSignal?.aborted) throw e;
-        onFallback?.();
-        return fallback.doStream(options);
+      for (let i = startIndex; i < lastIndex; i++) {
+        try {
+          const opened = await openStream(
+            models[i]!,
+            options,
+            firstChunkTimeoutMs,
+          );
+          startIndex = i;
+          return replayStream(opened);
+        } catch (e) {
+          if (options.abortSignal?.aborted) throw e;
+          onFallback?.(models[i + 1]!.modelId);
+        }
       }
+      const result = await models[lastIndex]!.doStream(options);
+      startIndex = lastIndex;
+      return result;
     },
   };
 }
