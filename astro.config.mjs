@@ -21,6 +21,11 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // Bundled scripts stay external so the CSP hashes cover only source-controlled inline scripts.
+      assetsInlineLimit: (filePath) =>
+        filePath.endsWith('.js') ? false : undefined,
+    },
   },
 
   adapter: vercel({
