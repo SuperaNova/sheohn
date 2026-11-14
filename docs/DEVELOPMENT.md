@@ -58,6 +58,10 @@ Run `npm run preflight` before a big push if you want full CI parity locally.
 
 > **svelte-check** type-checks `.svelte` components deeper than `astro check` does (it catches script-body type errors `astro check` misses). It runs against `tsconfig.svelte-check.json` (the project config minus test files, which `astro check` + the test runners already cover) and is a blocking gate in pre-push and CI.
 
+### CSP script hashes
+
+Inline scripts are allow-listed in `vercel.json` by SHA-256 hash in `script-src`, so `'unsafe-inline'` is not needed for scripts. `postbuild` fails when the built HTML's inline scripts no longer match those hashes, which stops a dependency bump from shipping blocked scripts. Fix it by running `npm run build`, then `npm run csp:write`, and committing `vercel.json`. Bundled component scripts are kept external via `assetsInlineLimit`, so the hash list only ever covers the layout's own inline script and Astro's hydration loaders. `style-src` intentionally keeps `'unsafe-inline'` because Svelte emits inline style attributes.
+
 ### Whole-site Lighthouse sweep (optional)
 
 `lhci` (above) gates a fixed list of routes per PR. For an ad-hoc crawl of **every** page at once — handy when adding routes or hunting per-page SEO/a11y gaps — run [unlighthouse](https://unlighthouse.dev) on demand (no install needed):

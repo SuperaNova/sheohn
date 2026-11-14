@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "postbuild": "pagefind --site .vercel/output/static",
+    "postbuild": "pagefind --site .vercel/output/static && tsx scripts/csp-hashes.ts",
+    "csp:write": "tsx scripts/csp-hashes.ts --write",
     "preview": "node scripts/serve-static.mjs",
     "astro": "astro",
     "lint": "eslint src",
