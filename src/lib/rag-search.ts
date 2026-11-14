@@ -18,7 +18,7 @@ interface VectorHit {
 }
 
 export interface RagSearchDeps {
-  embedQuery: (query: string) => Promise<number[]>;
+  embedQuery: (query: string, abortSignal?: AbortSignal) => Promise<number[]>;
   queryVectors: (vector: number[]) => Promise<VectorHit[]>;
 }
 
@@ -29,10 +29,11 @@ const google = createGoogleGenerativeAI({
 });
 
 const defaultDeps: RagSearchDeps = {
-  embedQuery: async (query) => {
+  embedQuery: async (query, abortSignal) => {
     const { embedding } = await embed({
       model: google.embeddingModel(RAG_EMBEDDING_MODEL),
       value: query,
+      abortSignal,
       providerOptions: {
         google: { outputDimensionality: RAG_EMBEDDING_DIMENSIONS },
       },
@@ -46,6 +47,45 @@ const defaultDeps: RagSearchDeps = {
       includeMetadata: true,
     }),
 };
+
+// Fail fast during a provider outage so retrieval doesn't eat the chat budget.
+const RAG_ATTEMPT_TIMEOUT_MS = 4000;
+
+class RagTimeoutError extends Error {
+  constructor() {
+    super(`RAG attempt timed out after ${RAG_ATTEMPT_TIMEOUT_MS}ms`);
+    this.name = 'RagTimeoutError';
+  }
+}
+
+// The race guarantees a prompt exit even if the callee ignores the signal (the Upstash client has none).
+async function withAttemptTimeout<T>(
+  fn: (abortSignal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new RagTimeoutError());
+    }, RAG_ATTEMPT_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([fn(controller.signal), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Timeouts and overload responses won't clear within the retry backoff.
+function isNonRetryable(err: unknown): boolean {
+  if (err instanceof RagTimeoutError) return true;
+  const { statusCode, status } = (err ?? {}) as {
+    statusCode?: unknown;
+    status?: unknown;
+  };
+  return [statusCode, status].some((code) => code === 503 || code === 429);
+}
 
 // Retries a transient failure (network blip, brief provider hiccup) with a
 // short backoff before giving up, so retrieval doesn't hard-fail on the
@@ -61,6 +101,7 @@ async function withRetry<T>(
       return await fn();
     } catch (err) {
       lastError = err;
+      if (isNonRetryable(err)) break;
       if (i < attempts) {
         await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
       }
@@ -122,8 +163,12 @@ export async function searchFacts(
   if (cached) return cached;
 
   try {
-    const embedding = await withRetry(() => embedQuery(query));
-    const results = await withRetry(() => queryVectors(embedding));
+    const embedding = await withRetry(() =>
+      withAttemptTimeout((signal) => embedQuery(query, signal)),
+    );
+    const results = await withRetry(() =>
+      withAttemptTimeout(() => queryVectors(embedding)),
+    );
 
     const hits: RagFact[] = results.map((r) => ({
       id: String(r.id),
