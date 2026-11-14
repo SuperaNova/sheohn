@@ -8,6 +8,7 @@
     "tsx",
     "vite",
     "lint-staged",
-    "@secretlint/secretlint-rule-preset-recommend"
+    "@secretlint/secretlint-rule-preset-recommend",
+    "@emnapi/core"
   ]
 }

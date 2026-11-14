@@ -91,4 +91,42 @@ describe('searchFacts', () => {
     expect((await pending).facts).toHaveLength(1);
     expect(embedQuery).toHaveBeenCalledTimes(2);
   });
+
+  test('gives up on a hanging embed within the attempt timeout, without retrying', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const deps: RagSearchDeps = {
+      embedQuery: vi.fn(() => new Promise<number[]>(() => {})),
+      queryVectors: vi.fn(async () => []),
+    };
+    let settled = false;
+    const pending = searchFacts('stack', { deps }).then((result) => {
+      settled = true;
+      return result;
+    });
+
+    await vi.advanceTimersByTimeAsync(3999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({
+      query: 'stack',
+      facts: [],
+      filteredOut: [],
+    });
+    expect(deps.embedQuery).toHaveBeenCalledTimes(1);
+    expect(deps.queryVectors).not.toHaveBeenCalled();
+  });
+
+  test.each([503, 429])('does not retry a %i failure', async (statusCode) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const deps: RagSearchDeps = {
+      embedQuery: vi.fn(async () => {
+        throw Object.assign(new Error('overloaded'), { statusCode });
+      }),
+      queryVectors: vi.fn(async () => []),
+    };
+    const result = await searchFacts('stack', { deps });
+    expect(result.facts).toEqual([]);
+    expect(deps.embedQuery).toHaveBeenCalledTimes(1);
+  });
 });

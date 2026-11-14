@@ -97,6 +97,12 @@ The integrated AI assistant allows visitors to query your portfolio and triggers
 5. **State Bridge (`src/store.ts`)**:
    Houses the Svelte stores (`agentQuery`, `sceneCommand`, `routeCommand`) that act as the message bus between the UI and the AI components.
 
+## Chat models and fallback
+
+`/api/chat` tries `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` (ids in `src/lib/chat-model.ts`). The primary is skipped if it throws or sends no content within 6s (`FIRST_CHUNK_TIMEOUT_MS`); the fallback has no first-chunk timeout, and the whole turn is capped at 25s. A switch only happens before any output is sent, so two models' text is never mixed, and later tool-loop steps in the same request stay on the model that worked. `/stats` counts fallbacks per target model.
+
+Embeddings stay on Gemini (`gemini-embedding-001`) because the vector index holds those vectors. During an outage retrieval fails fast: each embed attempt times out after 4s, timeouts and 503/429 responses are not retried, and the chat tool then answers without facts.
+
 ## Chat kill switch
 
 `/api/chat` checks the Redis key `agent:killswitch` before anything else. Flip it from the Upstash console or CLI:

@@ -38,7 +38,7 @@ import {
   CHAT_MODEL_PRIMARY,
   FIRST_CHUNK_TIMEOUT_MS,
 } from '../../lib/chat-model';
-import { withModelFallback } from '../../lib/model-fallback';
+import { withModelFallbacks } from '../../lib/model-fallback';
 
 /**
  * AI Chatbot API Endpoint (/api/chat)
@@ -191,12 +191,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
 
   const result = streamText({
-    model: withModelFallback(
-      google(CHAT_MODEL_PRIMARY),
-      google(CHAT_MODEL_FALLBACK),
+    model: withModelFallbacks(
+      [google(CHAT_MODEL_PRIMARY), google(CHAT_MODEL_FALLBACK)],
       {
         firstChunkTimeoutMs: FIRST_CHUNK_TIMEOUT_MS,
-        onFallback: () => waitUntil(recordAgentModelFallback()),
+        onFallback: (toModelId) =>
+          waitUntil(recordAgentModelFallback(toModelId)),
       },
     ),
     system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
@@ -226,7 +226,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     },
     experimental_transform: () =>
       createOutputGuard((kind) => waitUntil(recordGuardrailTrip(kind))),
-    // Bounds the whole multi-step tool loop so a hung Gemini call can't hang
+    // Bounds the whole multi-step tool loop so a hung model call can't hang
     // the request indefinitely.
     timeout: { totalMs: 25_000 },
     onFinish: ({ steps }) => {

@@ -75,6 +75,7 @@
     "@astrojs/svelte": "^8.1.1",
     "@astrojs/vercel": "^10.0.4",
     "@axe-core/playwright": "^4.11.3",
+    "@emnapi/core": "^1.11.3",
     "@eslint/js": "^10.0.0",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.60.0",
