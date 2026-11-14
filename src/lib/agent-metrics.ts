@@ -63,6 +63,8 @@ export interface RequestStats {
   busy: number;
   /** Subset of `rejected` turned away by the kill switch. */
   offline: number;
+  /** Subset of `rejected` turned away by the per-IP daily cap. */
+  quota: number;
   /** Percentage (0-100) of total requests rejected by a guard. */
   rejectionRate: number;
 }
@@ -72,12 +74,14 @@ export function buildRequestStats(
   rejected: number,
   busy = 0,
   offline = 0,
+  quota = 0,
 ): RequestStats {
   return {
     total,
     rejected,
     busy,
     offline,
+    quota,
     rejectionRate: total === 0 ? 0 : round1((rejected / total) * 100),
   };
 }
@@ -148,7 +152,14 @@ export interface AgentStats {
 }
 
 export const EMPTY_AGENT_STATS: AgentStats = {
-  requests: { total: 0, rejected: 0, busy: 0, offline: 0, rejectionRate: 0 },
+  requests: {
+    total: 0,
+    rejected: 0,
+    busy: 0,
+    offline: 0,
+    quota: 0,
+    rejectionRate: 0,
+  },
   toolCalls: buildToolCallDistribution({}),
   latency: EMPTY_LATENCY,
   cache: { hits: 0, misses: 0, hitRate: 0 },
@@ -162,6 +173,7 @@ export function buildAgentStats(input: {
   rejectedRequests: number;
   busyRequests: number;
   offlineRequests: number;
+  quotaRequests: number;
   toolCounts: Record<string, number>;
   latencyBuckets: Record<string, number>;
   cacheHits: number;
@@ -176,6 +188,7 @@ export function buildAgentStats(input: {
       input.rejectedRequests,
       input.busyRequests,
       input.offlineRequests,
+      input.quotaRequests,
     ),
     toolCalls: buildToolCallDistribution(input.toolCounts),
     latency: estimateLatencyPercentiles(input.latencyBuckets),

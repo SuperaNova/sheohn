@@ -3,6 +3,7 @@ import {
   chatErrorNotice,
   decideChatAdmission,
   isKillSwitchOn,
+  isLoopbackAddress,
   rejectionReasonFromError,
   type LimitOutcome,
 } from './chat-guard';
@@ -28,6 +29,7 @@ function checks(
   return {
     readKillSwitch: vi.fn(async () => null as unknown),
     limitIp: vi.fn(async () => pass as LimitOutcome | null),
+    limitIpDaily: vi.fn(async () => pass as LimitOutcome | null),
     limitGlobal: vi.fn(async () => pass as LimitOutcome | null),
     limitDaily: vi.fn(async () => pass as LimitOutcome | null),
     now: () => NOW,
@@ -48,6 +50,7 @@ describe('decideChatAdmission', () => {
       status: 503,
     });
     expect(c.limitIp).not.toHaveBeenCalled();
+    expect(c.limitIpDaily).not.toHaveBeenCalled();
     expect(c.limitGlobal).not.toHaveBeenCalled();
     expect(c.limitDaily).not.toHaveBeenCalled();
   });
@@ -63,6 +66,30 @@ describe('decideChatAdmission', () => {
     });
     expect(c.limitGlobal).not.toHaveBeenCalled();
     expect(c.limitDaily).not.toHaveBeenCalled();
+  });
+
+  test('per-IP daily cap is a 429 quota with the limit outcome and skips global guards', async () => {
+    const c = checks({ limitIpDaily: vi.fn(async () => fail) });
+    expect(await decideChatAdmission(c)).toEqual({
+      admit: false,
+      reason: 'quota',
+      status: 429,
+      retryAfterSeconds: 31,
+      ipLimit: fail,
+    });
+    expect(c.limitGlobal).not.toHaveBeenCalled();
+    expect(c.limitDaily).not.toHaveBeenCalled();
+  });
+
+  test('per-IP daily cap is only checked after the per-minute limit', async () => {
+    const c = checks({ limitIp: vi.fn(async () => fail) });
+    await decideChatAdmission(c);
+    expect(c.limitIpDaily).not.toHaveBeenCalled();
+  });
+
+  test('per-IP daily cap failing open admits the request', async () => {
+    const c = checks({ limitIpDaily: vi.fn(async () => null) });
+    expect(await decideChatAdmission(c)).toEqual({ admit: true });
   });
 
   test('global limit rejects as busy before the daily budget is spent', async () => {
@@ -88,6 +115,7 @@ describe('decideChatAdmission', () => {
   test('every guard failing open admits the request', async () => {
     const c = checks({
       limitIp: vi.fn(async () => null),
+      limitIpDaily: vi.fn(async () => null),
       limitGlobal: vi.fn(async () => null),
       limitDaily: vi.fn(async () => null),
     });
@@ -117,12 +145,28 @@ describe('isKillSwitchOn', () => {
   );
 });
 
+describe('isLoopbackAddress', () => {
+  test.each([
+    ['127.0.0.1', true],
+    ['127.8.9.10', true],
+    ['::1', true],
+    ['::ffff:127.0.0.1', true],
+    ['::FFFF:127.0.0.1', true],
+    ['10.0.0.1', false],
+    ['::ffff:10.0.0.1', false],
+    ['', false],
+  ])('%s -> %s', (ip, expected) => {
+    expect(isLoopbackAddress(ip)).toBe(expected);
+  });
+});
+
 describe('rejection errors', () => {
   const rejection = (reason: string) =>
     new Error(JSON.stringify({ reason, retryAfterSeconds: 5 }));
 
   test('reads the reason out of the transport error message', () => {
     expect(rejectionReasonFromError(rejection('busy'))).toBe('busy');
+    expect(rejectionReasonFromError(rejection('quota'))).toBe('quota');
   });
 
   test('returns null for unknown reasons, plain text and non-errors', () => {
@@ -134,6 +178,7 @@ describe('rejection errors', () => {
 
   test('maps each reason to its in-persona line', () => {
     expect(chatErrorNotice(rejection('rate_limited'))).toMatch(/too many/);
+    expect(chatErrorNotice(rejection('quota'))).toMatch(/today's limit/);
     expect(chatErrorNotice(rejection('busy'))).toMatch(/swamped/);
     expect(chatErrorNotice(rejection('offline'))).toMatch(/maintenance/);
   });
