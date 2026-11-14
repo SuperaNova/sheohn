@@ -18,7 +18,9 @@ import {
 import {
   CHAT_DAILY_BUDGET,
   CHAT_GLOBAL_PER_MINUTE,
+  CHAT_IP_DAILY_BUDGET,
   decideChatAdmission,
+  isLoopbackAddress,
 } from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
@@ -59,6 +61,12 @@ import { withModelFallbacks } from '../../lib/model-fallback';
 export const prerender = false;
 
 const ratelimit = createRateLimiter('ratelimit_chat', 10, '1 m');
+const ipDailyRatelimit = createRateLimiter(
+  'ratelimit_chat_ip_daily',
+  CHAT_IP_DAILY_BUDGET,
+  '1 d',
+  'fixed',
+);
 const globalRatelimit = createRateLimiter(
   'ratelimit_chat_global',
   CHAT_GLOBAL_PER_MINUTE,
@@ -118,6 +126,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const admission = await decideChatAdmission({
     readKillSwitch,
     limitIp: () => safeLimit(ratelimit, `ratelimit_chat_${ip}`),
+    limitIpDaily: isLoopbackAddress(ip)
+      ? async () => null
+      : () => safeLimit(ipDailyRatelimit, ip),
     limitGlobal: () => safeLimit(globalRatelimit, 'global'),
     limitDaily: () => safeLimit(dailyRatelimit, 'global'),
   });

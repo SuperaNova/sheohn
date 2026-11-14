@@ -114,8 +114,9 @@ DEL agent:killswitch     # back online
 
 Any value except empty, `0` or `false` turns it on. A Redis outage reads as "off", so the switch can never take chat down by itself.
 
-After the switch, chat applies a per-IP limit (10/min), then two shared guards that reject with 503 "busy". Both constants live in `src/lib/chat-guard.ts` and sit under Gemini's free-tier 15 RPM / 500 RPD:
+After the switch, chat applies a per-IP limit (10/min), a per-IP daily cap that rejects with 429 "quota", then two shared guards that reject with 503 "busy". The constants live in `src/lib/chat-guard.ts` and sit under Gemini's free-tier 15 RPM / 500 RPD:
 
+- `CHAT_IP_DAILY_BUDGET = 40` requests per IP per UTC day (loopback addresses are exempt, since local dev, evals and the red team share the production Redis)
 - `CHAT_GLOBAL_PER_MINUTE = 12` requests per minute across all callers
 - `CHAT_DAILY_BUDGET = 400` requests per UTC day
 

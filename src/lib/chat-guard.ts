@@ -3,8 +3,15 @@
 // Under Gemini's 15 RPM / 500 RPD free-tier limits, leaving headroom for scheduled evals.
 export const CHAT_GLOBAL_PER_MINUTE = 12;
 export const CHAT_DAILY_BUDGET = 400;
+// One IP must not be able to drain the shared daily budget.
+export const CHAT_IP_DAILY_BUDGET = 40;
 
-const CHAT_REJECTION_REASONS = ['rate_limited', 'busy', 'offline'] as const;
+const CHAT_REJECTION_REASONS = [
+  'rate_limited',
+  'quota',
+  'busy',
+  'offline',
+] as const;
 
 export type ChatRejectionReason = (typeof CHAT_REJECTION_REASONS)[number];
 
@@ -36,6 +43,12 @@ export function secondsUntil(resetMs: number, nowMs: number): number {
   return Math.max(1, Math.ceil((resetMs - nowMs) / 1000));
 }
 
+// Local dev, evals and the red team hit `astro dev` on loopback against the production Redis,
+// so loopback skips the per-IP daily cap; Vercel never reports loopback for a real visitor.
+export function isLoopbackAddress(ip: string): boolean {
+  return /^(::ffff:)?127(\.\d{1,3}){3}$/i.test(ip) || ip === '::1';
+}
+
 /**
  * Runs the guards in order and stops at the first rejection, so a rejected request never
  * spends a later guard's budget. A null result means the check failed open.
@@ -43,6 +56,7 @@ export function secondsUntil(resetMs: number, nowMs: number): number {
 export async function decideChatAdmission(checks: {
   readKillSwitch: () => Promise<unknown>;
   limitIp: () => Promise<LimitOutcome | null>;
+  limitIpDaily: () => Promise<LimitOutcome | null>;
   limitGlobal: () => Promise<LimitOutcome | null>;
   limitDaily: () => Promise<LimitOutcome | null>;
   now?: () => number;
@@ -61,6 +75,17 @@ export async function decideChatAdmission(checks: {
       status: 429,
       retryAfterSeconds: secondsUntil(ipLimit.reset, nowMs),
       ipLimit,
+    };
+  }
+
+  const ipDailyLimit = await checks.limitIpDaily();
+  if (ipDailyLimit && !ipDailyLimit.success) {
+    return {
+      admit: false,
+      reason: 'quota',
+      status: 429,
+      retryAfterSeconds: secondsUntil(ipDailyLimit.reset, nowMs),
+      ipLimit: ipDailyLimit,
     };
   }
 
@@ -109,6 +134,8 @@ export function rejectionReasonFromError(
 
 const REJECTION_NOTICES: Record<ChatRejectionReason, string> = {
   rate_limited: 'Easy — too many messages too fast. Try again in a moment.',
+  quota:
+    "That's today's limit for this connection. Resets at midnight UTC — type help to use the shell meanwhile.",
   busy: "The agent's swamped right now. Try again in a minute — or type help to use the shell meanwhile.",
   offline:
     'The agent is offline for maintenance. The shell still works — type help.',
