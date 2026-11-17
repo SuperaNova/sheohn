@@ -32,6 +32,7 @@ const PAGES: { path: string; title: string | RegExp; status?: number }[] = [
   { path: '/projects/', title: 'Projects & Work' },
   { path: `/projects/${PROJECT_SLUG}`, title: /Case Study$/ },
   { path: '/about', title: 'About Me' },
+  { path: '/now', title: 'Now' },
   { path: '/status', title: 'Status' },
   { path: '/stats', title: 'Stats' },
   {

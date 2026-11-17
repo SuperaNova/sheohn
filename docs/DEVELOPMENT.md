@@ -164,7 +164,7 @@ src/
 ├── data/ Centralized personal info (bio, experience, socials)
 ├── layouts/ Astro layouts (BaseLayout with SEO + ClientRouter)
 ├── lib/ Server helpers (prompts, RAG, shell/, actions) + unit-tested pure logic
-├── pages/ Routes; api/* are SSR endpoints; colophon.astro, status.astro, stats.astro are observability pages
+├── pages/ Routes; api/* are SSR endpoints; colophon.astro, status.astro, stats.astro are observability pages; now.astro reads src/data/now.ts and is edited by hand (bump the date when you edit it)
 └── styles/global.css Tailwind v4 entry + design tokens
 scripts/ ~14 scripts — see the Scripts table below; notably update-brain.ts (RAG sync),
          transform-eval-results.ts, heal-prompt.ts, ping-uptime.ts, mutation-summary.ts

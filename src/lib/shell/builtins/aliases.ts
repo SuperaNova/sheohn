@@ -17,6 +17,7 @@ function navAlias(name: string, path: string, description: string): Command {
 export const home = navAlias('home', '/', 'Go to home.');
 export const projects = navAlias('projects', '/projects', 'Go to projects.');
 export const about = navAlias('about', '/about', 'Go to about.');
+export const now = navAlias('now', '/now', 'Go to the now page.');
 export const contact = navAlias('contact', '/#contact', 'Go to contact.');
 
 export const theme: Command = {
