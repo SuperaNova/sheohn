@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 import { INDEX_UNAVAILABLE_MESSAGE } from '../../src/lib/shell/builtins/search';
+import { scriptSrcTokens } from '../../src/lib/csp-hashes';
 
 // Reads the shipped policy from vercel.json instead of a hardcoded copy.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +62,10 @@ const deck = (page: Page) => page.locator('aside[aria-label="Command Deck"]');
 
 test.describe('Tightened CSP', () => {
   test('vercel.json no longer allows unsafe-eval and requires wasm-unsafe-eval', () => {
+    const scriptSrc = scriptSrcTokens(CSP);
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+    expect(scriptSrc).toContain("'self'");
+    expect(scriptSrc.some((t) => t.startsWith("'sha256-"))).toBe(true);
     expect(CSP).not.toContain("'unsafe-eval'");
     expect(CSP).toContain("'wasm-unsafe-eval'");
     expect(CSP).toContain('report-to csp-endpoint');
