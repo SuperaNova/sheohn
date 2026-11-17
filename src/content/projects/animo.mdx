@@ -1,6 +1,6 @@
 ---
 title: 'AniMo — GDG on Campus APAC Solutions Challenge 2025'
-summary: 'AI-driven matching engine to optimize agricultural supply-demand pairings and reduce food waste.'
+summary: 'A farm-to-buyer marketplace with an AI matching engine, built in a 72-hour sprint for the GDG APAC Solutions Challenge.'
 category: 'System Architecture / AI'
 stack: ['GCP', 'Vertex AI', 'TypeScript', 'Firebase', 'Flutter', 'Dart']
 role: 'Project Manager, AI Engineer'
@@ -16,31 +16,31 @@ import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
 
 ## Overview
 
-Engineered a serverless Firebase backend and an AI-driven matching engine using Vertex AI and Genkit to optimize agricultural supply-demand pairings.
+AniMo pairs smallholder farmers with buyers and a driver network so produce does not sit around waiting for a middleman. I managed the project and built the backend: Firebase, Cloud Functions, and a Genkit flow that asks Gemini on Vertex AI to match listings to requests.
 
-### Background & Context
+### Background and context
 
-This platform was developed for the **GDG on Campus APAC Solution Challenge 2025**, a global AI hackathon powered by Google Developer Groups and Hack2Skill. The competition challenges student developers to build Google AI-powered solutions that address the United Nations' 17 Sustainable Development Goals (SDGs). AniMo was built specifically to target themes of Agriculture, Sustainability, and Responsible Consumption.
+We built this for the **GDG on Campus APAC Solution Challenge 2025**, a global AI hackathon run by Google Developer Groups and Hack2Skill. Student teams build Google AI-powered solutions for the United Nations' 17 Sustainable Development Goals (SDGs). AniMo targets Agriculture, Sustainability, and Responsible Consumption.
 
-### The Problem: Disconnected Supply Chains
+### The problem
 
-Every year, massive amounts of edible food go to waste due to broken supply chains, a lack of coordination, and limited access to distribution networks. This global issue creates a gap where millions remain hungry despite available resources. Traditionally, produce goes through multiple middlemen—such as distributors and retailers—before reaching consumers, which drastically increases both the time to table and the likelihood of spoilage.
+Every year, a lot of edible food goes to waste because of broken supply chains, poor coordination, and limited access to distribution networks. Millions stay hungry despite available resources. Produce usually passes through several middlemen, such as distributors and retailers, before it reaches consumers. That adds time to the table and raises the chance of spoilage.
 
-### The Solution: Decentralized "Harvest-to-Hand"
+### The idea: harvest to hand
 
-"Ani Mo" is a Filipino phrase meaning "your harvest". The platform operates as a decentralized harvest-to-hand system, entirely removing traditional middlemen by connecting smallholder farmers directly to buyers through community-based transport.
+"Ani Mo" is a Filipino phrase meaning "your harvest". The platform connects smallholder farmers directly to buyers through community-based transport, with no traditional middlemen.
 
-- **Farmers** manage live produce inventories and handle incoming buyer orders without relying on market intermediaries.
-- **Buyers** browse fresh produce, track order status in real-time, and place custom requests for unlisted goods.
-- **Drivers** act as the decentralized delivery network, accepting nearby tasks and executing same-day farm-to-table deliveries.
+- **Farmers** manage live produce inventories and handle incoming buyer orders without market intermediaries.
+- **Buyers** browse fresh produce, track order status in real time, and place custom requests for unlisted goods.
+- **Drivers** make up the delivery network. They accept nearby tasks and do same-day farm-to-table deliveries.
 
-### My Role
+### What I did
 
-As the **Project Manager and AI Engineer**, I was responsible for leading the end-to-end system design and architecting the backend middleware. My core focus was bridging the gap between raw database operations and the AI processing required to make intelligent, real-time matching suggestions between farmers and buyers.
+I was the project manager and the AI engineer, which on a four-person hackathon team means I drew the system diagram and then owned the middle of it: the Cloud Functions, the Firestore schema, and the Genkit flow that turns raw listings and buyer requests into match suggestions.
 
 ---
 
-## System Architecture & Engineering
+## How it is built
 
 <img
   src="/animo/AniMo_Diagram.webp"
@@ -50,45 +50,45 @@ As the **Project Manager and AI Engineer**, I was responsible for leading the en
   class="mb-6 rounded-lg border border-gray-800 shadow-xl"
 />
 
-To manage the complex state handoffs between three distinct user interfaces, the platform relies on a robust Google Cloud Platform and Firebase infrastructure. The mobile client serves purely as the presentation layer, while all core logic, AI orchestration, and geospatial processing are handled server-side.
+Three user interfaces hand state back and forth, so the platform sits on Google Cloud Platform and Firebase. The mobile client only presents data. Core logic, AI orchestration, and geospatial processing all run server-side.
 
-### 1. Serverless Orchestration & Data Flow
+### 1. Serverless orchestration and data flow
 
-The backend application logic operates entirely within Cloud Functions for Firebase. This serverless compute layer independently manages the Produce Listing Service, Buyer Request Service, and Order Management Service to ensure stability during high-traffic harvest seasons. Firestore acts as the primary NoSQL database handling all read/write operations, with security strictly enforced via Firebase Authentication token verification.
+The backend logic runs entirely in Cloud Functions for Firebase. Each of the Produce Listing Service, Buyer Request Service, and Order Management Service runs independently, so it stays stable in high-traffic harvest seasons. Firestore is the primary NoSQL database for all reads and writes, and Firebase Authentication token verification protects access.
 
-### 2. The AI Matching Engine (Vertex AI & Genkit)
+### 2. The AI matching engine (Vertex AI and Genkit)
 
-> **The Middleware Challenge:** Connecting a surplus of dynamic, unstructured harvest data to specific buyer demands requires more than standard query logic.
+> **The middleware challenge:** Connecting a surplus of dynamic, unstructured harvest data to specific buyer demands takes more than standard query logic.
 
-Using the Genkit framework deployed on Cloud Functions, the system integrates an AI flow that directly calls Gemini models via the Vertex AI endpoint. This middleware continuously reads existing database listings alongside custom buyer requests, processes the data for matching analysis, and writes optimized suggestions back to Firestore.
+The Genkit framework is deployed on Cloud Functions and runs an AI flow that calls Gemini models through the Vertex AI endpoint. This middleware reads existing database listings alongside custom buyer requests, analyzes them for matches, and writes suggestions back to Firestore.
 
-### 3. Geospatial Processing & Routing
+### 3. Geospatial processing and routing
 
-Efficient delivery is the backbone of reducing food waste. The platform heavily utilizes the Google Maps Platform—specifically the Geocoding API and Routes API. By processing spatial data in real-time, the system generates optimized routing suggestions for drivers, ensuring that the geographic gap between rural producers and urban consumers is bridged as efficiently as possible.
+Efficient delivery is what keeps food from going to waste. The platform uses the Google Maps Platform, specifically the Geocoding API and Routes API. It processes spatial data in real time and suggests routes to drivers, which closes the distance between rural producers and urban consumers.
 
-### 4. Deployment & Observability
+### 4. Deployment and observability
 
-Deployment was highly automated via the Firebase CLI. By utilizing a fully managed GCP environment, we offloaded load balancing and scaling concerns entirely to the platform. To ensure the system remained stable during the hackathon judging, we integrated **Google Cloud Operations**. Monitoring Cloud Logging and Cloud Trace allowed us to track the latency of the Vertex AI endpoint calls, ensuring the middleware wasn't timing out when processing complex matching algorithms.
+We deployed with the Firebase CLI. On a fully managed GCP environment, the platform handled load balancing and scaling for us. To keep the system stable during hackathon judging, we added **Google Cloud Operations**. Cloud Logging and Cloud Trace let us track the latency of the Vertex AI endpoint calls and check that the middleware wasn't timing out on complex matching.
 
 ---
 
-## Technologies Used
+## Technologies used
 
 - **AI & Middleware:** Google Cloud AI, Genkit Framework, Gemini Models, Vertex AI.
 - **Infrastructure & Backend:** Firebase (Firestore, Authentication, Cloud Storage), Google Cloud Operations (Cloud Logging, Cloud Monitoring, Cloud Trace).
 - **Geospatial Data:** Google Maps SDK, Geocoding API, Routes API.
 - **Client Interface:** Flutter, Flutterfire, Dart.
 
-### Why This Stack?
+### Why this stack
 
 In a 72-hour sprint, infrastructure overhead is the enemy of execution.
 
-- **Serverless Backend (Firebase/GCP):** Selected to eliminate the need for manual server provisioning. Cloud Functions allowed us to deploy discrete backend services instantly, while Firestore provided real-time, zero-config state synchronization across the client devices.
-- **Vertex AI vs. Direct API Calls:** We routed our AI matching engine through Vertex AI rather than calling standard public LLM endpoints because it allowed for tighter integration with GCP's IAM (Identity and Access Management) and provided better native observability within the Google Cloud ecosystem.
+- **Serverless Backend (Firebase/GCP):** Picked so we did not have to provision servers by hand. Cloud Functions let us deploy separate backend services instantly, and Firestore gave us real-time, zero-config state sync across client devices.
+- **Vertex AI vs. Direct API Calls:** We routed the matching engine through Vertex AI instead of public LLM endpoints. It integrates more tightly with GCP's IAM (Identity and Access Management) and has better native observability in the Google Cloud ecosystem.
 
 ---
 
-## Project Pitch Deck
+## Project pitch deck
 
 <PdfEmbed
   client:visible
@@ -99,24 +99,24 @@ In a 72-hour sprint, infrastructure overhead is the enemy of execution.
 
 ---
 
-## Outcomes & Results
+## What we got done
 
-While the official competition timeline was longer, balancing this project with rigorous university coursework and leadership responsibilities in campus tech organizations meant our actual development window was compressed into a single 72-hour sprint. Despite this strict time constraint, we successfully deployed a functional MVP that achieved our core objectives:
+The competition window was longer than 72 hours. Ours was not, because of coursework and org commitments, so we compressed the build into one sprint. We still shipped an MVP that did what we set out to do:
 
-- **End-to-End Orchestration:** Successfully processed mock geospatial data and user requests, piping them through the Genkit middleware to output real-time match suggestions.
-- **Zero Downtime:** The serverless architecture handled all concurrent read/write operations during the demonstration without dropping a single state update.
+- **End-to-end flow:** Mock geospatial data and user requests went end to end through the Genkit middleware and came back as match suggestions in real time.
+- **Zero downtime:** The serverless backend handled every concurrent read and write during the demo without dropping a state update.
 
 ---
 
-## Retrospective: Mindset & Technical Debt
+## What we left rough
 
-Building a serverless AI matching engine and a complete multi-tier mobile ecosystem in an effective 3-day sprint required deliberate architectural tradeoffs. Because velocity was prioritized over perfection, several areas were left optimized for speed rather than long-term scale:
+Three days means you pick speed over clean. This is what that cost:
 
-- **Monolithic Cloud Functions:** To guarantee state handoffs worked before the deadline, logic that should be broken into isolated microservices was packed into a single compute block.
-- **Cold Start Latency:** Relying heavily on Cloud Functions meant experiencing notable cold starts when triggering the Gemini models via Vertex AI endpoints—a bottleneck that requires pre-warming or a switch to cloud run containers for sustained traffic.
-- **Error Handling & Edge Cases:** Rushed database writes occasionally lack complete transactional validation, meaning the system assumes network stability rather than robustly handling network failures or race conditions between concurrent buyer requests.
+- **Monolithic Cloud Functions:** To get state handoffs working before the deadline, logic that belongs in separate microservices went into a single compute block.
+- **Cold start latency:** Cloud Functions had noticeable cold starts when triggering Gemini models through Vertex AI endpoints. Fixing that means pre-warming or moving to Cloud Run containers for sustained traffic.
+- **Error handling and edge cases:** Rushed database writes sometimes lack full transactional validation. The system assumes the network is stable and does not handle network failures or race conditions between concurrent buyer requests.
 
-### If We Had 3 Months Instead of 3 Days...
+### With three months instead of three days
 
-1. **Implement Redis Caching:** Cache active nearby produce listings to minimize heavy Firestore read charges and drastically lower model pipeline invocation costs.
-2. **Robust Integration Testing:** Build automated testing pipelines to stress-test the state transitions between the driver routing logic and the AI matching services.
+1. **Add Redis caching:** Cache active nearby produce listings to cut Firestore read charges and lower the cost of model pipeline invocations.
+2. **Integration testing:** Build automated pipelines that stress-test the state transitions between the driver routing logic and the AI matching services.

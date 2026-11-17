@@ -3,7 +3,7 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { getCollection } from 'astro:content';
 import { renderOgCard, type OgCardInput } from '../../lib/og-image';
-import { personalInfo } from '../../data/personalInfo';
+import { firstName, personalInfo } from '../../data/personalInfo';
 
 export const prerender = true;
 
@@ -21,7 +21,15 @@ export const getStaticPaths: GetStaticPaths = async () => {
       params: { slug: 'about' },
       props: {
         title: 'About Me',
-        summary: `About ${personalInfo.name} and his technical experience.`,
+        summary: `Who ${firstName} is, what he has built, and what he works with.`,
+        kind: 'site',
+      },
+    },
+    {
+      params: { slug: 'now' },
+      props: {
+        title: 'Now',
+        summary: `What ${firstName} is working on right now.`,
         kind: 'site',
       },
     },
