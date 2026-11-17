@@ -106,7 +106,6 @@ export function buildLoaderLines(bootInfo: BootInfo): DmesgLine[] {
     { tag: 'island', text: 'CommandDeck docked' },
     { tag: 'island', text: 'ScenePilot on station' },
     { tag: 'island', text: 'ScrollProgress tracking' },
-    { tag: 'island', text: 'CustomCursor calibrated' },
     { tag: 'island', text: 'ContactForm listening' },
     { tag: 'island', text: 'PongGame on standby' },
     { tag: 'theme', text: 'engine ready — light default, no OS sniff' },

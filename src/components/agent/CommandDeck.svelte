@@ -562,7 +562,6 @@
 <aside
   bind:this={deckRoot}
   aria-label="Command Deck"
-  data-cursor-green="true"
   class="deck-root fixed bottom-4 left-1/2 z-[120] w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2"
   class:deck-perched={perched}
 >

@@ -215,7 +215,7 @@ Quiet, tactile content components; alive, instrument-grade console components.
 
 - **Shape:** gently rounded (`8px`, `rounded-lg`).
 - **Primary:** a subtle radial-gradient fill from Forest Container to Deep Forest (`radial-gradient(circle at top left, var(--color-primary-container), var(--color-primary))`), `text-slate-100`, `12px 24px` padding, label-weight tracking. Carries the CTA Lift shadow. Often paired with a leading mono `›` and an optional `⌘K`/`Ctrl K` `<kbd>`.
-- **Hover / Focus:** lifts (`-translate-y-0.5`) and scales (`1.03`) with the shadow growing; `active:scale-0.985`. Some primary buttons add a magnetic pull (`use:magnetic`). Keyboard focus shows the global Operative-Forest ring.
+- **Hover / Focus:** lifts (`-translate-y-0.5`) and scales (`1.03`) with the shadow growing; `active:scale-0.985`. Keyboard focus shows the global Operative-Forest ring.
 - **Secondary / Text:** muted-ink link with `underline-offset-4`, transitions to Ink + underline on hover ("or get in touch →").
 
 ### Chips / Tags

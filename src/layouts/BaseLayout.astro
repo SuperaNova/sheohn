@@ -4,7 +4,6 @@ import HeaderNav from '../components/chrome/HeaderNav.svelte';
 import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
-import CustomCursor from '../components/chrome/CustomCursor.svelte';
 import RumCollector from '../components/chrome/RumCollector.svelte';
 import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandDeck from '../components/agent/CommandDeck.svelte';
@@ -182,7 +181,6 @@ const canonicalURL = new URL(
 
     <NavProgress client:idle transition:persist />
     <ScrollProgress client:idle transition:persist />
-    <CustomCursor client:idle transition:persist />
     <ScenePilot client:idle transition:persist />
     <!-- RUM collector island: runs once and stays mounted via transition:persist. -->
     <RumCollector client:idle transition:persist />
