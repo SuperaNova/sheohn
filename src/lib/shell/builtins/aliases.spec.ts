@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import type { ShellCtx } from '../registry';
-import { home, projects, about, contact, theme, resume } from './aliases';
+import { home, projects, about, now, contact, theme, resume } from './aliases';
 
 function makeCtx(): ShellCtx {
   return {
@@ -32,6 +32,12 @@ test('about navigates to /about', () => {
   const ctx = makeCtx();
   about.run([], ctx);
   expect(ctx.navigate).toHaveBeenCalledWith('/about');
+});
+
+test('now navigates to /now', () => {
+  const ctx = makeCtx();
+  now.run([], ctx);
+  expect(ctx.navigate).toHaveBeenCalledWith('/now');
 });
 
 test('contact navigates to /#contact', () => {

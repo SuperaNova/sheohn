@@ -3,7 +3,6 @@
   import { Spring } from 'svelte/motion';
   import { get } from 'svelte/store';
   import { inview } from '../../lib/actions/inview';
-  import { magnetic } from '../../lib/actions/magnetic';
   import { prefersReducedMotion } from '../../lib/motion';
   import {
     isEnteringDark,
@@ -254,8 +253,7 @@
           <button
             type="button"
             onclick={openDeck}
-            use:magnetic={{ strength: 0.4, max: 12 }}
-            class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-cta-from),var(--color-cta-to))] px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-on-cta)] shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
+            class="group inline-flex items-center gap-2 rounded-lg bg-[radial-gradient(circle_at_top_left,var(--color-cta-from),var(--color-cta-to))] px-6 py-3 text-sm font-semibold tracking-wide text-[var(--color-on-cta)] shadow-[0_18px_34px_rgba(28,28,25,0.22)] transition-[box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_22px_46px_rgba(28,28,25,0.32)]"
           >
             <span
               aria-hidden="true"

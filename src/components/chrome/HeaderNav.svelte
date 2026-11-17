@@ -9,6 +9,7 @@
     { id: 'home', label: 'home', path: '/' },
     { id: 'projects', label: 'projects', path: '/projects' },
     { id: 'about', label: 'about', path: '/about' },
+    { id: 'now', label: 'now', path: '/now' },
     {
       id: 'resume',
       label: 'resume',
@@ -30,6 +31,8 @@
       activeId = 'projects';
     } else if (path.startsWith('/about')) {
       activeId = 'about';
+    } else if (path.startsWith('/now')) {
+      activeId = 'now';
     } else {
       activeId = '';
     }

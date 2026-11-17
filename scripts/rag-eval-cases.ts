@@ -49,7 +49,9 @@ export const labeledQueries: LabeledQuery[] = [
   {
     name: 'identity — role/title',
     query: 'What is Jared professionally — what does he call himself?',
-    expectedFacts: ['I am a Software Developer and Systems Architect.'],
+    expectedFacts: [
+      'I am a computer science student who builds backend systems, AI pipelines and small low-level tools.',
+    ],
   },
   {
     name: 'identity — GitHub handle',
@@ -103,7 +105,7 @@ export const labeledQueries: LabeledQuery[] = [
     name: 'projects — Lexicon',
     query: 'What is Lexicon, the programming language project Jared built?',
     expectedFacts: [
-      'I created Lexicon (2026), a Custom Programming Language Interpreter & Web IDE using Rust, WebAssembly (Wasm), React, and Astro.',
+      'I created Lexicon (2026), a custom programming language interpreter and web IDE using Rust, WebAssembly (Wasm), SolidJS, and TypeScript.',
     ],
   },
   {

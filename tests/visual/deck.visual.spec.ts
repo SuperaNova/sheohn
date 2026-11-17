@@ -3,8 +3,6 @@ import { test, expect, seedTheme } from './fixtures';
 
 const THEMES = ['light', 'dark'] as const;
 
-const HIDE_CURSOR_CSS = '.cursor-dot { display: none !important; }';
-
 // CommandDeck is a hydrated island: retry Ctrl+K until the "esc" collapse button shows,
 // proving the deck opened.
 async function openDeck(page: Page) {
@@ -30,7 +28,6 @@ for (const theme of THEMES) {
       }
     });
     await page.goto(`/?theme=${theme}`);
-    await page.addStyleTag({ content: HIDE_CURSOR_CSS });
     await page.evaluate(() => document.fonts.ready);
 
     await openDeck(page);
