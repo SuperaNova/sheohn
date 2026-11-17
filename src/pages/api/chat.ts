@@ -24,6 +24,9 @@ import {
 } from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
+import { now } from '../../data/now';
+import { siteNotice } from '../../data/site-notice';
+import { freshnessNote } from '../../lib/stale-notice';
 import type { RagQueryResult } from '../../lib/rag';
 import { searchFacts } from '../../lib/rag-search';
 import {
@@ -200,6 +203,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     .join('\n')}`;
 
   const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
+  const freshnessContext = `\n\n${freshnessNote(now.updated, new Date(), siteNotice.staleAfterMonths)}`;
 
   const result = streamText({
     model: withModelFallbacks(
@@ -210,7 +214,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           waitUntil(recordAgentModelFallback(toModelId)),
       },
     ),
-    system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
+    system: SYSTEM_PROMPT + caseStudyContext + resumeContext + freshnessContext,
     messages,
     stopWhen: stepCountIs(5),
     providerOptions: {

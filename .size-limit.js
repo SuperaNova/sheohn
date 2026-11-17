@@ -51,7 +51,7 @@ export default [
     name: 'dmesg-boot-lines',
     path: 'dist/client/_astro/dmesg.*.js',
     gzip: true,
-    limit: '1.7 KB',
+    limit: '1.9 KB',
   },
   {
     name: 'Lightbox',

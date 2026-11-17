@@ -354,3 +354,8 @@ html.dark .work-manifest::before {
   border-top: 1px solid
     color-mix(in srgb, var(--color-scene-horizon-line) 22%, transparent);
 }
+
+/* Clears the stale-info strip (h-8) pinned under the fixed header. */
+html[data-notice] #main-content {
+  padding-top: 2rem;
+}

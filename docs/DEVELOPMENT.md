@@ -107,6 +107,10 @@ The integrated AI assistant allows visitors to query your portfolio and triggers
 
 Embeddings stay on Gemini (`gemini-embedding-001`) because the vector index holds those vectors. During an outage retrieval fails fast: each embed attempt times out after 4s, timeouts and 503/429 responses are not retried, and the chat tool then answers without facts.
 
+## Stale-info notice
+
+The review date is `updated` in `src/data/now.ts`. Once it is older than `staleAfterMonths` (default 6), a strip under the header and a boot-log warning tell visitors the facts may be out of date. `mode` in `src/data/site-notice.ts` forces the notice (`on`, optionally with a custom `message`) or silences it (`off`); `auto` follows the date. `?notice=on|off` overrides it on localhost only. Automated browsers (Playwright, Lighthouse) hide it unless the query param is set. `/api/chat` always appends a freshness line to the system prompt, with a caveat once the date is stale.
+
 ## Chat kill switch
 
 `/api/chat` checks the Redis key `agent:killswitch` before anything else. Flip it from the Upstash console or CLI:
