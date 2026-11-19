@@ -22,7 +22,7 @@
       w: 200,
       h: 60,
       detail:
-        "Astro 6, output: 'static' — every page is prerendered HTML. Interactive pieces hydrate selectively as Svelte 5 islands: client:load for chrome that must be ready instantly (HeaderNav, Loader), client:idle for the docked CommandDeck, client:visible for below-the-fold islands like this diagram.",
+        "Astro 7, output: 'static' — every page is prerendered HTML. Interactive pieces hydrate selectively as Svelte 5 islands: client:load for chrome that must be ready instantly (HeaderNav, Loader), client:idle for the docked CommandDeck, client:visible for below-the-fold islands like this diagram.",
     },
     {
       id: 'ci',
