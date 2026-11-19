@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
+import { isDeclaredBodyTooLarge } from '../../lib/body-limit';
 import { normalizeCspReportBody } from '../../lib/csp-report-shape';
 import { recordViolation } from '../../lib/csp-redis';
 
@@ -15,6 +16,12 @@ const ALLOWED_CONTENT_TYPES = [
 
 // Dedup collapses repeated violations into one Redis entry; this still bounds request volume.
 const ratelimit = createRateLimiter('ratelimit_csp_report', 20, '10 s');
+const globalRatelimit = createRateLimiter(
+  'ratelimit_csp_report_global',
+  300,
+  '1 m',
+  'fixed',
+);
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const contentType = request.headers.get('content-type') ?? '';
@@ -22,9 +29,23 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return new Response('Unsupported Media Type', { status: 415 });
   }
 
+  if (
+    isDeclaredBodyTooLarge(
+      request.headers.get('content-length'),
+      MAX_BODY_BYTES,
+    )
+  ) {
+    return new Response('Payload Too Large', { status: 413 });
+  }
+
   const ip = clientAddress ?? '127.0.0.1';
   const limitResult = await safeLimit(ratelimit, `ratelimit_csp_report_${ip}`);
   if (limitResult && !limitResult.success) {
+    return new Response('Too Many Requests', { status: 429 });
+  }
+
+  const globalResult = await safeLimit(globalRatelimit, 'global');
+  if (globalResult && !globalResult.success) {
     return new Response('Too Many Requests', { status: 429 });
   }
 

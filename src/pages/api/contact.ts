@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { Resend } from 'resend';
+import { isDeclaredBodyTooLarge } from '../../lib/body-limit';
 import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
 
 export const prerender = false;
@@ -52,6 +53,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return jsonResponse({ error: 'Unsupported Media Type' }, 415);
   }
 
+  if (
+    isDeclaredBodyTooLarge(
+      request.headers.get('content-length'),
+      MAX_BODY_BYTES,
+    )
+  ) {
+    return jsonResponse({ error: 'Payload too large' }, 413);
+  }
+
   // Trust only the platform-derived client address; x-forwarded-for is
   // client-spoofable and would let a caller bypass the rate limiter.
   const ip = clientAddress ?? '127.0.0.1';
@@ -83,7 +93,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const safeEmail = escapeHtml(email);
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
 
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: 'Portfolio Contact <hello@contact.sheohn.dev>',
       to: 'jared.acebes@gmail.com',
       subject: `New Portfolio Message from ${name.slice(0, 60)}`,
@@ -103,7 +113,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       return jsonResponse({ error: 'Failed to send message' }, 500);
     }
 
-    return jsonResponse({ success: true, data }, 200);
+    return jsonResponse({ success: true }, 200);
   } catch (error) {
     console.error('Contact API Error:', error);
     return jsonResponse({ error: 'Internal Server Error' }, 500);

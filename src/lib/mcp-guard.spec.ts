@@ -122,6 +122,18 @@ describe('decideMcpAdmission', () => {
     expect(c.limitIp).not.toHaveBeenCalled();
   });
 
+  test('rejects a declared content-length above the cap without reading the body', async () => {
+    const c = checks();
+    expect(
+      await decideMcpAdmission(
+        { ...goodRequest, contentLength: String(MCP_MAX_BODY_BYTES + 1) },
+        c,
+      ),
+    ).toEqual({ admit: false, reason: 'payload_too_large', status: 413 });
+    expect(c.readBody).not.toHaveBeenCalled();
+    expect(c.limitIp).not.toHaveBeenCalled();
+  });
+
   test('admits a body exactly at the cap', async () => {
     const c = checks({
       readBody: vi.fn(async () => 'x'.repeat(MCP_MAX_BODY_BYTES)),

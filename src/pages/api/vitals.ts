@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { getCollection } from 'astro:content';
 import { createRateLimiter, safeLimit } from '../../lib/ratelimit';
+import { isVitalValueInRange } from '../../lib/rum-metrics';
 import {
   buildKnownRoutes,
   isKnownRoute,
@@ -24,14 +25,22 @@ const VitalsSchema = z.object({
   value: z.number().nonnegative().optional(),
 });
 
-// Per-visitor limiting would need an IP, conflicting with anonymity; so one global per-minute cap.
+// Global cap bounds total write volume; the per-IP cap stops one client using all of it.
+// The IP is only a limiter key and is never stored.
 const ratelimit = createRateLimiter('ratelimit_vitals', 120, '1 m');
+const ipRatelimit = createRateLimiter('ratelimit_vitals_ip', 60, '1 m');
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
     return new Response('Unsupported Media Type', { status: 415 });
+  }
+
+  const ip = clientAddress ?? '127.0.0.1';
+  const ipLimitResult = await safeLimit(ipRatelimit, `ratelimit_vitals_${ip}`);
+  if (ipLimitResult && !ipLimitResult.success) {
+    return new Response('Too Many Requests', { status: 429 });
   }
 
   const limitResult = await safeLimit(ratelimit, 'global');
@@ -58,6 +67,11 @@ export const POST: APIRoute = async ({ request }) => {
   const { route: rawRoute, metric, value } = parsed.data;
   if (metric !== 'pageview' && value === undefined) {
     return new Response('Bad Request', { status: 400 });
+  }
+
+  // Out-of-range samples are dropped silently; sendBeacon ignores the response.
+  if (metric !== 'pageview' && !isVitalValueInRange(metric, value as number)) {
+    return new Response(null, { status: 204 });
   }
 
   // Route allowlist before any Redis write; arbitrary routes would mint unbounded keys.

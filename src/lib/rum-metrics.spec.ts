@@ -5,6 +5,7 @@ import {
   bucketForBoundaries,
   estimatePercentile,
   estimatePercentiles,
+  isVitalValueInRange,
 } from './rum-metrics';
 
 describe('bucketForBoundaries', () => {
@@ -91,5 +92,26 @@ describe('estimatePercentiles', () => {
     const buckets = { '0-1000': 5, '1000-2500': 5 };
     const result = estimatePercentiles(buckets, 'lcp');
     expect(result.p50).toBeCloseTo(1000);
+  });
+});
+
+describe('isVitalValueInRange', () => {
+  test('accepts values up to the per-metric maximum', () => {
+    expect(isVitalValueInRange('lcp', 0)).toBe(true);
+    expect(isVitalValueInRange('lcp', 60_000)).toBe(true);
+    expect(isVitalValueInRange('inp', 60_000)).toBe(true);
+    expect(isVitalValueInRange('cls', 10)).toBe(true);
+  });
+
+  test('rejects values above the maximum', () => {
+    expect(isVitalValueInRange('lcp', 60_001)).toBe(false);
+    expect(isVitalValueInRange('inp', 60_001)).toBe(false);
+    expect(isVitalValueInRange('cls', 10.01)).toBe(false);
+  });
+
+  test('rejects negative, NaN and non-finite values', () => {
+    expect(isVitalValueInRange('lcp', -1)).toBe(false);
+    expect(isVitalValueInRange('cls', NaN)).toBe(false);
+    expect(isVitalValueInRange('inp', Infinity)).toBe(false);
   });
 });
