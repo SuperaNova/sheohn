@@ -140,13 +140,13 @@ export default [
     gzip: true,
     limit: '4.1 KB',
   },
-  // Vercel Analytics + Speed Insights bootstraps from index.astro, kept
+  // Vercel Analytics bootstrap from index.astro, kept
   // external so the CSP script hashes stay stable across Vite bumps.
   {
     name: 'vercel-bootstraps',
     path: 'dist/client/_astro/index.astro_astro_type_script_*.js',
     gzip: true,
-    limit: '2.9 KB',
+    limit: '1.5 KB',
   },
   {
     name: 'astro-render',
