@@ -19,6 +19,12 @@ const projectsCollection = defineCollection({
   }),
 });
 
+const nowCollection = defineCollection({
+  loader: glob({ pattern: 'index.md', base: './src/content/now' }),
+  schema: z.object({ updated: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+});
+
 export const collections = {
   projects: projectsCollection,
+  now: nowCollection,
 };
