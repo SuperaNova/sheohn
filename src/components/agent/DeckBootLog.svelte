@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import type { BootInfo } from '../../lib/boot-info';
   import { buildDeckBootLines } from '../../lib/dmesg';
-  import { now } from '../../data/now';
   import { currentNotice } from '../../lib/stale-notice';
 
   // Plays once per session on first deck open (gated in CommandDeck).
@@ -12,7 +11,10 @@
 
   let infoStale = $state(false);
   const lines = $derived.by(() =>
-    buildDeckBootLines(bootInfo, { reviewedOn: now.updated, infoStale }),
+    buildDeckBootLines(bootInfo, {
+      reviewedOn: bootInfo.reviewedOn,
+      infoStale,
+    }),
   );
 
   let lineCount = $state(0);
@@ -38,7 +40,9 @@
   }
 
   onMount(() => {
-    infoStale = currentNotice().show;
+    infoStale = bootInfo.reviewedOn
+      ? currentNotice(bootInfo.reviewedOn).show
+      : false;
     const reduceMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;

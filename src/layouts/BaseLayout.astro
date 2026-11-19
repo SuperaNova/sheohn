@@ -15,8 +15,11 @@ import SpeedInsights from '@vercel/speed-insights/astro';
 import { personalInfo } from '../data/personalInfo';
 // Build-time only (boot-data pulls in node:child_process); never imported by client code.
 import { getBootInfo } from '../lib/boot-data';
+import { getEntry } from 'astro:content';
 
-const bootInfo = getBootInfo();
+const nowEntry = await getEntry('now', 'index');
+if (!nowEntry) throw new Error('Missing now content: src/content/now/index.md');
+const bootInfo = { ...getBootInfo(), reviewedOn: nowEntry.data.updated };
 
 interface Props {
   title: string;
@@ -186,7 +189,11 @@ const canonicalURL = new URL(
     <!-- RUM collector island: runs once and stays mounted via transition:persist. -->
     <RumCollector client:idle transition:persist />
     <HeaderNav client:load transition:persist />
-    <StaleNotice client:idle transition:persist />
+    <StaleNotice
+      client:idle
+      transition:persist
+      reviewedOn={nowEntry.data.updated}
+    />
 
     <!-- pb leaves a scroll runway so the docked deck never covers the last content. -->
     <div id="main-content" class="pb-28">

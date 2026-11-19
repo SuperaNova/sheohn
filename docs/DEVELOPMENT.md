@@ -109,7 +109,7 @@ Embeddings stay on Gemini (`gemini-embedding-001`) because the vector index hold
 
 ## Stale-info notice
 
-The review date is `updated` in `src/data/now.ts`. Once it is older than `staleAfterMonths` (default 6), a strip under the header and a boot-log warning tell visitors the facts may be out of date. `mode` in `src/data/site-notice.ts` forces the notice (`on`, optionally with a custom `message`) or silences it (`off`); `auto` follows the date. `?notice=on|off` overrides it on localhost only. Automated browsers (Playwright, Lighthouse) hide it unless the query param is set. `/api/chat` always appends a freshness line to the system prompt, with a caveat once the date is stale.
+The review date is `updated` in the frontmatter of `src/content/now/index.md`, the same file that holds the /now content; bump it when you edit the page. `BaseLayout.astro` reads it from the content collection and passes it to the notice, the loader and the deck boot log as a prop; `/api/chat` reads it the same way. Once it is older than `staleAfterMonths` (default 6), a strip under the header and a boot-log warning tell visitors the facts may be out of date. `mode` in `src/data/site-notice.ts` forces the notice (`on`, optionally with a custom `message`) or silences it (`off`); `auto` follows the date. `?notice=on|off` overrides it on localhost only. Automated browsers (Playwright, Lighthouse) hide it unless the query param is set. `/api/chat` always appends a freshness line to the system prompt, with a caveat once the date is stale.
 
 ## Chat kill switch
 
@@ -168,7 +168,7 @@ src/
 ├── data/ Centralized personal info (bio, experience, socials)
 ├── layouts/ Astro layouts (BaseLayout with SEO + ClientRouter)
 ├── lib/ Server helpers (prompts, RAG, shell/, actions) + unit-tested pure logic
-├── pages/ Routes; api/* are SSR endpoints; colophon.astro, status.astro, stats.astro are observability pages; now.astro reads src/data/now.ts and is edited by hand (bump the date when you edit it)
+├── pages/ Routes; api/* are SSR endpoints; colophon.astro, status.astro, stats.astro are observability pages; now.astro renders src/content/now/index.md, edited by hand (bump `updated` in its frontmatter when you edit it)
 └── styles/global.css Tailwind v4 entry + design tokens
 scripts/ ~14 scripts — see the Scripts table below; notably update-brain.ts (RAG sync),
          transform-eval-results.ts, heal-prompt.ts, ping-uptime.ts, mutation-summary.ts

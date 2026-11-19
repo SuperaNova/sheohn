@@ -1,4 +1,3 @@
-import { now } from '../data/now';
 import { siteNotice, type SiteNoticeMode } from '../data/site-notice';
 
 function parseIsoDate(iso: string): [number, number, number] {
@@ -109,11 +108,14 @@ export function freshnessNote(
 }
 
 /** Browser-only; shared by the notice island and the boot log so they agree. */
-export function currentNotice(): { show: boolean; text: string } {
+export function currentNotice(reviewedOn: string): {
+  show: boolean;
+  text: string;
+} {
   if (typeof window === 'undefined') return { show: false, text: '' };
   return resolveNotice({
     mode: siteNotice.mode,
-    reviewedOn: now.updated,
+    reviewedOn,
     today: new Date(),
     months: siteNotice.staleAfterMonths,
     message: siteNotice.message,

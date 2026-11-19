@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { currentNotice } from '../../lib/stale-notice';
 
+  let { reviewedOn }: { reviewedOn: string } = $props();
+
   const DISMISS_KEY = 'notice-dismissed';
 
   let text = $state('');
@@ -27,7 +29,7 @@
   }
 
   onMount(() => {
-    const notice = currentNotice();
+    const notice = currentNotice(reviewedOn);
     if (!notice.show || readDismissed()) return;
     topOffset = document.querySelector('header')?.offsetHeight ?? 64;
     text = notice.text;

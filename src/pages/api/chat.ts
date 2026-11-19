@@ -9,7 +9,7 @@ import { waitUntil } from '@vercel/functions';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import {
   createRateLimiter,
   readKillSwitch,
@@ -24,7 +24,6 @@ import {
 } from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
-import { now } from '../../data/now';
 import { siteNotice } from '../../data/site-notice';
 import { freshnessNote } from '../../lib/stale-notice';
 import type { RagQueryResult } from '../../lib/rag';
@@ -112,6 +111,14 @@ const ChatBodySchema = z.object({
 // Hard cap on the raw request body — a cheap DoS guard so a caller can't
 // inflate the LLM context (and the bill) with a giant payload.
 const MAX_BODY_BYTES = 32_000;
+
+let reviewedOnPromise: Promise<string> | undefined;
+
+async function loadReviewedOn(): Promise<string> {
+  const entry = await getEntry('now', 'index');
+  if (!entry) throw new Error('Missing now content');
+  return entry.data.updated;
+}
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const startedAt = Date.now();
@@ -203,7 +210,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     .join('\n')}`;
 
   const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
-  const freshnessContext = `\n\n${freshnessNote(now.updated, new Date(), siteNotice.staleAfterMonths)}`;
+  reviewedOnPromise ??= loadReviewedOn();
+  const reviewedOn = await reviewedOnPromise;
+  const freshnessContext = `\n\n${freshnessNote(reviewedOn, new Date(), siteNotice.staleAfterMonths)}`;
 
   const result = streamText({
     model: withModelFallbacks(

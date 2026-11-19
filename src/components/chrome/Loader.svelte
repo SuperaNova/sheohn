@@ -4,7 +4,6 @@
   import { cubicOut } from 'svelte/easing';
   import type { BootInfo } from '../../lib/boot-info';
   import { buildLoaderLines } from '../../lib/dmesg';
-  import { now } from '../../data/now';
   import { currentNotice } from '../../lib/stale-notice';
 
   // bootInfo is a build-time prop (see CommandDeck); defaulted so rendering without it is safe.
@@ -18,7 +17,7 @@
 
   let infoStale = $state(false);
   const lines = $derived.by(() =>
-    buildLoaderLines(bootInfo, { reviewedOn: now.updated, infoStale }),
+    buildLoaderLines(bootInfo, { reviewedOn: bootInfo.reviewedOn, infoStale }),
   );
 
   // Non-linear reveal cadence (bursts plus longer beats), deterministic for stable screenshots/e2e;
@@ -55,7 +54,9 @@
   });
 
   onMount(() => {
-    infoStale = currentNotice().show;
+    infoStale = bootInfo.reviewedOn
+      ? currentNotice(bootInfo.reviewedOn).show
+      : false;
     if (
       typeof document !== 'undefined' &&
       document.documentElement.classList.contains('skip-loader')
