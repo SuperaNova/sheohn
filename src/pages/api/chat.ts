@@ -35,6 +35,7 @@ import {
   recordAgentTurn,
   recordGuardrailTrip,
 } from '../../lib/agent-redis';
+import { isDeclaredBodyTooLarge } from '../../lib/body-limit';
 import { createOutputGuard } from '../../lib/output-guard';
 import { collectToolNames } from '../../lib/agent-metrics';
 import {
@@ -127,6 +128,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
     return new Response('Unsupported Media Type', { status: 415 });
+  }
+
+  if (
+    isDeclaredBodyTooLarge(
+      request.headers.get('content-length'),
+      MAX_BODY_BYTES,
+    )
+  ) {
+    return new Response('Payload Too Large', { status: 413 });
   }
 
   // Trust only the platform-derived client address. x-forwarded-for is
@@ -336,6 +346,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         inputSchema: z.object({
           query: z
             .string()
+            .max(500)
             .describe("The search query to match against Jared's facts."),
         }),
         execute: async ({ query }): Promise<RagQueryResult> =>
