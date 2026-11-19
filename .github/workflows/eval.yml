@@ -89,6 +89,7 @@ jobs:
         if: steps.regression.outputs.has_regression == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE: ${{ steps.regression.outputs.issue_title }}
         run: |
           existing=$(gh issue list --label eval-regression --state open --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
@@ -97,7 +98,7 @@ jobs:
           else
             echo "Opening a new eval-regression issue"
             gh issue create \
-              --title "${{ steps.regression.outputs.issue_title }} ($(date -u +%Y-%m-%d))" \
+              --title "$ISSUE_TITLE ($(date -u +%Y-%m-%d))" \
               --label eval-regression \
               --body-file "$RUNNER_TEMP/regression-body.md"
           fi
