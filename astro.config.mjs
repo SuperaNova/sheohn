@@ -13,6 +13,7 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://sheohn.dev',
   output: 'static',
+  compressHTML: true,
   prefetch: {
     defaultStrategy: 'hover',
     prefetchAll: true,

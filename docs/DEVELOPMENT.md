@@ -12,7 +12,7 @@ Badges read the committed history under [`data/`](../data); each shows "invalid"
 
 ## Stack
 
-- **Astro 6** (static output, Vercel adapter) with MDX content collections
+- **Astro 7** (static output, Vercel adapter) with MDX content collections
 - **Svelte 5** (runes) for interactive islands
 - **Tailwind CSS v4** via `@tailwindcss/vite` (config lives in `src/styles/global.css` under `@theme`)
 - **Vercel AI SDK** (`ai` v6 + `@ai-sdk/google` + `@ai-sdk/svelte`) — streaming chat agent backed by Gemini
