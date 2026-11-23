@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-23",
+  "commitSha": "328a48275e89d397dea6e2d023db573e07ae49b3",
+  "cases": [
+    {
+      "name": "open_case_study — named project",
+      "status": "passed",
+      "durationMs": 25783
+    },
+    {
+      "name": "open_resume — resume request",
+      "status": "failed",
+      "durationMs": 33060,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "focus_section — tech stack overview",
+      "status": "failed",
+      "durationMs": 20613,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "set_theme — dark mode",
+      "status": "failed",
+      "durationMs": 20248,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "trigger_ui_state — tech highlight",
+      "status": "failed",
+      "durationMs": 34172,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "query_jared_memory — background question",
+      "status": "failed",
+      "durationMs": 34899,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "plain conversation — off-topic decline",
+      "status": "failed",
+      "durationMs": 40077,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "plain conversation — trivial math",
+      "status": "failed",
+      "durationMs": 31020,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "query_jared_memory — education facts",
+      "status": "failed",
+      "durationMs": 33868,
+      "error": "Error: parseAgentResponse: no UIMessage chunks were parsed from the SSE response"
+    },
+    {
+      "name": "query_jared_memory — leadership facts",
+      "status": "passed",
+      "durationMs": 42491
+    }
+  ]
+}
