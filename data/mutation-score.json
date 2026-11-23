@@ -1,7 +1,7 @@
 {
   "latest": {
-    "date": "2026-11-16",
-    "commitSha": "15be15d3377e280a4481022b01b484e648e3bc4d",
+    "date": "2026-11-23",
+    "commitSha": "6b165f27f9f844f44735a419a6fd4175e09bf4ee",
     "mutationScore": 56,
     "killed": 1193,
     "survived": 614,
@@ -123,6 +123,16 @@
     {
       "date": "2026-11-16",
       "commitSha": "15be15d3377e280a4481022b01b484e648e3bc4d",
+      "mutationScore": 56,
+      "killed": 1193,
+      "survived": 614,
+      "timeout": 1,
+      "noCoverage": 323,
+      "totalMutants": 2131
+    },
+    {
+      "date": "2026-11-23",
+      "commitSha": "6b165f27f9f844f44735a419a6fd4175e09bf4ee",
       "mutationScore": 56,
       "killed": 1193,
       "survived": 614,
