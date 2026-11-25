@@ -28,6 +28,7 @@
     80, 20, 90, 20, 100, 60,
   ];
   const HOLD_MS = 200;
+  const FAILSAFE_MS = 1500;
 
   let isLoading = $state(true);
   let lineCount = $state(0);
@@ -66,6 +67,23 @@
       return;
     }
 
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    const slowLink =
+      performance.now() > FAILSAFE_MS ||
+      connection?.saveData === true ||
+      ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '');
+    if (slowLink) {
+      lineCount = lines.length;
+      finish();
+      return;
+    }
+
+    // Playing the full sequence: keep the CSS failsafe from hiding it early.
+    if (logEl) logEl.style.animation = 'none';
     document.body.style.overflow = 'hidden';
 
     // Respect reduced motion: skip the boot animation, show the end state.
