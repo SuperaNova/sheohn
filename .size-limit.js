@@ -7,7 +7,14 @@ export default [
     name: 'CommandDeck',
     path: 'dist/client/_astro/CommandDeck.*.js',
     gzip: true,
-    limit: '55 KB',
+    limit: '15.5 KB',
+  },
+  // Lazy chunk: AI SDK chat client + transport, loaded when the deck first opens.
+  {
+    name: 'agent-chat',
+    path: 'dist/client/_astro/agent-chat.*.js',
+    gzip: true,
+    limit: '41.5 KB',
   },
   {
     name: 'HeaderNav',

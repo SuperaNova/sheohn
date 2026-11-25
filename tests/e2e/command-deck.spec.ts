@@ -234,3 +234,35 @@ test.describe('Command deck', () => {
     );
   });
 });
+
+test.describe('Lazy chat transport', () => {
+  test('fetches the chat chunk only once the deck is engaged', async ({
+    page,
+  }) => {
+    await mockAgent(page);
+    const chunkRequests: string[] = [];
+    page.on('request', (request) => {
+      if (/\/_astro\/agent-chat\.[^/]*\.js/.test(request.url())) {
+        chunkRequests.push(request.url());
+      }
+    });
+
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await expect(deckInput(page)).toBeVisible();
+    expect(chunkRequests).toHaveLength(0);
+
+    await waitForDeck(page);
+    await deckInput(page).fill('help');
+    await deckInput(page).press('Enter');
+    await expect(
+      deck(page)
+        .getByText(/commands|usage|help/i)
+        .first(),
+    ).toBeVisible();
+
+    await deckInput(page).fill('What is his tech stack?');
+    await deckInput(page).press('Enter');
+    await expect(deck(page).getByText(/Opening Jared's resume/i)).toBeVisible();
+    expect(chunkRequests.length).toBeGreaterThan(0);
+  });
+});
