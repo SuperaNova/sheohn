@@ -63,7 +63,7 @@ export default [
     name: 'PdfEmbed',
     path: 'dist/client/_astro/PdfEmbed.*.js',
     gzip: true,
-    limit: '1.4 KB',
+    limit: '1.6 KB',
   },
   {
     name: 'TableOfContents',

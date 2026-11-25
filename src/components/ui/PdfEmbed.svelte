@@ -1,7 +1,6 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
-  // Lazy PDF embed via `client:visible`: the iframe mounts on scroll into view; a spinner shows
-  // until its load event.
+  // The iframe mounts only after the visitor clicks Load document; a spinner shows until its load event.
 
   let {
     src,
@@ -9,6 +8,7 @@
     caption = '',
   }: { src: string; title: string; caption?: string } = $props();
 
+  let requested = $state(false);
   let loaded = $state(false);
   // Mobile taps open a new tab with no preview, so surface the filename up front.
   const fileName = $derived(src.split('/').pop() || src);
@@ -17,28 +17,58 @@
 <div
   class="my-8 overflow-hidden rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] shadow-sm"
 >
-  <!-- Desktop: embedded iframe viewer -->
+  <!-- Desktop: poster until the visitor asks for the document, then the iframe viewer -->
   <div class="relative hidden h-[75vh] w-full md:block">
-    {#if !loaded}
+    {#if !requested}
       <div
-        class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-surface-container)] text-[var(--color-on-surface-muted)]"
-        out:fade={{ duration: 200 }}
+        class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--color-surface-container)] px-6 text-center"
       >
         <span
-          class="h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-outline-variant)] border-t-[var(--color-tertiary)]"
-          aria-hidden="true"
-        ></span>
-        <span class="font-mono text-xs tracking-wide">loading document…</span>
+          class="font-mono text-xs tracking-wide text-[var(--color-on-surface-muted)]"
+          >{caption}</span
+        >
+        <span
+          class="font-mono text-[11px] tracking-wide text-[var(--color-on-surface-muted)]/70"
+          >{fileName}</span
+        >
+        <button
+          type="button"
+          onclick={() => (requested = true)}
+          class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] px-5 py-3 text-sm font-semibold text-[var(--color-tertiary)] transition hover:text-[var(--color-on-surface)]"
+        >
+          Load document
+        </button>
+        <a
+          href={src}
+          target="_blank"
+          rel="noreferrer"
+          class="text-xs font-semibold text-[var(--color-tertiary)] hover:text-[var(--color-on-surface)] hover:underline"
+        >
+          Open in a new tab ↗
+        </a>
       </div>
+    {:else}
+      {#if !loaded}
+        <div
+          class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[var(--color-surface-container)] text-[var(--color-on-surface-muted)]"
+          out:fade={{ duration: 200 }}
+        >
+          <span
+            class="h-6 w-6 animate-spin rounded-full border-2 border-[var(--color-outline-variant)] border-t-[var(--color-tertiary)]"
+            aria-hidden="true"
+          ></span>
+          <span class="font-mono text-xs tracking-wide">loading document…</span>
+        </div>
+      {/if}
+      <iframe
+        {src}
+        {title}
+        onload={() => (loaded = true)}
+        class="h-full w-full border-none transition-opacity duration-300"
+        class:opacity-0={!loaded}
+        class:opacity-100={loaded}
+      ></iframe>
     {/if}
-    <iframe
-      {src}
-      {title}
-      onload={() => (loaded = true)}
-      class="h-full w-full border-none transition-opacity duration-300"
-      class:opacity-0={!loaded}
-      class:opacity-100={loaded}
-    ></iframe>
   </div>
 
   <!-- Mobile: link-only fallback (PDF iframes are unusable on iOS/Android) -->
