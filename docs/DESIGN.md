@@ -177,6 +177,8 @@ The console palette is **deliberately fixed across light and dark themes**. Cont
 **Body Font:** Inter (with system-ui, sans-serif fallback)
 **Label/Mono Font:** system monospace stack (ui-monospace, SFMono-Regular, Menlo)
 
+Playfair Display and Inter are self-hosted as latin-subset variable WOFF2 files in `public/fonts/` (SIL OFL 1.1 texts alongside), declared in `src/styles/global.css`; the two upright files are preloaded in `BaseLayout.astro`. There is no third-party font origin.
+
 **Character:** A high-contrast pairing on a real axis — a transitional serif masthead against a neutral grotesque body. Playfair carries the hand-catalogued, almanac authority; Inter keeps the prose clean and credible; monospace is the _voice of the machine_, reserved for anything the system "says." The serif is the author, the mono is the instrument.
 
 ### Hierarchy
