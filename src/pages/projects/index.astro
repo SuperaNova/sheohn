@@ -60,6 +60,7 @@ import { personalInfo } from '../../data/personalInfo';
               >
                 {project.data.image ? (
                   <Image
+                    quality={75}
                     src={project.data.image}
                     alt={project.data.title}
                     loading="lazy"
