@@ -12,6 +12,7 @@ featured: false
 order: 1
 ---
 
+import { Image } from 'astro:assets';
 import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
 
 ## Overview
@@ -42,11 +43,16 @@ I was the project manager and the AI engineer, which on a four-person hackathon 
 
 ## How it is built
 
-<img
+<Image
+  quality={75}
   src="/animo/AniMo_Diagram.webp"
   alt="AniMo Serverless Compute and Architecture Diagram"
-  width="800"
-  height="500"
+  width={1962}
+  height={832}
+  widths={[640, 1080, 1200]}
+  sizes="(min-width: 54rem) 54rem, 100vw"
+  loading="lazy"
+  decoding="async"
   class="mb-6 rounded-lg border border-gray-800 shadow-xl"
 />
 
