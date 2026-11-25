@@ -4,8 +4,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { get } from 'svelte/store';
 
-  import { Chat } from '@ai-sdk/svelte';
-  import { DefaultChatTransport } from 'ai';
+  import type { Chat } from '@ai-sdk/svelte';
   import { navigate } from 'astro:transitions/client';
   import {
     setFocus,
@@ -100,7 +99,6 @@
   const visibleStarters = $derived(
     starters.filter((s) => !s.hideWhenDark || $theme !== 'dark'),
   );
-  let chatError = $state('');
   // In-persona line for a failed agent request; cleared on the next send.
   let agentNotice = $state('');
   // One queued message: lets the visitor keep typing while a reply streams.
@@ -148,6 +146,7 @@
           !prefersReducedMotion() && $theme === 'dark' && $heroInView && isLg;
         reperchHold = false;
         queueMicrotask(() => inputEl?.focus());
+        preloadChat();
         // First expand this session plays the boot log.
         if (
           !showBootLog &&
@@ -201,30 +200,49 @@
   };
 
   let chat = $state<Chat | null>(null);
-  try {
-    chat = new Chat({
-      transport: new DefaultChatTransport({ api: '/api/chat' }),
-      onToolCall: ({ toolCall }) => {
-        const payload = toolCall as {
-          toolName: string;
-          args?: unknown;
-          arguments?: unknown;
-          input?: unknown;
-        };
-        const args = (payload.args ??
-          payload.arguments ??
-          payload.input ??
-          {}) as ToolCallArgs;
-        toolCallHandlers[payload.toolName]?.(args);
-      },
-      onError: (err) => {
-        console.error('[CommandDeck] agent error:', err);
-        agentNotice = chatErrorNotice(err);
-      },
+  let chatPromise: Promise<Chat> | null = null;
+
+  // Memoized; a failed import clears the cache so the next attempt retries.
+  function ensureChat(): Promise<Chat> {
+    chatPromise ??= import('../../lib/agent-chat')
+      .then(({ createAgentChat }) =>
+        createAgentChat({
+          onToolCall: ({ toolCall }) => {
+            const payload = toolCall as {
+              toolName: string;
+              args?: unknown;
+              arguments?: unknown;
+              input?: unknown;
+            };
+            const args = (payload.args ??
+              payload.arguments ??
+              payload.input ??
+              {}) as ToolCallArgs;
+            toolCallHandlers[payload.toolName]?.(args);
+          },
+          onError: (err) => {
+            console.error('[CommandDeck] agent error:', err);
+            agentNotice = chatErrorNotice(err);
+          },
+        }),
+      )
+      .then(
+        (created) => {
+          chat = created;
+          return created;
+        },
+        (err) => {
+          chatPromise = null;
+          throw err;
+        },
+      );
+    return chatPromise;
+  }
+
+  function preloadChat() {
+    ensureChat().catch((err) => {
+      console.error('[CommandDeck] chat preload failed', err);
     });
-  } catch (err) {
-    chatError = String(err);
-    console.error('[CommandDeck] chat init failed', err);
   }
 
   const isLoading = $derived(
@@ -357,18 +375,26 @@
     inputValue = '';
   }
 
-  function ask(text: string) {
+  async function ask(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || !chat) return;
+    if (!trimmed) return;
     open();
     agentNotice = '';
+    inputValue = '';
+    let agent: Chat;
+    try {
+      agent = await ensureChat();
+    } catch (err) {
+      console.error('[CommandDeck] chat init failed', err);
+      agentNotice = chatErrorNotice(err);
+      return;
+    }
     // Queue input while a reply streams; send when the agent is free.
     if (isLoading) {
       pending = trimmed;
     } else {
-      chat.sendMessage({ text: trimmed });
+      agent.sendMessage({ text: trimmed });
     }
-    inputValue = '';
   }
 
   async function handleSubmit(e: SubmitEvent) {
@@ -615,11 +641,6 @@
             maxHeightPx={listMaxPx}
             onHover={(i) => (selectedIndex = i)}
           />
-        {:else if chatError}
-          <div class="p-4 font-mono text-xs text-red-400">
-            [ agent offline ] — slash-commands still work. Type
-            <span class="text-[var(--color-console-signal)]">/</span> to list them.
-          </div>
         {:else if messages.length}
           <DeckChatLog {messages} {showTyping} maxHeightPx={listMaxPx} />
           {@render noticeLine('px-4 pb-3')}
@@ -698,6 +719,7 @@
       bind:value={inputValue}
       onfocus={() => {
         if (!window.matchMedia('(pointer: coarse)').matches) open();
+        preloadChat();
       }}
       onkeydown={onInputKeydown}
       role={commandMode ? 'combobox' : undefined}
