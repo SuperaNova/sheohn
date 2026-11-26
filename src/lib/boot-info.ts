@@ -11,4 +11,6 @@ export interface BootInfo {
   dependencyCount: number;
   /** Upstash vector count; intentionally omitted (see boot-data.ts), optional for a future request-time count. */
   vectorCount?: number;
+  /** ISO date the site facts were last reviewed, from the now page frontmatter. */
+  reviewedOn?: string;
 }

@@ -1,4 +1,5 @@
 // Pure admission logic for /mcp; request metadata and limiter I/O are injected so it stays testable.
+import { isDeclaredBodyTooLarge } from './body-limit';
 import { isKillSwitchOn, secondsUntil, type LimitOutcome } from './chat-guard';
 
 export const MCP_MAX_BODY_BYTES = 16_384;
@@ -37,7 +38,11 @@ function isOriginAllowed(origin: string, isDev: boolean): boolean {
  * spends a later guard's budget. A null limiter result means the check failed open.
  */
 export async function decideMcpAdmission(
-  request: { origin: string | null; contentType: string | null },
+  request: {
+    origin: string | null;
+    contentType: string | null;
+    contentLength?: string | null;
+  },
   checks: {
     isDev: boolean;
     readBody: () => Promise<string>;
@@ -57,6 +62,12 @@ export async function decideMcpAdmission(
 
   if (!(request.contentType ?? '').includes('application/json')) {
     return { admit: false, reason: 'unsupported_media_type', status: 415 };
+  }
+
+  if (
+    isDeclaredBodyTooLarge(request.contentLength ?? null, MCP_MAX_BODY_BYTES)
+  ) {
+    return { admit: false, reason: 'payload_too_large', status: 413 };
   }
 
   const body = await checks.readBody();

@@ -84,6 +84,32 @@ test('the deck sequence is shorter than the loader sequence, with or without vec
   ).toBeLessThan(loaderCount);
 });
 
+test('freshness lines appear only with reviewedOn; the warning only when stale', () => {
+  const plain = buildLoaderLines(bootInfo);
+  const fresh = buildLoaderLines(bootInfo, { reviewedOn: '2026-11-17' });
+  const stale = buildLoaderLines(bootInfo, {
+    reviewedOn: '2026-11-17',
+    infoStale: true,
+  });
+  expect(fresh.length).toBe(plain.length + 1);
+  expect(stale.length).toBe(plain.length + 2);
+  expect(stale.length).toBeLessThanOrEqual(45);
+  const text = stale.map((l) => l.text).join('\n');
+  expect(text).toContain('facts last reviewed 2026-11-17');
+  expect(text).toContain(
+    'WARN facts past their review window, treat as historical',
+  );
+  const seconds = stale.map((l) => Number(l.ts.slice(1, -1).trim()));
+  expect(seconds).toEqual([...seconds].sort((a, b) => a - b));
+  expect(new Set(seconds).size).toBe(seconds.length);
+
+  const deck = buildDeckBootLines(bootInfo, {
+    reviewedOn: '2026-11-17',
+    infoStale: true,
+  });
+  expect(deck.map((l) => l.text).join('\n')).toContain('WARN facts past');
+});
+
 test('both builders are deterministic — two calls deep-equal', () => {
   expect(buildLoaderLines(bootInfo)).toEqual(buildLoaderLines(bootInfo));
   expect(buildDeckBootLines(bootInfo)).toEqual(buildDeckBootLines(bootInfo));

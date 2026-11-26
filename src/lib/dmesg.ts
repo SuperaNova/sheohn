@@ -68,7 +68,36 @@ const DECK_OFFSETS_SEC = [
   0.000892, 0.0413, 0.0419, 0.0424, 0.3187, 0.3192, 0.8045,
 ];
 
-export function buildLoaderLines(bootInfo: BootInfo): DmesgLine[] {
+export interface FreshnessOptions {
+  reviewedOn?: string;
+  infoStale?: boolean;
+}
+
+function freshnessLines({
+  reviewedOn,
+  infoStale,
+}: FreshnessOptions): RawLine[] {
+  if (!reviewedOn) return [];
+  const lines: RawLine[] = [
+    { tag: 'content', text: `facts last reviewed ${reviewedOn}` },
+  ];
+  if (infoStale) {
+    lines.push({
+      tag: 'content',
+      text: 'WARN facts past their review window, treat as historical',
+    });
+  }
+  return lines;
+}
+
+// Spliced in right after the content group so later loader offsets stay unchanged.
+const FRESHNESS_OFFSETS_SEC = [0.019601, 0.019873];
+const FRESHNESS_INSERT_INDEX = 9;
+
+export function buildLoaderLines(
+  bootInfo: BootInfo,
+  freshness: FreshnessOptions = {},
+): DmesgLine[] {
   const raw: RawLine[] = [
     { text: `sheohn.os ${bootInfo.commitSha} — static build online` },
     { tag: 'build', text: `image assembled ${bootInfo.buildTimestamp}` },
@@ -85,6 +114,7 @@ export function buildLoaderLines(bootInfo: BootInfo): DmesgLine[] {
     },
     { tag: 'vfs', text: 'mounted ~/work (shell virtual filesystem)' },
     { tag: 'content', text: 'mdx collections validated against schema' },
+    ...freshnessLines(freshness),
     { tag: 'fonts', text: 'Inter 400/500/600/700 preloaded' },
     { tag: 'fonts', text: 'Playfair Display attached (swap)' },
     { tag: 'router', text: 'view transitions enabled (ClientRouter)' },
@@ -120,10 +150,19 @@ export function buildLoaderLines(bootInfo: BootInfo): DmesgLine[] {
     { text: 'all subsystems nominal' },
     { text: 'sheohn.os: boot complete' },
   ];
-  return toLines(raw, LOADER_OFFSETS_SEC);
+  const extra = freshnessLines(freshness).length;
+  const offsets = [
+    ...LOADER_OFFSETS_SEC.slice(0, FRESHNESS_INSERT_INDEX),
+    ...FRESHNESS_OFFSETS_SEC.slice(0, extra),
+    ...LOADER_OFFSETS_SEC.slice(FRESHNESS_INSERT_INDEX),
+  ];
+  return toLines(raw, offsets);
 }
 
-export function buildDeckBootLines(bootInfo: BootInfo): DmesgLine[] {
+export function buildDeckBootLines(
+  bootInfo: BootInfo,
+  freshness: FreshnessOptions = {},
+): DmesgLine[] {
   const raw: RawLine[] = [
     { text: 'sheohn.os deck boot' },
     {
@@ -140,6 +179,7 @@ export function buildDeckBootLines(bootInfo: BootInfo): DmesgLine[] {
       text: `${bootInfo.vectorCount} vectors indexed`,
     });
   }
+  raw.push(...freshnessLines(freshness));
   raw.push({ tag: 'shell', text: 'ready' });
   return toLines(raw, DECK_OFFSETS_SEC);
 }

@@ -39,3 +39,46 @@ test.describe('Projects', () => {
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
   });
 });
+
+test.describe('PDF embed on demand', () => {
+  const pdfPattern = /AniMoIntelliJaysAPACSolutionsChallenge\.pdf/;
+
+  test('desktop loads the PDF only after clicking Load document', async ({
+    page,
+  }) => {
+    const pdfRequests: string[] = [];
+    page.on('request', (request) => {
+      if (pdfPattern.test(request.url())) pdfRequests.push(request.url());
+    });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/projects/animo');
+
+    const button = page.getByRole('button', { name: 'Load document' });
+    await button.scrollIntoViewIfNeeded();
+    await expect(button).toBeVisible();
+    await expect(page.locator('iframe[title="AniMo Pitch Deck"]')).toHaveCount(
+      0,
+    );
+    expect(pdfRequests).toHaveLength(0);
+
+    await button.click();
+    await expect(page.locator('iframe[title="AniMo Pitch Deck"]')).toHaveCount(
+      1,
+    );
+  });
+
+  test('mobile never mounts the iframe', async ({ page }) => {
+    const pdfRequests: string[] = [];
+    page.on('request', (request) => {
+      if (pdfPattern.test(request.url())) pdfRequests.push(request.url());
+    });
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto('/projects/animo');
+    await page.getByText('Open document ↗').scrollIntoViewIfNeeded();
+
+    await expect(page.locator('iframe[title="AniMo Pitch Deck"]')).toHaveCount(
+      0,
+    );
+    expect(pdfRequests).toHaveLength(0);
+  });
+});

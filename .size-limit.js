@@ -7,7 +7,14 @@ export default [
     name: 'CommandDeck',
     path: 'dist/client/_astro/CommandDeck.*.js',
     gzip: true,
-    limit: '55 KB',
+    limit: '15.5 KB',
+  },
+  // Lazy chunk: AI SDK chat client + transport, loaded when the deck first opens.
+  {
+    name: 'agent-chat',
+    path: 'dist/client/_astro/agent-chat.*.js',
+    gzip: true,
+    limit: '41.5 KB',
   },
   {
     name: 'HeaderNav',
@@ -51,7 +58,7 @@ export default [
     name: 'dmesg-boot-lines',
     path: 'dist/client/_astro/dmesg.*.js',
     gzip: true,
-    limit: '1.7 KB',
+    limit: '1.9 KB',
   },
   {
     name: 'Lightbox',
@@ -63,7 +70,7 @@ export default [
     name: 'PdfEmbed',
     path: 'dist/client/_astro/PdfEmbed.*.js',
     gzip: true,
-    limit: '1.4 KB',
+    limit: '1.6 KB',
   },
   {
     name: 'TableOfContents',
@@ -140,13 +147,13 @@ export default [
     gzip: true,
     limit: '4.1 KB',
   },
-  // Vercel Analytics + Speed Insights bootstraps from index.astro, kept
+  // Vercel Analytics bootstrap from index.astro, kept
   // external so the CSP script hashes stay stable across Vite bumps.
   {
     name: 'vercel-bootstraps',
     path: 'dist/client/_astro/index.astro_astro_type_script_*.js',
     gzip: true,
-    limit: '2.9 KB',
+    limit: '1.5 KB',
   },
   {
     name: 'astro-render',

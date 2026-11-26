@@ -1,9 +1,15 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 export default defineConfig({
   plugins: [svelte()],
   test: {
+    alias: {
+      'astro:content': fileURLToPath(
+        new URL('./tests/astro-content-stub.ts', import.meta.url),
+      ),
+    },
     environment: 'jsdom',
     setupFiles: ['./tests/vitest.setup.ts'],
     globals: true,

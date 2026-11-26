@@ -42,6 +42,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     {
       origin: request.headers.get('origin'),
       contentType: request.headers.get('content-type'),
+      contentLength: request.headers.get('content-length'),
     },
     {
       isDev: import.meta.env.DEV,

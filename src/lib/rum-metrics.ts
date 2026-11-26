@@ -116,3 +116,19 @@ export function estimatePercentiles(
     p95: descale(estimatePercentile(buckets, boundaries, 0.95)),
   };
 }
+
+const MAX_VITAL_VALUE: Record<MetricKind, number> = {
+  lcp: 60_000,
+  inp: 60_000,
+  cls: 10,
+};
+
+/** Rejects non-finite, negative or implausibly large samples before they reach a bucket. */
+export function isVitalValueInRange(
+  metric: MetricKind,
+  value: number,
+): boolean {
+  return (
+    Number.isFinite(value) && value >= 0 && value <= MAX_VITAL_VALUE[metric]
+  );
+}

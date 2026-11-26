@@ -2,13 +2,20 @@
   import { onMount } from 'svelte';
   import type { BootInfo } from '../../lib/boot-info';
   import { buildDeckBootLines } from '../../lib/dmesg';
+  import { currentNotice } from '../../lib/stale-notice';
 
   // Plays once per session on first deck open (gated in CommandDeck).
   // bootInfo arrives as a prop: boot-data.ts pulls in node:child_process, so never import it here.
   let { bootInfo, onComplete }: { bootInfo: BootInfo; onComplete: () => void } =
     $props();
 
-  const lines = $derived.by(() => buildDeckBootLines(bootInfo));
+  let infoStale = $state(false);
+  const lines = $derived.by(() =>
+    buildDeckBootLines(bootInfo, {
+      reviewedOn: bootInfo.reviewedOn,
+      infoStale,
+    }),
+  );
 
   let lineCount = $state(0);
   let logEl = $state<HTMLElement | null>(null);
@@ -33,6 +40,9 @@
   }
 
   onMount(() => {
+    infoStale = bootInfo.reviewedOn
+      ? currentNotice(bootInfo.reviewedOn).show
+      : false;
     const reduceMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;

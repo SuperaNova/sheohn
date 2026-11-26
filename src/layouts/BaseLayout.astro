@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import HeaderNav from '../components/chrome/HeaderNav.svelte';
+import StaleNotice from '../components/chrome/StaleNotice.svelte';
 import Loader from '../components/chrome/Loader.svelte';
 import NavProgress from '../components/chrome/NavProgress.svelte';
 import ScrollProgress from '../components/chrome/ScrollProgress.svelte';
@@ -9,13 +10,15 @@ import ScenePilot from '../components/agent/ScenePilot.svelte';
 import CommandDeck from '../components/agent/CommandDeck.svelte';
 import { ClientRouter } from 'astro:transitions';
 import Analytics from '@vercel/analytics/astro';
-import SpeedInsights from '@vercel/speed-insights/astro';
 
 import { personalInfo } from '../data/personalInfo';
 // Build-time only (boot-data pulls in node:child_process); never imported by client code.
 import { getBootInfo } from '../lib/boot-data';
+import { getEntry } from 'astro:content';
 
-const bootInfo = getBootInfo();
+const nowEntry = await getEntry('now', 'index');
+if (!nowEntry) throw new Error('Missing now content: src/content/now/index.md');
+const bootInfo = { ...getBootInfo(), reviewedOn: nowEntry.data.updated };
 
 interface Props {
   title: string;
@@ -85,16 +88,19 @@ const canonicalURL = new URL(
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={new URL(image, canonicalURL)} />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/fonts/inter-latin.woff2"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/fonts/playfair-latin.woff2"
     />
     <ClientRouter />
 
@@ -185,6 +191,11 @@ const canonicalURL = new URL(
     <!-- RUM collector island: runs once and stays mounted via transition:persist. -->
     <RumCollector client:idle transition:persist />
     <HeaderNav client:load transition:persist />
+    <StaleNotice
+      client:idle
+      transition:persist
+      reviewedOn={nowEntry.data.updated}
+    />
 
     <!-- pb leaves a scroll runway so the docked deck never covers the last content. -->
     <div id="main-content" class="pb-28">
@@ -195,6 +206,5 @@ const canonicalURL = new URL(
     <CommandDeck client:idle transition:persist {bootInfo} />
 
     <Analytics />
-    <SpeedInsights />
   </body>
 </html>

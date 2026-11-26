@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing';
   import type { BootInfo } from '../../lib/boot-info';
   import { buildLoaderLines } from '../../lib/dmesg';
+  import { currentNotice } from '../../lib/stale-notice';
 
   // bootInfo is a build-time prop (see CommandDeck); defaulted so rendering without it is safe.
   let {
@@ -14,7 +15,10 @@
     },
   }: { bootInfo?: BootInfo } = $props();
 
-  const lines = $derived.by(() => buildLoaderLines(bootInfo));
+  let infoStale = $state(false);
+  const lines = $derived.by(() =>
+    buildLoaderLines(bootInfo, { reviewedOn: bootInfo.reviewedOn, infoStale }),
+  );
 
   // Non-linear reveal cadence (bursts plus longer beats), deterministic for stable screenshots/e2e;
   // separate from each line's fake dmesg timestamp.
@@ -24,6 +28,7 @@
     80, 20, 90, 20, 100, 60,
   ];
   const HOLD_MS = 200;
+  const FAILSAFE_MS = 1500;
 
   let isLoading = $state(true);
   let lineCount = $state(0);
@@ -50,6 +55,9 @@
   });
 
   onMount(() => {
+    infoStale = bootInfo.reviewedOn
+      ? currentNotice(bootInfo.reviewedOn).show
+      : false;
     if (
       typeof document !== 'undefined' &&
       document.documentElement.classList.contains('skip-loader')
@@ -59,6 +67,23 @@
       return;
     }
 
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    const slowLink =
+      performance.now() > FAILSAFE_MS ||
+      connection?.saveData === true ||
+      ['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '');
+    if (slowLink) {
+      lineCount = lines.length;
+      finish();
+      return;
+    }
+
+    // Playing the full sequence: keep the CSS failsafe from hiding it early.
+    if (logEl) logEl.style.animation = 'none';
     document.body.style.overflow = 'hidden';
 
     // Respect reduced motion: skip the boot animation, show the end state.

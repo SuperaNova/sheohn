@@ -15,7 +15,11 @@ permissions:
 jobs:
   smoke:
     name: Smoke-test the deployment
-    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+      (github.event.deployment_status.environment == 'Production' ||
+      github.event.deployment_status.environment == 'Preview'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,6 +27,16 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ github.event.deployment.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Verify the deployed commit is on a branch of this repository
+        env:
+          DEPLOYED_SHA: ${{ github.event.deployment.sha || github.sha }}
+        run: |
+          if ! git branch -r --contains "$DEPLOYED_SHA" | grep -q 'origin/'; then
+            echo "::error::$DEPLOYED_SHA is not on any branch of this repository; refusing to run its code"
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0

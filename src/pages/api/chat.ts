@@ -9,7 +9,7 @@ import { waitUntil } from '@vercel/functions';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import {
   createRateLimiter,
   readKillSwitch,
@@ -24,6 +24,8 @@ import {
 } from '../../lib/chat-guard';
 import { SYSTEM_PROMPT } from '../../lib/prompts';
 import { personalInfo } from '../../data/personalInfo';
+import { siteNotice } from '../../data/site-notice';
+import { freshnessNote } from '../../lib/stale-notice';
 import type { RagQueryResult } from '../../lib/rag';
 import { searchFacts } from '../../lib/rag-search';
 import {
@@ -33,6 +35,7 @@ import {
   recordAgentTurn,
   recordGuardrailTrip,
 } from '../../lib/agent-redis';
+import { isDeclaredBodyTooLarge } from '../../lib/body-limit';
 import { createOutputGuard } from '../../lib/output-guard';
 import { collectToolNames } from '../../lib/agent-metrics';
 import {
@@ -110,6 +113,14 @@ const ChatBodySchema = z.object({
 // inflate the LLM context (and the bill) with a giant payload.
 const MAX_BODY_BYTES = 32_000;
 
+let reviewedOnPromise: Promise<string> | undefined;
+
+async function loadReviewedOn(): Promise<string> {
+  const entry = await getEntry('now', 'index');
+  if (!entry) throw new Error('Missing now content');
+  return entry.data.updated;
+}
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const startedAt = Date.now();
 
@@ -117,6 +128,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     !(request.headers.get('content-type') ?? '').includes('application/json')
   ) {
     return new Response('Unsupported Media Type', { status: 415 });
+  }
+
+  if (
+    isDeclaredBodyTooLarge(
+      request.headers.get('content-length'),
+      MAX_BODY_BYTES,
+    )
+  ) {
+    return new Response('Payload Too Large', { status: 413 });
   }
 
   // Trust only the platform-derived client address. x-forwarded-for is
@@ -200,6 +220,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     .join('\n')}`;
 
   const resumeContext = `\n\nJARED'S RESUME URL: ${personalInfo.resumeUrl}`;
+  reviewedOnPromise ??= loadReviewedOn();
+  const reviewedOn = await reviewedOnPromise;
+  const freshnessContext = `\n\n${freshnessNote(reviewedOn, new Date(), siteNotice.staleAfterMonths)}`;
 
   const result = streamText({
     model: withModelFallbacks(
@@ -210,7 +233,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           waitUntil(recordAgentModelFallback(toModelId)),
       },
     ),
-    system: SYSTEM_PROMPT + caseStudyContext + resumeContext,
+    system: SYSTEM_PROMPT + caseStudyContext + resumeContext + freshnessContext,
     messages,
     stopWhen: stepCountIs(5),
     providerOptions: {
@@ -323,6 +346,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         inputSchema: z.object({
           query: z
             .string()
+            .max(500)
             .describe("The search query to match against Jared's facts."),
         }),
         execute: async ({ query }): Promise<RagQueryResult> =>

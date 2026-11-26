@@ -69,10 +69,15 @@ const { Content, headings } = await render(entry);
           entry.data.image && (
             <div class="mb-16 aspect-video w-full overflow-hidden bg-[var(--color-surface-container)] md:aspect-[21/9]">
               <Image
+                quality={75}
                 src={entry.data.image}
                 alt={entry.data.title}
                 width={1200}
                 height={514}
+                widths={[640, 1080, 1200]}
+                sizes="(min-width: 54rem) 54rem, 100vw"
+                loading="eager"
+                fetchpriority="high"
                 class="h-full w-full object-cover"
               />
             </div>

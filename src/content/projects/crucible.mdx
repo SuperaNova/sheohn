@@ -15,11 +15,12 @@ role: 'AI Engineer'
 timeline: 'April 2026'
 team: '2 Person Team'
 status: 'Completed'
-image: 'crucible/crucible.webp'
+image: '/crucible/crucible.webp'
 featured: true
 order: 3
 ---
 
+import { Image } from 'astro:assets';
 import PdfEmbed from '../../components/ui/PdfEmbed.svelte';
 
 ## Overview
@@ -56,11 +57,16 @@ So we stopped fighting the dataset and turned sprite fusion from a latent-manifo
 
 We used the **RPG Framework** (Recaption, Plan, Generate) from _Yang et al., 2024_. Instead of one big script, perception (eyes), reasoning (brain) and rendering (brush) are separate agents that talk through shared state. Only the reasoning agent runs on Google ADK as an `LlmAgent`; the perception and rendering agents are role-defined units in plain Python, coordinated sequentially by a `Forge` orchestrator.
 
-<img
+<Image
+  quality={75}
   src="/crucible/crucible-diagram.webp"
   alt="Crucible Multi-Agent Pipeline Architecture"
-  width="800"
-  height="450"
+  width={1720}
+  height={162}
+  widths={[640, 1080, 1200]}
+  sizes="(min-width: 54rem) 54rem, 100vw"
+  loading="lazy"
+  decoding="async"
   class="my-8 rounded-lg border border-gray-800 shadow-xl"
 />
 
