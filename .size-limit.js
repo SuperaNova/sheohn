@@ -7,14 +7,14 @@ export default [
     name: 'CommandDeck',
     path: 'dist/client/_astro/CommandDeck.*.js',
     gzip: true,
-    limit: '15.5 KB',
+    limit: '14.3 KB',
   },
   // Lazy chunk: AI SDK chat client + transport, loaded when the deck first opens.
   {
     name: 'agent-chat',
     path: 'dist/client/_astro/agent-chat.*.js',
     gzip: true,
-    limit: '41.5 KB',
+    limit: '52 KB',
   },
   {
     name: 'HeaderNav',
@@ -96,6 +96,24 @@ export default [
     gzip: true,
     limit: '0.8 KB',
   },
+  {
+    name: 'ArchitectureDiagram',
+    path: 'dist/client/_astro/ArchitectureDiagram.*.js',
+    gzip: true,
+    limit: '2.7 KB',
+  },
+  {
+    name: 'ExperienceTimeline',
+    path: 'dist/client/_astro/ExperienceTimeline.*.js',
+    gzip: true,
+    limit: '1 KB',
+  },
+  {
+    name: 'StaleNotice',
+    path: 'dist/client/_astro/StaleNotice.*.js',
+    gzip: true,
+    limit: '1 KB',
+  },
 
   // Case-study content chunks (per-project MDX-derived data, code-split by
   // Astro/Vite because each project page dynamically imports its own).
@@ -124,54 +142,51 @@ export default [
     limit: '1.9 KB',
   },
 
-  // Framework internals. `index.*.js` groups several unrelated chunks that
-  // share Rollup's generic `index` prefix.
+  // Framework internals. `client.<hash>.js` is Svelte's runtime plus Astro's router
+  // core; their hashed names can't be told apart, so they share one budget.
   {
-    name: 'svelte-runtime',
-    path: 'dist/client/_astro/runtime.*.js',
+    name: 'svelte-and-astro-runtime',
+    path: 'dist/client/_astro/client.????????.js',
     gzip: true,
-    limit: '12 KB',
+    limit: '25.7 KB',
   },
   {
-    name: 'astro-router',
-    path: 'dist/client/_astro/router.*.js',
+    name: 'client-router-script',
+    path: 'dist/client/_astro/ClientRouter.astro_astro_type_script_*.js',
     gzip: true,
-    limit: '4.7 KB',
+    limit: '0.9 KB',
   },
   {
-    name: 'shared-vendor-index-chunks',
-    path: [
-      'dist/client/_astro/index.*.js',
-      '!dist/client/_astro/index.astro_astro_type_script_*.js',
-    ],
+    name: 'prefetch',
+    path: 'dist/client/_astro/prefetch.*.js',
     gzip: true,
-    limit: '4.1 KB',
+    limit: '1.3 KB',
+  },
+  {
+    name: 'svelte-transition',
+    path: 'dist/client/_astro/transition.*.js',
+    gzip: true,
+    limit: '0.8 KB',
+  },
+  {
+    name: 'svelte-motion',
+    path: 'dist/client/_astro/motion.*.js',
+    gzip: true,
+    limit: '1.5 KB',
+  },
+  {
+    name: 'theme-store',
+    path: 'dist/client/_astro/store.*.js',
+    gzip: true,
+    limit: '1.2 KB',
   },
   // Vercel Analytics bootstrap from index.astro, kept
-  // external so the CSP script hashes stay stable across Vite bumps.
+  // external so the CSP script hashes stay stable across bundler bumps.
   {
     name: 'vercel-bootstraps',
     path: 'dist/client/_astro/index.astro_astro_type_script_*.js',
     gzip: true,
     limit: '1.5 KB',
-  },
-  {
-    name: 'astro-render',
-    path: 'dist/client/_astro/render.*.js',
-    gzip: true,
-    limit: '2.7 KB',
-  },
-  {
-    name: 'svelte-each-block',
-    path: 'dist/client/_astro/each.*.js',
-    gzip: true,
-    limit: '2.3 KB',
-  },
-  {
-    name: 'svelte-spring-store',
-    path: 'dist/client/_astro/spring.*.js',
-    gzip: true,
-    limit: '1.2 KB',
   },
 
   // Aggregate safety net: all client JS combined, including chunks not

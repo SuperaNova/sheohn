@@ -106,7 +106,7 @@ export function buildLoaderLines(
       text: `attached to firmware build ${bootInfo.commitSha}`,
     },
     { tag: 'pkg', text: `${bootInfo.dependencyCount} dependencies resolved` },
-    { text: 'Astro 6 · Svelte 5 · Tailwind v4' },
+    { text: 'Astro 7 · Svelte 5 · Tailwind v4' },
     { tag: 'vfs', text: 'mounted rootfs (astro static output)' },
     {
       tag: 'vfs',
